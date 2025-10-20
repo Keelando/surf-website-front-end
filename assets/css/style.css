@@ -1,0 +1,340 @@
+/* -----------------------------
+   Base Styles
+----------------------------- */
+
+body {
+  font-family: system-ui, sans-serif;
+  background-color: #eef4f8;
+  color: #222;
+  margin: 0;
+  padding: 0;
+  line-height: 1.5; /* ✅ Added: better text spacing */
+}
+
+/* ✅ Added: normalize box sizing for all elements */
+* {
+  box-sizing: border-box;
+}
+
+header, footer {
+  background-color: #004b7c;
+  color: white;
+  text-align: center;
+  padding: 1rem;
+}
+
+#buoy-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 1rem;
+  gap: 1rem;
+}
+
+.buoy-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  padding: 1rem;
+  width: 280px;
+  transition: transform 0.2s;
+}
+
+.buoy-card:hover {
+  transform: translateY(-4px);
+}
+
+.buoy-card h2 {
+  margin-top: 0;
+  color: #0066a1;
+  font-size: 1.2em;
+}
+
+.buoy-metric {
+  margin: 0.4rem 0;
+  font-size: 0.95em;
+}
+
+.error {
+  color: red;
+  text-align: center;
+  margin-top: 2rem;
+}
+
+/* -----------------------------
+   Charts Section
+----------------------------- */
+
+#charts-section {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+/* ✅ Added: slightly narrower padding on small screens */
+@media (max-width: 600px) {
+  #charts-section {
+    padding: 0 0.5rem;
+  }
+}
+
+#charts-section h2 {
+  text-align: center;
+  color: #004b7c;
+  margin-bottom: 1.5rem;
+}
+
+#buoy-selector {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+#chart-buoy-select {
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 2px solid #004b7c;
+  border-radius: 4px;
+  margin-left: 0.5rem;
+}
+
+/* ✅ Added: overflow hidden to prevent rotated labels/legend from spilling outside rounded borders */
+#wave-chart, 
+#wind-chart, 
+#temp-chart, 
+#wave-comparison-chart {
+  margin-bottom: 2rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: white;
+  overflow: hidden; /* ✅ Added */
+}
+
+/* -----------------------------
+   Active buoy indicator
+----------------------------- */
+
+.active-indicator {
+  text-align: center;
+  font-size: 0.95rem;
+  color: #004b7c;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: #e3f2fd;
+  border-radius: 4px;
+  display: inline-block;
+  min-width: 200px;
+}
+
+.active-indicator.active {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* -----------------------------
+   Wave Height Table
+----------------------------- */
+
+#wave-height-table-section {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+#wave-height-table-section h2 {
+  text-align: center;
+  color: #004b7c;
+  margin-bottom: 1.5rem;
+}
+
+.data-table {
+  background: white;
+  border-radius: 8px;
+  overflow-x: auto;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.data-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  background: #004b7c;
+  color: white;
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+}
+
+.data-table td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #ddd;
+  text-align: center;
+}
+
+.data-table td:first-child {
+  text-align: left;
+  font-weight: 500;
+}
+
+.data-table tr:hover {
+  background: #f5f5f5;
+}
+
+/* Enhanced styles for buoy cards - add to your existing style.css */
+
+/* NOAA buoy card special styling */
+.noaa-card {
+  border-left: 4px solid #003087; /* NOAA blue accent */
+  background: linear-gradient(to right, #f8f9ff 0%, #ffffff 10%);
+}
+
+/* Environment Canada card styling */
+.envcan-card {
+  border-left: 4px solid #006400; /* Canada green accent */
+  background: linear-gradient(to right, #f8fff8 0%, #ffffff 10%);
+}
+
+/* Section headers within cards */
+.buoy-metric.section-header {
+  margin-top: 0.75rem;
+  font-size: 1.05em;
+  color: #004b7c;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 0.25rem;
+}
+
+/* Indented metrics for sub-sections */
+.buoy-metric.indent {
+  margin-left: 1.5rem;
+  font-size: 0.95em;
+}
+
+/* Wave section container */
+.wave-section {
+  background: #f5f8ff;
+  padding: 1rem;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  border: 1px solid #e0e8f0;
+}
+
+/* Section dividers */
+h2[style*="border-bottom"] {
+  font-size: 1.3em;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* Enhanced buoy name headers */
+.buoy-card h2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+/* Expand button styling */
+.expand-btn {
+  margin-top: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: #f0f4f8;
+  border: 1px solid #d0d7de;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  color: #004b7c;
+  font-weight: 600;
+  width: 100%;
+  text-align: center;
+  transition: background 0.2s;
+}
+
+.expand-btn:hover {
+  background: #e1e8ed;
+}
+
+.expand-btn:active {
+  background: #d0d7e0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .buoy-metric.indent {
+    margin-left: 1rem;
+    font-size: 0.9em;
+  }
+  
+  .wave-section {
+    padding: 0.75rem;
+  }
+  
+  .buoy-metric.section-header {
+    font-size: 1em;
+  }
+  
+  .buoy-card h2 {
+    font-size: 1.3em;
+  }
+}
+
+/* Optional: Add a subtle animation when cards load */
+.buoy-card {
+  animation: fadeIn 0.4s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Staleness warning styling */
+.stale-warning {
+  color: #f57c00;
+  font-weight: bold;
+  font-size: 0.9em;
+}
+
+/* Data source badges */
+.source-badge {
+  font-size: 0.7em;
+  font-weight: normal;
+  padding: 0.2em 0.5em;
+  border-radius: 3px;
+  margin-left: 0.5em;
+}
+
+.source-badge.envcan {
+  color: #006400;
+  background: rgba(0, 100, 0, 0.1);
+}
+
+.source-badge.noaa {
+  color: #003087;
+  background: rgba(0, 48, 135, 0.1);
+}
+
+/* Metric icons spacing */
+.buoy-metric b::before {
+  margin-right: 0.3em;
+}
+
+/* Horizontal dividers between sections */
+.section-divider {
+  margin: 0.75rem 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid #eee;
+}

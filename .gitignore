@@ -1,0 +1,10 @@
+# Data files (regenerated automatically)
+data/*.json
+data/storm_surge/*.json
+
+# Logs
+*.log
+
+# Temp files
+*.tmp
+*~

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Salish Sea Wave Conditions (Under Development)</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <header>
+    <h1>Salish Sea Wave Conditions</h1>
+    <h2>(Under Development)</h2>
+  </header>
+
+  <main id="buoy-container">
+    <p>Loading latest buoy data…</p>
+  </main>
+
+  <section id="charts-section">
+    <h2>24-Hour Trends</h2>
+    <div id="wave-comparison-chart" style="width: 100%; height: 400px;"></div>
+    <div id="buoy-selector">
+      <label for="chart-buoy-select">Select Buoy:</label>
+      <select id="chart-buoy-select">
+        <option value="4600146">Halibut Bank</option>
+        <option value="4600304">English Bay</option>
+        <option value="4600303">Southern Georgia Strait</option>
+        <option value="4600131">Sentry Shoal</option>
+        <option value="46087">Neah Bay</option>
+      </select>
+    </div>
+    <div id="wave-chart" style="width: 100%; height: 400px;"></div>
+    <div id="wind-chart" style="width: 100%; height: 400px;"></div>
+    <div id="temp-chart" style="width: 100%; height: 400px;"></div>
+  </section>
+
+  <div id="wave-height-table-section">
+    <h2>24-Hour Wave Height Summary</h2>
+    <div class="data-table">
+      <table id="wave-height-table">
+        <!-- Table will be populated by JavaScript -->
+      </table>
+    </div>
+  </div>
+
+  <!-- Storm Surge Forecast Section -->
+  <section style="max-width: 1200px; margin: 40px auto; padding: 0;">
+    <h2 style="text-align: center; color: #004b7c;">Storm Surge Forecast</h2>
+    <div id="surge-chart" style="width: 100%; height: 400px; margin: 20px 0;"></div>
+    <div id="surge-metadata" style="text-align: center; color: #666; font-size: 0.9em; line-height: 1.6;"></div>
+  </section>
+
+  <footer>
+    <p>Please independently verify this data and do not base recreational activities around this information.</p>
+    <p><small>Auto-updated from Environment Canada | <span id="timestamp">Loading...</span></small></p>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+  <script src="assets/js/main.js"></script>
+  <script src="assets/js/charts.js"></script>
+  <script src="assets/js/storm_surge_chart.js"></script>
+</body>
+</html>
