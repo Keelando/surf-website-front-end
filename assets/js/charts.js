@@ -161,7 +161,7 @@ function updateCharts(buoyId) {
   const ts = buoy.timeseries;
   
   // Check if this is a NOAA buoy with swell data
-  const isNoaaBuoy = buoyId === "46087";
+  const isNoaaBuoy = buoyId === "46087" || buoyId === "46088";
 
   /* ---------- WAVE CHART ---------- */
   let waveHeightData, wavePeriodData, chartTitle;
@@ -397,6 +397,21 @@ function updateWaveComparisonChart() {
         connectNulls: false,
         itemStyle: { color: buoyColors[buoyId] },
         emphasis: { focus: "series" },
+        markLine: {
+          symbol: "none",
+          data: [
+            { 
+              yAxis: 0.7,
+              lineStyle: { type: "dashed", color: "orange", width: 1 },
+              label: { formatter: "0.7m" }
+            },
+            { 
+              yAxis: 1.2,
+              lineStyle: { type: "dashed", color: "red", width: 1 },
+              label: { formatter: "1.2m" }
+            }
+          ]
+        }
       };
     })
     .filter(Boolean);
@@ -432,8 +447,7 @@ function updateWaveComparisonChart() {
       axisLabel: {
         fontSize: window.innerWidth < 600 ? 9 : 10,
         rotate: window.innerWidth < 600 ? 30 : 0,
-        formatter: (value) =>
-          formatCompactTimeLabel(new Date(value).toISOString()),
+        formatter: (value) => formatCompactTimeLabel(new Date(value).toISOString()),
         hideOverlap: true,
         margin: 10,
       },
@@ -469,15 +483,15 @@ function generateWaveHeightTable() {
   const table = document.getElementById("wave-height-table");
   if (!table) return;
 
-  const buoyOrder = ["4600146", "4600304", "4600303", "4600131", "46087"];
+  const buoyOrder = ["4600146", "4600304", "4600303", "4600131", "46087", "46088"];
   const hourMap = new Map();
 
   buoyOrder.forEach((buoyId) => {
     const buoy = chartData[buoyId];
     if (!buoy || !buoy.timeseries) return;
 
-    // Use swell_height for Neah Bay, wave_height_sig for others
-    const waveData = buoyId === "46087" 
+    // Use swell_height for NOAA buoys, wave_height_sig for Environment Canada
+    const waveData = (buoyId === "46087" || buoyId === "46088")
       ? buoy.timeseries.swell_height?.data 
       : buoy.timeseries.wave_height_sig?.data;
     
@@ -507,6 +521,7 @@ function generateWaveHeightTable() {
         <th>Southern Georgia Strait</th>
         <th>Sentry Shoal</th>
         <th>Neah Bay<br><span style="font-size: 0.8em; font-weight: normal; color: #666;">(Swell)</span></th>
+        <th>New Dungeness<br><span style="font-size: 0.8em; font-weight: normal; color: #666;">(Swell)</span></th>
       </tr>
     </thead>
     <tbody>
@@ -538,6 +553,7 @@ function generateWaveHeightTable() {
         <td>${values["4600303"] != null ? values["4600303"] + " m" : "—"}</td>
         <td>${values["4600131"] != null ? values["4600131"] + " m" : "—"}</td>
         <td>${values["46087"] != null ? values["46087"] + " m" : "—"}</td>
+        <td>${values["46088"] != null ? values["46088"] + " m" : "—"}</td>
       </tr>
     `;
   });

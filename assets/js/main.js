@@ -9,7 +9,18 @@ async function loadBuoyData() {
     "4600303", // Southern Georgia Strait
     "4600131", // Sentry Shoal
     "46087",   // Neah Bay
+    "46088",   // New Dungeness
   ];
+
+  // Source links for each buoy
+  const sourceLinks = {
+    "4600146": "https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46146",
+    "4600304": "https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46304",
+    "4600303": "https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46303",
+    "4600131": "https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46131",
+    "46087": "https://www.ndbc.noaa.gov/station_page.php?station=46087",
+    "46088": "https://www.ndbc.noaa.gov/station_page.php?station=46088"
+  };
 
   try {
     const response = await fetch(`/data/latest_buoy_v2.json?t=${Date.now()}`);
@@ -52,7 +63,7 @@ async function loadBuoyData() {
       card.className = "buoy-card";
       
       // Special styling for NOAA buoys
-      if (id === "46087") {
+      if (id === "46087" || id === "46088") {
         card.style.borderLeft = "4px solid #003087";
       }
 
@@ -85,7 +96,7 @@ async function loadBuoyData() {
       let cardContent = `<h2>${b.name || id}`;
       
       // Add source badge
-      if (id === "46087") {
+      if (id === "46087" || id === "46088") {
         cardContent += ` <span style="font-size: 0.7em; color: #003087; font-weight: normal;">🇺🇸 NOAA</span>`;
       } else {
         cardContent += ` <span style="font-size: 0.7em; color: #006400; font-weight: normal;">🇨🇦 Env Canada</span>`;
@@ -96,7 +107,7 @@ async function loadBuoyData() {
       cardContent += `<div style="margin-top: 1rem;">`;
 
       // NOAA buoys get enhanced wave display with collapse
-      if (id === "46087") {
+      if (id === "46087" || id === "46088") {
         // Wind first
         cardContent += `<p class="buoy-metric"><b>💨 Wind:</b> ${windSpeed} kt G ${windGust} kt from ${b.wind_direction_cardinal ?? "—"} (${b.wind_direction ?? "—"}°)</p>`;
         
@@ -176,6 +187,22 @@ async function loadBuoyData() {
         cardContent += `
           <p class="buoy-metric" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #eee;"><b>🌡️ Sea Temperature:</b> ${b.sea_temp ?? "—"} °C | <b>Air:</b> ${b.air_temp ?? "—"} °C</p>
           <p class="buoy-metric"><b>⏱️ Pressure:</b> ${b.pressure ?? "—"} hPa</p>
+        `;
+      }
+
+      // Add source link at the bottom of the card
+      if (sourceLinks[id]) {
+        cardContent += `
+          <p style="margin-top: 0.75rem; margin-bottom: 0; padding-top: 0.5rem; border-top: 1px solid #e0e0e0; text-align: center;">
+            <a href="${sourceLinks[id]}" target="_blank" rel="noopener noreferrer" style="
+              font-size: 0.85em;
+              color: #004b7c;
+              text-decoration: none;
+              font-weight: 500;
+            " onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+              🔗 View Source Data
+            </a>
+          </p>
         `;
       }
 
