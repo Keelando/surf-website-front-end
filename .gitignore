@@ -8,3 +8,5 @@ data/storm_surge/*.json
 # Temp files
 *.tmp
 *~
+*.log
+git_backup.log

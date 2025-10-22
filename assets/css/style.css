@@ -2,18 +2,17 @@
    Base Styles
 ----------------------------- */
 
+* {
+  box-sizing: border-box;
+}
+
 body {
   font-family: system-ui, sans-serif;
   background-color: #eef4f8;
   color: #222;
   margin: 0;
   padding: 0;
-  line-height: 1.5; /* ✅ Added: better text spacing */
-}
-
-/* ✅ Added: normalize box sizing for all elements */
-* {
-  box-sizing: border-box;
+  line-height: 1.5;
 }
 
 header, footer {
@@ -22,6 +21,10 @@ header, footer {
   text-align: center;
   padding: 1rem;
 }
+
+/* -----------------------------
+   Buoy Cards Container
+----------------------------- */
 
 #buoy-container {
   display: flex;
@@ -38,6 +41,7 @@ header, footer {
   padding: 1rem;
   width: 280px;
   transition: transform 0.2s;
+  animation: fadeIn 0.4s ease-in;
 }
 
 .buoy-card:hover {
@@ -48,6 +52,10 @@ header, footer {
   margin-top: 0;
   color: #0066a1;
   font-size: 1.2em;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
 }
 
 .buoy-metric {
@@ -55,10 +63,100 @@ header, footer {
   font-size: 0.95em;
 }
 
+.buoy-metric.section-header {
+  margin-top: 0.75rem;
+  font-size: 1.05em;
+  color: #004b7c;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 0.25rem;
+}
+
+.buoy-metric.indent {
+  margin-left: 1.5rem;
+  font-size: 0.95em;
+}
+
+.section-divider {
+  margin: 0.75rem 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid #eee;
+}
+
 .error {
   color: red;
   text-align: center;
   margin-top: 2rem;
+}
+
+/* NOAA buoy styling */
+.noaa-card {
+  border-left: 4px solid #003087;
+  background: linear-gradient(to right, #f8f9ff 0%, #ffffff 10%);
+}
+
+/* Environment Canada styling */
+.envcan-card {
+  border-left: 4px solid #006400;
+  background: linear-gradient(to right, #f8fff8 0%, #ffffff 10%);
+}
+
+/* Wave section container */
+.wave-section {
+  background: #f5f8ff;
+  padding: 1rem;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  border: 1px solid #e0e8f0;
+}
+
+/* Data source badges */
+.source-badge {
+  font-size: 0.7em;
+  font-weight: normal;
+  padding: 0.2em 0.5em;
+  border-radius: 3px;
+  margin-left: 0.5em;
+}
+
+.source-badge.envcan {
+  color: #006400;
+  background: rgba(0, 100, 0, 0.1);
+}
+
+.source-badge.noaa {
+  color: #003087;
+  background: rgba(0, 48, 135, 0.1);
+}
+
+/* Staleness warning */
+.stale-warning {
+  color: #f57c00;
+  font-weight: bold;
+  font-size: 0.9em;
+}
+
+/* Expand button */
+.expand-btn {
+  margin-top: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: #f0f4f8;
+  border: 1px solid #d0d7de;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  color: #004b7c;
+  font-weight: 600;
+  width: 100%;
+  text-align: center;
+  transition: background 0.2s;
+}
+
+.expand-btn:hover {
+  background: #e1e8ed;
+}
+
+.expand-btn:active {
+  background: #d0d7e0;
 }
 
 /* -----------------------------
@@ -69,13 +167,6 @@ header, footer {
   max-width: 1200px;
   margin: 2rem auto;
   padding: 0 1rem;
-}
-
-/* ✅ Added: slightly narrower padding on small screens */
-@media (max-width: 600px) {
-  #charts-section {
-    padding: 0 0.5rem;
-  }
 }
 
 #charts-section h2 {
@@ -97,22 +188,23 @@ header, footer {
   margin-left: 0.5rem;
 }
 
-/* ✅ Added: overflow hidden to prevent rotated labels/legend from spilling outside rounded borders */
+/* Chart containers - consistent styling */
 #wave-chart, 
+#wave-period-chart,
 #wind-chart, 
 #temp-chart, 
-#wave-comparison-chart {
+#wave-comparison-chart,
+#surge-chart {
   margin-bottom: 2rem;
+  padding: 1rem;
   border: 1px solid #ddd;
   border-radius: 8px;
   background: white;
-  overflow: hidden; /* ✅ Added */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  overflow: hidden;
 }
 
-/* -----------------------------
-   Active buoy indicator
------------------------------ */
-
+/* Active buoy indicator */
 .active-indicator {
   text-align: center;
   font-size: 0.95rem;
@@ -127,11 +219,6 @@ header, footer {
 
 .active-indicator.active {
   animation: fadeIn 0.3s ease-in;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
 }
 
 /* -----------------------------
@@ -187,86 +274,72 @@ header, footer {
   background: #f5f5f5;
 }
 
-/* Enhanced styles for buoy cards - add to your existing style.css */
+/* -----------------------------
+   About Section
+----------------------------- */
 
-/* NOAA buoy card special styling */
-.noaa-card {
-  border-left: 4px solid #003087; /* NOAA blue accent */
-  background: linear-gradient(to right, #f8f9ff 0%, #ffffff 10%);
+.about-section {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 30px 20px;
+  background: #f7fafc;
+  color: #1a1a1a;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  font-size: 1.05rem;
+  line-height: 1.6;
 }
 
-/* Environment Canada card styling */
-.envcan-card {
-  border-left: 4px solid #006400; /* Canada green accent */
-  background: linear-gradient(to right, #f8fff8 0%, #ffffff 10%);
-}
-
-/* Section headers within cards */
-.buoy-metric.section-header {
-  margin-top: 0.75rem;
-  font-size: 1.05em;
-  color: #004b7c;
-  border-bottom: 1px solid #e0e0e0;
-  padding-bottom: 0.25rem;
-}
-
-/* Indented metrics for sub-sections */
-.buoy-metric.indent {
-  margin-left: 1.5rem;
-  font-size: 0.95em;
-}
-
-/* Wave section container */
-.wave-section {
-  background: #f5f8ff;
-  padding: 1rem;
-  border-radius: 6px;
-  margin: 0.5rem 0;
-  border: 1px solid #e0e8f0;
-}
-
-/* Section dividers */
-h2[style*="border-bottom"] {
-  font-size: 1.3em;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-
-/* Enhanced buoy name headers */
-.buoy-card h2 {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-}
-
-/* Expand button styling */
-.expand-btn {
-  margin-top: 0.75rem;
-  padding: 0.5rem 1rem;
-  background: #f0f4f8;
-  border: 1px solid #d0d7de;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9em;
-  color: #004b7c;
-  font-weight: 600;
-  width: 100%;
+.about-section h3 {
   text-align: center;
-  transition: background 0.2s;
+  color: #004b7c;
+  margin-bottom: 1em;
+  font-size: 1.4rem;
 }
 
-.expand-btn:hover {
-  background: #e1e8ed;
+.about-section p {
+  margin: 0.8em 0;
+  text-align: center;
 }
 
-.expand-btn:active {
-  background: #d0d7e0;
+/* -----------------------------
+   Storm Surge Section
+----------------------------- */
+
+#surge-metadata {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f5f9fc;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: #555;
+  line-height: 1.6;
 }
 
-/* Responsive adjustments */
+/* -----------------------------
+   Animations
+----------------------------- */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* -----------------------------
+   Responsive Design
+----------------------------- */
+
 @media (max-width: 600px) {
+  #charts-section {
+    padding: 0 0.5rem;
+  }
+  
   .buoy-metric.indent {
     margin-left: 1rem;
     font-size: 0.9em;
@@ -283,58 +356,13 @@ h2[style*="border-bottom"] {
   .buoy-card h2 {
     font-size: 1.3em;
   }
-}
-
-/* Optional: Add a subtle animation when cards load */
-.buoy-card {
-  animation: fadeIn 0.4s ease-in;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
+  
+  #wave-chart,
+  #wave-period-chart,
+  #wind-chart,
+  #temp-chart,
+  #wave-comparison-chart,
+  #surge-chart {
+    padding: 0.5rem;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Staleness warning styling */
-.stale-warning {
-  color: #f57c00;
-  font-weight: bold;
-  font-size: 0.9em;
-}
-
-/* Data source badges */
-.source-badge {
-  font-size: 0.7em;
-  font-weight: normal;
-  padding: 0.2em 0.5em;
-  border-radius: 3px;
-  margin-left: 0.5em;
-}
-
-.source-badge.envcan {
-  color: #006400;
-  background: rgba(0, 100, 0, 0.1);
-}
-
-.source-badge.noaa {
-  color: #003087;
-  background: rgba(0, 48, 135, 0.1);
-}
-
-/* Metric icons spacing */
-.buoy-metric b::before {
-  margin-right: 0.3em;
-}
-
-/* Horizontal dividers between sections */
-.section-divider {
-  margin: 0.75rem 0;
-  padding-top: 0.75rem;
-  border-top: 1px solid #eee;
 }
