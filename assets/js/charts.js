@@ -162,6 +162,9 @@ function updateCharts(buoyId) {
   
   // Check if this is a NOAA buoy with swell data
   const isNoaaBuoy = buoyId === "46087" || buoyId === "46088";
+
+
+
 /* ---------- WAVE CHART ---------- */
   if (buoyId === "46088") {
     // NEW DUNGENESS - Special handling with two separate charts
@@ -260,7 +263,7 @@ function updateCharts(buoyId) {
           z: 1
         }
       ]
-    });
+    },true);
     
     // Chart 2: Wave Periods (All three components with fallbacks)
     const avgPeriod = ts.wave_period_avg?.data || [];
@@ -371,6 +374,97 @@ function updateCharts(buoyId) {
         }
       }, 100);
     }
+    
+  } else {
+    // ALL OTHER BUOYS - Standard single wave chart
+    
+    // Hide the period chart if it exists
+    const periodChartContainer = document.getElementById("wave-period-chart");
+    if (periodChartContainer) {
+      periodChartContainer.style.display = "none";
+    }
+    
+    let waveHeightData, wavePeriodData, chartTitle, heightLabel, periodLabel;
+    
+    if (buoyId === "46087") {
+      // Neah Bay - use swell data (open ocean)
+      waveHeightData = ts.swell_height?.data || [];
+      wavePeriodData = ts.swell_period?.data || [];
+      chartTitle = `${buoy.name} - Swell Conditions`;
+      heightLabel = "Swell Height";
+      periodLabel = "Swell Period";
+    } else {
+      // Canadian buoys - use significant wave height
+      waveHeightData = ts.wave_height_sig?.data || [];
+      wavePeriodData = ts.wave_period_peak?.data || [];
+      chartTitle = `${buoy.name} - Wave Conditions`;
+      heightLabel = "Significant Wave Height";
+      periodLabel = "Peak Period";
+    }
+
+    waveChart.setOption({
+      title: { text: chartTitle, left: "center" },
+      tooltip: {
+        trigger: "axis",
+        axisPointer: { type: "cross" },
+        formatter: (params) => {
+          if (!params || params.length === 0) return "";
+          const time = formatTimeAxis(new Date(params[0].value[0]).toISOString());
+          let res = `<b>${time}</b><br/>`;
+          params.forEach((p) => {
+            if (p.value[1] != null) {
+              res += `${p.marker} ${p.seriesName}: ${p.value[1]} ${
+                p.seriesName.includes("Height") ? "m" : "s"
+              }<br/>`;
+            }
+          });
+          return res;
+        },
+      },
+      legend: { 
+        data: [heightLabel, periodLabel], 
+        bottom: "2%" 
+      },
+      grid: getResponsiveGridConfig(false),
+      xAxis: {
+        type: "time",
+        axisLabel: {
+          fontSize: window.innerWidth < 600 ? 9 : 10,
+          rotate: window.innerWidth < 600 ? 30 : 0,
+          formatter: (value) => formatCompactTimeLabel(new Date(value).toISOString()),
+          hideOverlap: true,
+          margin: 10
+        },
+        axisTick: { show: true },
+        splitLine: { show: true, lineStyle: { color: "#eee" } },
+      },
+      yAxis: [
+        { type: "value", name: "Height (m)", position: "left", min: 0, max: (value) => Math.max(1, Math.ceil(value.max * 1.1)), scale: true},
+        { type: "value", name: "Period (s)", position: "right" },
+      ],
+      series: [
+        {
+          name: heightLabel,
+          type: "line",
+          data: sanitizeSeriesData(waveHeightData),
+          smooth: true,
+          connectNulls: false,
+          yAxisIndex: 0,
+          itemStyle: { color: "#1e88e5" },
+          areaStyle: { opacity: 0.1 },
+        },
+        {
+          name: periodLabel,
+          type: "line",
+          data: sanitizeSeriesData(wavePeriodData),
+          smooth: true,
+          connectNulls: false,
+          yAxisIndex: 1,
+          itemStyle: { color: "#43a047" },
+        },
+      ]
+    });
+  }
 
   /* ---------- WIND CHART ---------- */
   const windSpeedData = ts.wind_speed?.data || [];
