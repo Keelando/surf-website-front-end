@@ -107,59 +107,106 @@ async function loadBuoyData() {
       cardContent += `<div style="margin-top: 1rem;">`;
 
       // NOAA buoys get enhanced wave display with collapse
-      if (id === "46087" || id === "46088") {
-        // Wind first
-        cardContent += `<p class="buoy-metric"><b>💨 Wind:</b> ${windSpeed} kt G ${windGust} kt from ${b.wind_direction_cardinal ?? "—"} (${b.wind_direction ?? "—"}°)</p>`;
-        
-        // Primary swell data
-        cardContent += `
-          <p class="buoy-metric" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #eee;"><b>🌊 Swell Height:</b> ${b.swell_height ?? "—"} m</p>
-          <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Swell Period:</b> ${b.swell_period ?? "—"} s</p>
-          <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Direction:</b> ${b.swell_direction_cardinal ?? "—"} (${b.swell_direction ?? "—"}°)</p>
-        `;
+if (id === "46087" || id === "46088") {
+  // Wind first
+  cardContent += `<p class="buoy-metric"><b>💨 Wind:</b> ${windSpeed} kt G ${windGust} kt from ${b.wind_direction_cardinal ?? "—"} (${b.wind_direction ?? "—"}°)</p>`;
+  
+  // Special display for Dungeness (46088) - straddles open sea/inland transition
+  if (id === "46088") {
+    // Primary: Combined significant wave height
+    cardContent += `
+      <p class="buoy-metric" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #eee;"><b>🌊 Significant Wave Height:</b> ${b.wave_height_sig ?? "—"} m</p>
+      <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Average Period:</b> ${b.wave_period_avg ?? "—"} s</p>
+      <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Peak Direction:</b> ${b.wave_direction_peak_cardinal ?? "—"} (${b.wave_direction_peak ?? "—"}°)</p>
+    `;
 
-        // Collapsible detailed wave data
-        const detailsId = `details-${id}`;
-        cardContent += `
-          <button class="expand-btn" onclick="toggleDetails('${detailsId}')" style="
-            margin-top: 0.75rem;
-            padding: 0.5rem 1rem;
-            background: #f0f4f8;
-            border: 1px solid #d0d7de;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9em;
-            color: #004b7c;
-            font-weight: 600;
-            width: 100%;
-            text-align: center;
-            transition: background 0.2s;
-          " onmouseover="this.style.background='#e1e8ed'" onmouseout="this.style.background='#f0f4f8'">
-            ▼ Show Detailed Wave Data
-          </button>
-          
-          <div id="${detailsId}" style="display: none; margin-top: 0.75rem;">
-            <p class="buoy-metric" style="font-weight: 600; color: #004b7c; border-bottom: 1px solid #e0e0e0; padding-bottom: 0.25rem;">
-              💨 Wind Waves (Local Chop)
-            </p>
-            <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Height:</b> ${b.wind_wave_height ?? "—"} m</p>
-            <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Period:</b> ${b.wind_wave_period ?? "—"} s</p>
-            <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Direction:</b> ${b.wind_wave_direction_cardinal ?? "—"} (${b.wind_wave_direction ?? "—"}°)</p>
-            
-            <p class="buoy-metric" style="margin-top: 0.75rem; font-weight: 600; color: #004b7c; border-bottom: 1px solid #e0e0e0; padding-bottom: 0.25rem;">
-              📊 Combined Wave Metrics
-            </p>
-            <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sig. Wave Height:</b> ${b.wave_height_sig ?? "—"} m</p>
-            <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Average Period:</b> ${b.wave_period_avg ?? "—"} s</p>
-            <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Peak Direction:</b> ${b.wave_direction_peak_cardinal ?? "—"} (${b.wave_direction_peak ?? "—"}°)</p>
-          </div>
-        `;
+    // Collapsible detailed wave breakdown
+    const detailsId = `details-${id}`;
+    cardContent += `
+      <button class="expand-btn" onclick="toggleDetails('${detailsId}')" style="
+        margin-top: 0.75rem;
+        padding: 0.5rem 1rem;
+        background: #f0f4f8;
+        border: 1px solid #d0d7de;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9em;
+        color: #004b7c;
+        font-weight: 600;
+        width: 100%;
+        text-align: center;
+        transition: background 0.2s;
+      " onmouseover="this.style.background='#e1e8ed'" onmouseout="this.style.background='#f0f4f8'">
+        ▼ Show Wave Component Breakdown
+      </button>
+      
+      <div id="${detailsId}" style="display: none; margin-top: 0.75rem;">
+        <p class="buoy-metric" style="font-weight: 600; color: #004b7c; border-bottom: 1px solid #e0e0e0; padding-bottom: 0.25rem;">
+          💨 Wind Waves (Local Chop)
+        </p>
+        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Height:</b> ${b.wind_wave_height ?? "—"} m</p>
+        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Period:</b> ${b.wind_wave_period ?? "—"} s</p>
+        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Direction:</b> ${b.wind_wave_direction_cardinal ?? "—"} (${b.wind_wave_direction ?? "—"}°)</p>
         
-        // Temps and pressure
-        cardContent += `
-          <p class="buoy-metric" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #eee;"><b>🌡️ Sea Temperature:</b> ${b.sea_temp ?? "—"} °C | <b>Air:</b> ${b.air_temp ?? "—"} °C</p>
-          <p class="buoy-metric"><b>⏱️ Pressure:</b> ${b.pressure ?? "—"} hPa</p>
-        `;
+        <p class="buoy-metric" style="margin-top: 0.75rem; font-weight: 600; color: #004b7c; border-bottom: 1px solid #e0e0e0; padding-bottom: 0.25rem;">
+          🌊 Ocean Swell (Long Period)
+        </p>
+        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Height:</b> ${b.swell_height ?? "—"} m</p>
+        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Period:</b> ${b.swell_period ?? "—"} s</p>
+        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Direction:</b> ${b.swell_direction_cardinal ?? "—"} (${b.swell_direction ?? "—"}°)</p>
+      </div>
+    `;
+  } else {
+    // Standard NOAA display for 46087 (Neah Bay) - primary swell data
+    cardContent += `
+      <p class="buoy-metric" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #eee;"><b>🌊 Swell Height:</b> ${b.swell_height ?? "—"} m</p>
+      <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Swell Period:</b> ${b.swell_period ?? "—"} s</p>
+      <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Direction:</b> ${b.swell_direction_cardinal ?? "—"} (${b.swell_direction ?? "—"}°)</p>
+    `;
+
+    // Collapsible detailed wave data
+    const detailsId = `details-${id}`;
+    cardContent += `
+      <button class="expand-btn" onclick="toggleDetails('${detailsId}')" style="
+        margin-top: 0.75rem;
+        padding: 0.5rem 1rem;
+        background: #f0f4f8;
+        border: 1px solid #d0d7de;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9em;
+        color: #004b7c;
+        font-weight: 600;
+        width: 100%;
+        text-align: center;
+        transition: background 0.2s;
+      " onmouseover="this.style.background='#e1e8ed'" onmouseout="this.style.background='#f0f4f8'">
+        ▼ Show Detailed Wave Data
+      </button>
+      
+      <div id="${detailsId}" style="display: none; margin-top: 0.75rem;">
+        <p class="buoy-metric" style="font-weight: 600; color: #004b7c; border-bottom: 1px solid #e0e0e0; padding-bottom: 0.25rem;">
+          💨 Wind Waves (Local Chop)
+        </p>
+        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Height:</b> ${b.wind_wave_height ?? "—"} m</p>
+        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Period:</b> ${b.wind_wave_period ?? "—"} s</p>
+        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Direction:</b> ${b.wind_wave_direction_cardinal ?? "—"} (${b.wind_wave_direction ?? "—"}°)</p>
+        
+        <p class="buoy-metric" style="margin-top: 0.75rem; font-weight: 600; color: #004b7c; border-bottom: 1px solid #e0e0e0; padding-bottom: 0.25rem;">
+          📊 Combined Wave Metrics
+        </p>
+        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sig. Wave Height:</b> ${b.wave_height_sig ?? "—"} m</p>
+        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Average Period:</b> ${b.wave_period_avg ?? "—"} s</p>
+        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Peak Direction:</b> ${b.wave_direction_peak_cardinal ?? "—"} (${b.wave_direction_peak ?? "—"}°)</p>
+      </div>
+    `;
+  }
+  
+  // Temps and pressure (same for all NOAA buoys)
+  cardContent += `
+    <p class="buoy-metric" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #eee;"><b>🌡️ Sea Temperature:</b> ${b.sea_temp ?? "—"} °C | <b>Air:</b> ${b.air_temp ?? "—"} °C</p>
+    <p class="buoy-metric"><b>⏱️ Pressure:</b> ${b.pressure ?? "—"} hPa</p>
+  `;
       } else {
         // Standard Environment Canada wave display
         
