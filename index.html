@@ -19,13 +19,12 @@
   <meta property="og:image" content="https://halibutbank.ca/assets/img/social_preview.jpg" />
 
   <link rel="canonical" href="https://halibutbank.ca/" />
-  <link rel="stylesheet" href="assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/style-v2.css" />
 </head>
 
 <body>
   <header>
     <h1>Salish Sea Wave Conditions</h1>
-    <h2>(Under Development)</h2>
   </header>
 
   <main id="buoy-container">
@@ -66,20 +65,20 @@
   </div>
 
   <!-- Storm Surge Forecast Section -->
-  <section style="max-width: 1200px; margin: 40px auto; padding: 0;">
-    <h2 style="text-align: center; color: #004b7c;">Storm Surge Forecast</h2>
-<div style="margin-bottom: 1rem;">
-  <label for="surge-station-select">Select Station: </label>
-  <select id="surge-station-select" style="padding: 0.5rem; font-size: 1rem;">
-    <!-- Options populated by JavaScript -->
-  </select>
-  <span id="active-surge-indicator" style="margin-left: 1rem; color: #0077be;"></span>
-</div>
-<div id="surge-chart" style="width: 100%; height: 500px;"></div>
-<div id="surge-metadata" style="margin-top: 1rem; font-size: 0.9rem; color: #666;"></div>
-    <div id="surge-chart" style="width: 100%; height: 400px; margin: 20px 0;"></div>
-    <div id="surge-metadata" style="text-align: center; color: #666; font-size: 0.9em; line-height: 1.6;"></div>
-  </section>
+<section style="max-width: 1200px; margin: 40px auto; padding: 0;">
+  <h2 style="text-align: center; color: #004b7c;">Storm Surge Forecast</h2>
+  
+  <div style="margin-bottom: 1rem; text-align: center;">
+    <label for="surge-station-select">Select Station: </label>
+    <select id="surge-station-select" style="padding: 0.5rem; font-size: 1rem;">
+      <!-- Options populated by JavaScript -->
+    </select>
+    <span id="active-surge-indicator" style="margin-left: 1rem; color: #0077be;"></span>
+  </div>
+  
+  <div id="surge-chart" style="width: 100%; height: 500px;"></div>
+  <div id="surge-metadata" style="margin-top: 1rem; font-size: 0.9rem; color: #666; text-align: center;"></div>
+</section>
 
   <!-- About Section -->
   <section class="about-section">
@@ -100,8 +99,8 @@
   </section>
 
   <footer>
-    <p>Please independently verify this data and do not base recreational activities around this information.</p>
-    <p><small>Auto-updated from Environment Canada | <span id="timestamp">Loading...</span></small></p>
+    <p>Please independently verify this data and do not base recreational activities around this information. This website is in no way affiliated with either environment Canada or NOAA. </p>
+    <p><small>Auto-updated using Environment Canada and NOAA's weather data APIs | <span id="timestamp">Loading...</span></small></p>
   </footer>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>

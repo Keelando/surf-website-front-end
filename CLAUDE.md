@@ -122,7 +122,17 @@ The chart system is broken into focused modules for maintainability:
 - Test carefully before making edits
 - The site is in beta, so this workflow is acceptable for now
 
-### Running the Site
+### Web Server Configuration
+
+The site is served in production by **Caddy** on port 8090 from `/home/keelando/site`. Configuration is located at `/etc/caddy/Caddyfile`.
+
+**Current Cache Policy:**
+- **All files**: No caching enabled for development (`no-store, no-cache, must-revalidate`)
+- **Compression**: gzip and zstd enabled
+
+Changes to any files (CSS, JS, HTML, images) are immediately visible after refresh.
+
+### Running the Site Locally
 
 This is a **static site** with no build process. To develop:
 
