@@ -1,0 +1,166 @@
+/* =====================================================
+   Navigation Bar Styles
+   ===================================================== */
+
+.main-nav {
+  background: #004b7c;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.nav-link {
+  color: #fff;
+  text-decoration: none;
+  padding: 1rem 2rem;
+  font-weight: 500;
+  font-size: 1rem;
+  transition: background 0.2s ease;
+  border-bottom: 3px solid transparent;
+}
+
+.nav-link:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.nav-link.active {
+  background: rgba(255,255,255,0.15);
+  border-bottom-color: #0077be;
+}
+
+/* Mobile responsive */
+@media (max-width: 600px) {
+  .nav-link {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.95rem;
+  }
+}
+
+/* =====================================================
+   Tide Page Styles
+   ===================================================== */
+
+.tide-selector-section {
+  text-align: center;
+  padding: 2rem 0;
+  background: #f5f5f5;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.tide-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
+}
+
+.tide-card h2 {
+  color: #004b7c;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-size: 1.8rem;
+}
+
+.tide-data-group {
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.tide-data-group:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.tide-data-group h3 {
+  color: #0077be;
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.tide-value {
+  text-align: center;
+  padding: 1rem;
+}
+
+/* High/Low Table Styling */
+#highlow-table {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+#highlow-table th {
+  background: #004b7c;
+  color: #fff;
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+}
+
+#highlow-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+#highlow-table tr:last-child td {
+  border-bottom: none;
+}
+
+#highlow-table tr:hover {
+  background: #f5f5f5;
+}
+
+/* Mobile responsive */
+@media (max-width: 600px) {
+  .tide-card {
+    padding: 1rem;
+  }
+
+  .tide-card h2 {
+    font-size: 1.4rem;
+  }
+
+  .tide-data-group h3 {
+    font-size: 1.1rem;
+  }
+
+  .tide-value {
+    font-size: 0.9rem;
+  }
+
+  #highlow-table th,
+  #highlow-table td {
+    padding: 0.5rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* =====================================================
+   Select Dropdown Styling
+   ===================================================== */
+
+#tide-station-select {
+  border: 2px solid #0077be;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+#tide-station-select:hover {
+  border-color: #004b7c;
+}
+
+#tide-station-select:focus {
+  outline: none;
+  border-color: #004b7c;
+  box-shadow: 0 0 0 3px rgba(0,119,190,0.1);
+}
