@@ -11,6 +11,7 @@ const STATION_DISPLAY_NAMES = {
   'point_atkinson': 'Point Atkinson',
   'kitsilano': 'Kitsilano',
   'vancouver': 'Vancouver',
+  'vancouver_harbour': 'Vancouver Harbour',
   'tsawwassen': 'Tsawwassen',
   'whiterock': 'White Rock',
   'crescent_pile': 'Crescent Beach',
@@ -27,9 +28,9 @@ async function loadTideData() {
   try {
     // Load all three tide JSON files
     const [currentRes, timeseriesRes, highlowRes] = await Promise.all([
-      fetch(`/data/tide_current.json?t=${Date.now()}`),
-      fetch(`/data/tide_timeseries.json?t=${Date.now()}`),
-      fetch(`/data/tide_highlow.json?t=${Date.now()}`)
+      fetch(`/data/tide-latest.json?t=${Date.now()}`),
+      fetch(`/data/tide-timeseries.json?t=${Date.now()}`),
+      fetch(`/data/tide-hi-low.json?t=${Date.now()}`)
     ]);
 
     if (!currentRes.ok || !timeseriesRes.ok || !highlowRes.ok) {
@@ -105,7 +106,6 @@ function displayStation(stationKey) {
 
   // Get station data
   const currentStation = tideCurrentData.stations[stationKey];
-  const timeseriesStation = tideTimeseriesData.stations[stationKey];
   const highlowStation = tideHighLowData.stations[stationKey];
 
   // Update station name
@@ -115,8 +115,8 @@ function displayStation(stationKey) {
   // Display current observation
   displayCurrentObservation(currentStation);
 
-  // Display current prediction
-  displayCurrentPrediction(timeseriesStation);
+  // Display current prediction (also from currentStation which has prediction_now)
+  displayCurrentPrediction(currentStation);
 
   // Display high/low table
   displayHighLowTable(highlowStation);
@@ -137,16 +137,17 @@ function hideStation() {
 function displayCurrentObservation(station) {
   const container = document.getElementById('current-observation');
 
-  if (!station || !station.water_level) {
+  if (!station || !station.observation || station.observation.value === null) {
     container.innerHTML = '<p style="color: #999;">No recent observation available</p>';
     return;
   }
 
-  const waterLevel = station.water_level.toFixed(2);
-  const obsTime = new Date(station.observation_time);
+  const obs = station.observation;
+  const waterLevel = obs.value.toFixed(2);
+  const obsTime = new Date(obs.time);
   const timeStr = formatTime(obsTime);
   const ageStr = getAgeString(obsTime);
-  const isStale = station.stale || false;
+  const isStale = obs.stale || false;
 
   container.innerHTML = `
     <div style="font-size: 2rem; font-weight: bold; color: ${isStale ? '#e53935' : '#0077be'};">
@@ -156,7 +157,7 @@ function displayCurrentObservation(station) {
       at ${timeStr}
       <span style="color: ${isStale ? '#e53935' : '#999'};">(${ageStr})</span>
     </div>
-    ${isStale ? '<div style="color: #e53935; margin-top: 0.5rem; font-size: 0.9rem;">? Data may be stale</div>' : ''}
+    ${isStale ? '<div style="color: #e53935; margin-top: 0.5rem; font-size: 0.9rem;">⚠ Data may be stale</div>' : ''}
   `;
 }
 
@@ -167,33 +168,14 @@ function displayCurrentObservation(station) {
 function displayCurrentPrediction(station) {
   const container = document.getElementById('current-prediction');
 
-  if (!station || !station.data || station.data.length === 0) {
+  if (!station || !station.prediction_now || station.prediction_now.value === null) {
     container.innerHTML = '<p style="color: #999;">No prediction available</p>';
     return;
   }
 
-  // Find the closest prediction to current time
-  const now = new Date();
-  let closestPoint = null;
-  let minDiff = Infinity;
-
-  station.data.forEach(point => {
-    if (point.type !== 'predicted') return; // Only use predictions
-    const pointTime = new Date(point.time);
-    const diff = Math.abs(now - pointTime);
-    if (diff < minDiff) {
-      minDiff = diff;
-      closestPoint = point;
-    }
-  });
-
-  if (!closestPoint) {
-    container.innerHTML = '<p style="color: #999;">No current prediction available</p>';
-    return;
-  }
-
-  const waterLevel = closestPoint.value.toFixed(2);
-  const predTime = new Date(closestPoint.time);
+  const pred = station.prediction_now;
+  const waterLevel = pred.value.toFixed(2);
+  const predTime = new Date(pred.time);
   const timeStr = formatTime(predTime);
 
   container.innerHTML = `
@@ -218,30 +200,13 @@ function displayHighLowTable(station) {
     return;
   }
 
-  // Filter for today's events only
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
-  const todayEvents = station.events.filter(event => {
-    const eventTime = new Date(event.time);
-    return eventTime >= today && eventTime < tomorrow;
-  });
-
-  if (todayEvents.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="3" style="color: #999; text-align: center;">No high/low events for today</td></tr>';
-    return;
-  }
-
-  // Sort by time
-  todayEvents.sort((a, b) => new Date(a.time) - new Date(b.time));
+  // Sort events by time
+  const events = [...station.events].sort((a, b) => new Date(a.time) - new Date(b.time));
 
   // Build table rows
-  tbody.innerHTML = todayEvents.map(event => {
-    const eventTime = new Date(event.time);
-    const timeStr = formatTime(eventTime);
-    const height = event.water_level.toFixed(2);
+  tbody.innerHTML = events.map(event => {
+    const timeStr = event.time_display; // Use pre-formatted time from JSON
+    const height = event.value.toFixed(2);
     const type = event.type.charAt(0).toUpperCase() + event.type.slice(1);
     const typeColor = event.type === 'high' ? '#0077be' : '#e53935';
 
