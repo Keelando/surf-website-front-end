@@ -306,6 +306,18 @@ footer {
    Storm Surge Section
 ----------------------------- */
 
+#storm-surge-section {
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 0 1rem;
+}
+
+#storm-surge-section h2 {
+  text-align: center;
+  color: #004b7c;
+  margin-bottom: 1.5rem;
+}
+
 #surge-metadata {
   margin-top: 1rem;
   padding: 1rem;
@@ -336,7 +348,8 @@ footer {
 ----------------------------- */
 
 @media (max-width: 600px) {
-  #charts-section {
+  #charts-section,
+  #storm-surge-section {
     padding: 0 0.5rem;
   }
   

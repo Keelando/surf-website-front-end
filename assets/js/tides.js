@@ -5,6 +5,7 @@
 let tideCurrentData = null;
 let tideTimeseriesData = null;
 let tideHighLowData = null;
+let tideChart = null;
 
 // Station name formatting
 const STATION_DISPLAY_NAMES = {
@@ -89,6 +90,12 @@ function populateStationDropdown() {
       hideStation();
     }
   });
+
+  // Set Point Atkinson as default and load its data
+  if (stations.includes('point_atkinson')) {
+    select.value = 'point_atkinson';
+    displayStation('point_atkinson');
+  }
 }
 
 /* =====================================================
@@ -121,8 +128,11 @@ function displayStation(stationKey) {
   // Display high/low table
   displayHighLowTable(highlowStation);
 
-  // Show the section
+  // Show the section first (so chart can measure properly)
   section.style.display = 'block';
+
+  // Display tide chart after section is visible
+  displayTideChart(stationKey);
 }
 
 function hideStation() {
@@ -138,7 +148,24 @@ function displayCurrentObservation(station) {
   const container = document.getElementById('current-observation');
 
   if (!station || !station.observation || station.observation.value === null) {
-    container.innerHTML = '<p style="color: #999;">No recent observation available</p>';
+    // Check if this station has observations at all (in timeseries data)
+    const stationKey = Object.keys(tideCurrentData.stations).find(key => tideCurrentData.stations[key] === station);
+    const hasObservations = tideTimeseriesData?.stations?.[stationKey]?.has_observations || false;
+
+    if (!hasObservations) {
+      container.innerHTML = `
+        <div style="padding: 1rem; background: #fff3e0; border-radius: 4px; border-left: 4px solid #ff9800;">
+          <div style="font-weight: bold; color: #f57c00; margin-bottom: 0.5rem;">
+            📊 Predictions Only
+          </div>
+          <div style="color: #666; font-size: 0.9rem;">
+            This station provides astronomical tide predictions but does not have real-time water level sensors.
+          </div>
+        </div>
+      `;
+    } else {
+      container.innerHTML = '<p style="color: #999;">No recent observation available</p>';
+    }
     return;
   }
 
@@ -221,6 +248,132 @@ function displayHighLowTable(station) {
 }
 
 /* =====================================================
+   Tide Chart Display
+   ===================================================== */
+
+function displayTideChart(stationKey) {
+  const chartContainer = document.getElementById('tide-chart');
+
+  if (!chartContainer) return;
+
+  // Get timeseries data for this station
+  const stationData = tideTimeseriesData?.stations?.[stationKey];
+
+  if (!stationData || !stationData.predictions || stationData.predictions.length === 0) {
+    chartContainer.innerHTML = '<p style="text-align: center; color: #999; padding: 2rem;">No prediction data available</p>';
+    return;
+  }
+
+  // Initialize chart if needed
+  if (!tideChart) {
+    tideChart = echarts.init(chartContainer);
+  }
+
+  // Extract predictions data
+  const predictions = stationData.predictions;
+  const times = predictions.map(p => new Date(p.time));
+  const values = predictions.map(p => p.value);
+
+  // Get observations if available
+  const observations = stationData.observations || [];
+  const obsTimes = observations.map(o => new Date(o.time));
+  const obsValues = observations.map(o => o.value);
+
+  // Chart options
+  const option = {
+    tooltip: {
+      trigger: 'axis',
+      formatter: function(params) {
+        const date = new Date(params[0].value[0]);
+        const timeStr = date.toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+          timeZone: 'America/Vancouver'
+        });
+        let result = `${timeStr}<br/>`;
+        params.forEach(param => {
+          result += `${param.marker} ${param.seriesName}: ${param.value[1].toFixed(2)} m<br/>`;
+        });
+        return result;
+      }
+    },
+    grid: {
+      left: window.innerWidth < 600 ? '12%' : '10%',
+      right: window.innerWidth < 600 ? '12%' : '10%',
+      top: '10%',
+      bottom: '20%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'time',
+      axisLabel: {
+        formatter: function(value) {
+          const date = new Date(value);
+          return date.toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            hour12: true,
+            timeZone: 'America/Vancouver'
+          });
+        },
+        hideOverlap: true,
+        fontSize: window.innerWidth < 600 ? 9 : 10
+      },
+      splitLine: { show: true, lineStyle: { color: "#eee" } }
+    },
+    yAxis: {
+      type: 'value',
+      name: 'Height (m)',
+      nameLocation: 'middle',
+      nameGap: 45
+    },
+    series: [
+      {
+        name: 'Prediction',
+        type: 'line',
+        data: times.map((t, i) => [t, values[i]]),
+        smooth: true,
+        lineStyle: {
+          color: '#0077be',
+          width: 2
+        },
+        itemStyle: {
+          color: '#0077be'
+        },
+        showSymbol: false
+      }
+    ]
+  };
+
+  // Add observations if available
+  if (observations.length > 0) {
+    option.series.push({
+      name: 'Observation',
+      type: 'scatter',
+      data: obsTimes.map((t, i) => [t, obsValues[i]]),
+      itemStyle: {
+        color: '#43a047'
+      },
+      symbolSize: 6
+    });
+  }
+
+  // Render chart (notMerge=true to completely replace previous data)
+  tideChart.setOption(option, true);
+
+  // Force resize to ensure proper dimensions
+  setTimeout(() => {
+    if (tideChart) {
+      tideChart.resize();
+    }
+  }, 100);
+}
+
+/* =====================================================
    Utility Functions
    ===================================================== */
 
@@ -284,3 +437,10 @@ loadTideData();
 
 // Auto-refresh every 5 minutes
 setInterval(loadTideData, 5 * 60 * 1000);
+
+// Handle window resize for chart
+window.addEventListener('resize', () => {
+  if (tideChart) {
+    tideChart.resize();
+  }
+});

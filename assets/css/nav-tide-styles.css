@@ -39,9 +39,24 @@
   }
 }
 
+/* Tide chart container styling */
+#tide-chart {
+  margin-bottom: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: white;
+  overflow: visible;
+}
+
 /* =====================================================
    Tide Page Styles
    ===================================================== */
+
+.tide-main-content {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
 
 .tide-selector-section {
   text-align: center;
@@ -120,6 +135,10 @@
 
 /* Mobile responsive */
 @media (max-width: 600px) {
+  .tide-main-content {
+    padding: 0 0.5rem;
+  }
+
   .tide-card {
     padding: 1rem;
   }
