@@ -436,3 +436,127 @@ header h2 {
     font-size: 1rem;
   }
 }
+
+/* -----------------------------
+   Stations Map Section
+----------------------------- */
+
+#map-section {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+#map-section h2 {
+  text-align: center;
+  color: #004b7c;
+  margin-bottom: 1.5rem;
+}
+
+#stations-map {
+  height: 600px;
+  width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border: 1px solid #ddd;
+  overflow: hidden;
+}
+
+.map-legend {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.legend-icon {
+  font-size: 1.5rem;
+}
+
+/* Custom marker styles */
+.station-marker {
+  background: none;
+  border: none;
+}
+
+.marker-icon {
+  font-size: 24px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.station-marker:hover .marker-icon {
+  transform: scale(1.2);
+}
+
+/* Leaflet popup customization */
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+  box-shadow: 0 3px 14px rgba(0,0,0,0.2);
+}
+
+.station-popup {
+  font-family: system-ui, sans-serif;
+  min-width: 250px;
+}
+
+.station-popup h3 {
+  margin: 0 0 0.75rem 0;
+  color: #004b7c;
+  font-size: 1.2rem;
+  border-bottom: 2px solid #004b7c;
+  padding-bottom: 0.5rem;
+}
+
+.station-popup p {
+  margin: 0.4rem 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.station-popup strong {
+  color: #555;
+}
+
+.data-types-list {
+  margin: 0.5rem 0 0 0;
+  padding-left: 1.5rem;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.data-types-list li {
+  margin: 0.25rem 0;
+  text-transform: capitalize;
+}
+
+/* Responsive map */
+@media (max-width: 600px) {
+  #stations-map {
+    height: 400px;
+  }
+
+  .map-legend {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .station-popup {
+    min-width: 200px;
+  }
+}

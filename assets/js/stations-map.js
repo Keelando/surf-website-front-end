@@ -1,0 +1,155 @@
+/**
+ * Salish Sea Stations Map
+ * Displays all buoy and tide stations on an interactive Leaflet map
+ */
+
+let stationsMap = null;
+let markersLayer = null;
+
+// Initialize the map
+function initStationsMap() {
+  // Create map centered on Salish Sea
+  stationsMap = L.map('stations-map', {
+    center: [49.2, -123.3],
+    zoom: 8,
+    scrollWheelZoom: true,
+    zoomControl: true
+  });
+
+  // Add OpenStreetMap tiles
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 19
+  }).addTo(stationsMap);
+
+  // Create layer group for markers
+  markersLayer = L.layerGroup().addTo(stationsMap);
+
+  // Load stations and add markers
+  loadStationsAndMarkers();
+}
+
+// Load stations.json from the envcan_wave directory
+async function loadStationsAndMarkers() {
+  try {
+    // For now, we'll use the stations data directly
+    // In production, you'd fetch from a generated JSON endpoint
+    const response = await fetch('/data/stations.json');
+    const stations = await response.json();
+
+    // Add buoy markers
+    if (stations.buoys) {
+      Object.values(stations.buoys).forEach(buoy => {
+        addBuoyMarker(buoy);
+      });
+    }
+
+    // Add tide station markers
+    if (stations.tides) {
+      Object.entries(stations.tides).forEach(([stationKey, tide]) => {
+        addTideMarker(tide, stationKey);
+      });
+    }
+  } catch (error) {
+    console.error('Error loading stations:', error);
+    // Fallback to inline station data if fetch fails
+    loadFallbackStations();
+  }
+}
+
+// Add buoy marker to map
+function addBuoyMarker(buoy) {
+  const icon = L.divIcon({
+    className: 'station-marker buoy-marker',
+    html: `<div class="marker-icon">🌊</div>`,
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+    popupAnchor: [0, -15]
+  });
+
+  const marker = L.marker([buoy.lat, buoy.lon], { icon: icon });
+
+  const popupContent = `
+    <div class="station-popup">
+      <h3>${buoy.name}</h3>
+      <p><strong>ID:</strong> ${buoy.id}</p>
+      <p><strong>Location:</strong> ${buoy.location}</p>
+      <p><strong>Source:</strong> ${buoy.source}</p>
+      <p><strong>Type:</strong> Wave Buoy</p>
+      <p><strong>Coordinates:</strong> ${buoy.lat.toFixed(3)}, ${buoy.lon.toFixed(3)}</p>
+      <p><strong>Data Types:</strong></p>
+      <ul class="data-types-list">
+        ${buoy.data_types.slice(0, 5).map(dt => `<li>${dt.replace(/_/g, ' ')}</li>`).join('')}
+        ${buoy.data_types.length > 5 ? `<li><em>+ ${buoy.data_types.length - 5} more...</em></li>` : ''}
+      </ul>
+      <a href="/#buoy-${buoy.id}" class="view-data-btn">View Data →</a>
+    </div>
+  `;
+
+  marker.bindPopup(popupContent);
+  marker.addTo(markersLayer);
+}
+
+// Add tide station marker to map
+function addTideMarker(tide, stationKey) {
+  const icon = L.divIcon({
+    className: 'station-marker tide-marker',
+    html: `<div class="marker-icon">📍</div>`,
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+    popupAnchor: [0, -15]
+  });
+
+  const marker = L.marker([tide.lat, tide.lon], { icon: icon });
+
+  const hasObservations = tide.series && tide.series.includes('wlo');
+  const stationType = hasObservations ? 'Permanent (with observations)' : 'Temporary (predictions only)';
+
+  const popupContent = `
+    <div class="station-popup">
+      <h3>${tide.name}</h3>
+      <p><strong>Code:</strong> ${tide.code}</p>
+      <p><strong>Location:</strong> ${tide.location}</p>
+      <p><strong>Source:</strong> ${tide.source}</p>
+      <p><strong>Type:</strong> ${stationType}</p>
+      <p><strong>Coordinates:</strong> ${tide.lat.toFixed(3)}, ${tide.lon.toFixed(3)}</p>
+      ${tide.note ? `<p><em>${tide.note}</em></p>` : ''}
+      <p><strong>Data Types:</strong></p>
+      <ul class="data-types-list">
+        ${tide.data_types.map(dt => `<li>${dt.replace(/_/g, ' ')}</li>`).join('')}
+      </ul>
+      <a href="/tides.html?station=${stationKey}" class="view-data-btn">View Data →</a>
+    </div>
+  `;
+
+  marker.bindPopup(popupContent);
+  marker.addTo(markersLayer);
+}
+
+// Fallback station data if fetch fails
+function loadFallbackStations() {
+  // Hardcoded fallback stations (will be replaced by fetch in production)
+  const fallbackBuoys = [
+    { id: "4600146", name: "Halibut Bank", location: "Off Vancouver", lat: 49.337, lon: -123.731, source: "Environment Canada", data_types: ["wave_height", "wind_speed", "air_temp"] },
+    { id: "4600303", name: "Southern Georgia Strait", location: "Southern Strait", lat: 48.833, lon: -123.417, source: "Environment Canada", data_types: ["wave_height", "wind_speed", "air_temp"] },
+    { id: "4600304", name: "English Bay", location: "Vancouver Harbor", lat: 49.291, lon: -123.181, source: "Environment Canada", data_types: ["wave_height", "wind_speed", "air_temp"] },
+    { id: "4600131", name: "Sentry Shoal", location: "Northern Strait of Georgia", lat: 49.917, lon: -124.917, source: "Environment Canada", data_types: ["wave_height", "wind_speed", "air_temp"] },
+    { id: "46087", name: "Neah Bay", location: "Cape Flattery, WA", lat: 48.495, lon: -124.728, source: "NOAA NDBC", data_types: ["wave_height", "wind_speed", "swell_height"] },
+    { id: "46088", name: "New Dungeness", location: "Hein Bank", lat: 48.333, lon: -123.167, source: "NOAA NDBC", data_types: ["wave_height", "wind_speed", "swell_height"] }
+  ];
+
+  const fallbackTides = [
+    { code: "07795", name: "Point Atkinson", location: "West Vancouver", lat: 49.3375, lon: -123.253583, source: "DFO IWLS", series: ["wlo", "wlp"], data_types: ["water_level_observed", "water_level_predicted"] },
+    { code: "07707", name: "Kitsilano", location: "Vancouver", lat: 49.276583, lon: -123.13936, source: "DFO IWLS", series: ["wlo", "wlp"], data_types: ["water_level_observed", "water_level_predicted"] }
+  ];
+
+  fallbackBuoys.forEach(buoy => addBuoyMarker(buoy));
+  fallbackTides.forEach(tide => addTideMarker(tide));
+}
+
+// Initialize map when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initStationsMap);
+} else {
+  initStationsMap();
+}

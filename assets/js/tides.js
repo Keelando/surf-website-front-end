@@ -91,8 +91,15 @@ function populateStationDropdown() {
     }
   });
 
-  // Set Point Atkinson as default and load its data
-  if (stations.includes('point_atkinson')) {
+  // Check for URL parameter first
+  const urlParams = new URLSearchParams(window.location.search);
+  const stationParam = urlParams.get('station');
+
+  // If station parameter exists and is valid, use it; otherwise default to Point Atkinson
+  if (stationParam && stations.includes(stationParam)) {
+    select.value = stationParam;
+    displayStation(stationParam);
+  } else if (stations.includes('point_atkinson')) {
     select.value = 'point_atkinson';
     displayStation('point_atkinson');
   }

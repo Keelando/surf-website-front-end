@@ -61,6 +61,7 @@ async function loadBuoyData() {
 
       const card = document.createElement("div");
       card.className = "buoy-card";
+      card.id = `buoy-${id}`; // Add ID for anchor linking from map
       
       // Special styling for NOAA buoys
       if (id === "46087" || id === "46088") {

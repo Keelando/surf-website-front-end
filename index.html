@@ -21,6 +21,12 @@
   <link rel="canonical" href="https://halibutbank.ca/" />
   <link rel="stylesheet" href="/assets/css/style-v2.css" />
   <link rel="stylesheet" href="/assets/css/nav-tide-styles.css" />
+  <link rel="stylesheet" href="/assets/css/stations-map.css" />
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""/>
 </head>
 
 <body>
@@ -37,6 +43,16 @@
   <main id="buoy-container">
     <p>Loading latest buoy data…</p>
   </main>
+
+  <!-- Stations Map Section -->
+  <section id="map-section">
+    <h2>Monitoring Stations</h2>
+    <div id="stations-map"></div>
+    <div class="map-legend">
+      <span class="legend-item"><span class="legend-icon">🌊</span> Wave Buoy</span>
+      <span class="legend-item"><span class="legend-icon">📍</span> Tide Station</span>
+    </div>
+  </section>
 
   <section id="charts-section">
     <h2>24-Hour Trends</h2>
@@ -109,8 +125,14 @@
     <p><small>Auto-updated using Environment Canada and NOAA's weather data APIs | <span id="timestamp">Loading...</span></small></p>
   </footer>
 
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""></script>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
   <script src="assets/js/main.js"></script>
+  <script src="assets/js/stations-map.js"></script>
   <script src="assets/js/chart-utils.js"></script>
   <script src="assets/js/wave-chart.js"></script>
   <script src="assets/js/wind-chart.js"></script>
