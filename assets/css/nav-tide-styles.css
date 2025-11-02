@@ -60,16 +60,16 @@
 
 .tide-selector-section {
   text-align: center;
-  padding: 2rem 0;
+  padding: 1rem 0;
   background: #f5f5f5;
   border-radius: 8px;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .tide-card {
   background: #fff;
   border-radius: 8px;
-  padding: 2rem;
+  padding: 1.25rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   margin-bottom: 2rem;
 }
@@ -77,14 +77,66 @@
 .tide-card h2 {
   color: #004b7c;
   margin-top: 0;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.5rem;
   text-align: center;
-  font-size: 1.8rem;
+  font-size: 1.6rem;
+}
+
+/* Station metadata */
+.station-metadata {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  background: #f5f9fc;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.metadata-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.metadata-item strong {
+  color: #333;
+}
+
+.station-type-badge {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.station-type-permanent {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+}
+
+.station-type-temporary {
+  background: #fff3e0;
+  color: #e65100;
+  border: 1px solid #ffcc80;
+}
+
+@media (max-width: 600px) {
+  .station-metadata {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+  }
 }
 
 .tide-data-group {
-  margin-bottom: 2rem;
-  padding-bottom: 2rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.25rem;
   border-bottom: 1px solid #e0e0e0;
 }
 
@@ -96,14 +148,14 @@
 
 .tide-data-group h3 {
   color: #0077be;
-  font-size: 1.2rem;
-  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  margin-bottom: 0.75rem;
   font-weight: 600;
 }
 
 .tide-value {
   text-align: center;
-  padding: 1rem;
+  padding: 0.5rem;
 }
 
 /* High/Low Table Styling */

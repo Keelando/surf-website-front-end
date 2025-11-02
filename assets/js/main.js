@@ -1,3 +1,13 @@
+// Helper function to create rotated directional arrow
+function getDirectionalArrow(degrees, arrowType = 'wind') {
+  if (degrees == null || degrees === '—') return '';
+
+  // Choose arrow symbol based on type
+  const arrow = arrowType === 'wind' ? '↓' : '➤';
+
+  return `<span class="direction-arrow" style="display: inline-block; transform: rotate(${degrees}deg);">${arrow}</span>`;
+}
+
 async function loadBuoyData() {
   const container = document.getElementById("buoy-container");
   const timestamp = document.getElementById("timestamp");
@@ -110,7 +120,7 @@ async function loadBuoyData() {
       // NOAA buoys get enhanced wave display with collapse
 if (id === "46087" || id === "46088") {
   // Wind first
-  cardContent += `<p class="buoy-metric"><b>💨 Wind:</b> ${windSpeed} kt G ${windGust} kt from ${b.wind_direction_cardinal ?? "—"} (${b.wind_direction ?? "—"}°)</p>`;
+  cardContent += `<p class="buoy-metric"><b>💨 Wind:</b> ${windSpeed} kt G ${windGust} kt from ${b.wind_direction_cardinal ?? "—"} (${b.wind_direction ?? "—"}°) ${getDirectionalArrow(b.wind_direction, 'wind')}</p>`;
   
   // Special display for Dungeness (46088) - straddles open sea/inland transition
   if (id === "46088") {
@@ -118,7 +128,7 @@ if (id === "46087" || id === "46088") {
     cardContent += `
       <p class="buoy-metric" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #eee;"><b>🌊 Significant Wave Height:</b> ${b.wave_height_sig ?? "—"} m</p>
       <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Average Period:</b> ${b.wave_period_avg ?? "—"} s</p>
-      <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Peak Direction:</b> ${b.wave_direction_peak_cardinal ?? "—"} (${b.wave_direction_peak ?? "—"}°)</p>
+      <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Peak Direction:</b> ${b.wave_direction_peak_cardinal ?? "—"} (${b.wave_direction_peak ?? "—"}°) ${getDirectionalArrow(b.wave_direction_peak, 'wave')}</p>
     `;
 
     // Collapsible detailed wave breakdown
@@ -147,14 +157,14 @@ if (id === "46087" || id === "46088") {
         </p>
         <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Height:</b> ${b.wind_wave_height ?? "—"} m</p>
         <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Period:</b> ${b.wind_wave_period ?? "—"} s</p>
-        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Direction:</b> ${b.wind_wave_direction_cardinal ?? "—"} (${b.wind_wave_direction ?? "—"}°)</p>
-        
+        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Direction:</b> ${b.wind_wave_direction_cardinal ?? "—"} (${b.wind_wave_direction ?? "—"}°) ${getDirectionalArrow(b.wind_wave_direction, 'wave')}</p>
+
         <p class="buoy-metric" style="margin-top: 0.75rem; font-weight: 600; color: #004b7c; border-bottom: 1px solid #e0e0e0; padding-bottom: 0.25rem;">
           🌊 Ocean Swell (Long Period)
         </p>
         <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Height:</b> ${b.swell_height ?? "—"} m</p>
         <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Period:</b> ${b.swell_period ?? "—"} s</p>
-        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Direction:</b> ${b.swell_direction_cardinal ?? "—"} (${b.swell_direction ?? "—"}°)</p>
+        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Direction:</b> ${b.swell_direction_cardinal ?? "—"} (${b.swell_direction ?? "—"}°) ${getDirectionalArrow(b.swell_direction, 'wave')}</p>
       </div>
     `;
   } else {
@@ -162,7 +172,7 @@ if (id === "46087" || id === "46088") {
     cardContent += `
       <p class="buoy-metric" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #eee;"><b>🌊 Swell Height:</b> ${b.swell_height ?? "—"} m</p>
       <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Swell Period:</b> ${b.swell_period ?? "—"} s</p>
-      <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Direction:</b> ${b.swell_direction_cardinal ?? "—"} (${b.swell_direction ?? "—"}°)</p>
+      <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Direction:</b> ${b.swell_direction_cardinal ?? "—"} (${b.swell_direction ?? "—"}°) ${getDirectionalArrow(b.swell_direction, 'wave')}</p>
     `;
 
     // Collapsible detailed wave data
@@ -191,14 +201,14 @@ if (id === "46087" || id === "46088") {
         </p>
         <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Height:</b> ${b.wind_wave_height ?? "—"} m</p>
         <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Period:</b> ${b.wind_wave_period ?? "—"} s</p>
-        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Direction:</b> ${b.wind_wave_direction_cardinal ?? "—"} (${b.wind_wave_direction ?? "—"}°)</p>
-        
+        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Direction:</b> ${b.wind_wave_direction_cardinal ?? "—"} (${b.wind_wave_direction ?? "—"}°) ${getDirectionalArrow(b.wind_wave_direction, 'wave')}</p>
+
         <p class="buoy-metric" style="margin-top: 0.75rem; font-weight: 600; color: #004b7c; border-bottom: 1px solid #e0e0e0; padding-bottom: 0.25rem;">
           📊 Combined Wave Metrics
         </p>
         <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sig. Wave Height:</b> ${b.wave_height_sig ?? "—"} m</p>
         <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Average Period:</b> ${b.wave_period_avg ?? "—"} s</p>
-        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Peak Direction:</b> ${b.wave_direction_peak_cardinal ?? "—"} (${b.wave_direction_peak ?? "—"}°)</p>
+        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Peak Direction:</b> ${b.wave_direction_peak_cardinal ?? "—"} (${b.wave_direction_peak ?? "—"}°) ${getDirectionalArrow(b.wave_direction_peak, 'wave')}</p>
       </div>
     `;
   }
@@ -210,9 +220,9 @@ if (id === "46087" || id === "46088") {
   `;
       } else {
         // Standard Environment Canada wave display
-        
+
         // Wind first
-        cardContent += `<p class="buoy-metric"><b>💨 Wind:</b> ${windSpeed} kt G ${windGust} kt from ${b.wind_direction_cardinal ?? "—"} (${b.wind_direction ?? "—"}°)</p>`;
+        cardContent += `<p class="buoy-metric"><b>💨 Wind:</b> ${windSpeed} kt G ${windGust} kt from ${b.wind_direction_cardinal ?? "—"} (${b.wind_direction ?? "—"}°) ${getDirectionalArrow(b.wind_direction, 'wind')}</p>`;
         
         // Wave data
         let wavePeriod = "—";
@@ -228,7 +238,7 @@ if (id === "46087" || id === "46088") {
         cardContent += `
           <p class="buoy-metric" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #eee;"><b>🌊 Sig Wave Height:</b> ${b.wave_height_sig ?? "—"} m</p>
           <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Wave Period:</b> ${wavePeriod}</p>
-          <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Direction (Peak):</b> ${b.wave_direction_peak_cardinal ?? "—"} (${b.wave_direction_peak ?? "—"}°)</p>
+          <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Direction (Peak):</b> ${b.wave_direction_peak_cardinal ?? "—"} (${b.wave_direction_peak ?? "—"}°) ${getDirectionalArrow(b.wave_direction_peak, 'wave')}</p>
         `;
         
         // Temps and pressure
@@ -237,6 +247,22 @@ if (id === "46087" || id === "46088") {
           <p class="buoy-metric"><b>⏱️ Pressure:</b> ${b.pressure ?? "—"} hPa</p>
         `;
       }
+
+      // Check if we have sufficient data for charts
+      const hasChartData = b.wave_height_sig != null || b.wind_speed != null;
+      const chartButtonDisabled = !hasChartData ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : '';
+
+      // Add navigation links
+      cardContent += `
+        <div class="buoy-nav-links">
+          <button class="buoy-nav-link" onclick="scrollToMap('${id}')">
+            📍 View Location
+          </button>
+          <button class="buoy-nav-link" onclick="scrollToCharts('${id}')" ${chartButtonDisabled}>
+            📊 View Charts
+          </button>
+        </div>
+      `;
 
       // Add source link at the bottom of the card
       if (sourceLinks[id]) {
@@ -278,7 +304,7 @@ if (id === "46087" || id === "46088") {
 function toggleDetails(detailsId) {
   const details = document.getElementById(detailsId);
   const button = event.target;
-  
+
   if (details.style.display === "none") {
     details.style.display = "block";
     button.textContent = "▲ Hide Detailed Wave Data";
@@ -286,6 +312,54 @@ function toggleDetails(detailsId) {
     details.style.display = "none";
     button.textContent = "▼ Show Detailed Wave Data";
   }
+}
+
+// Scroll to charts section and select buoy
+function scrollToCharts(buoyId) {
+  const buoySelector = document.getElementById('buoy-selector');
+  const chartsSection = document.getElementById('charts-section');
+
+  // Prefer scrolling to the selector dropdown if it exists
+  const scrollTarget = buoySelector || chartsSection;
+  if (!scrollTarget) return;
+
+  // Smooth scroll to buoy selector
+  scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // Wait for scroll to complete, then trigger chart selection
+  setTimeout(() => {
+    const chartSelect = document.getElementById('chart-buoy-select');
+    if (chartSelect) {
+      chartSelect.value = buoyId;
+      chartSelect.dispatchEvent(new Event('change'));
+
+      // Add highlight pulse effect to the selector
+      if (buoySelector) {
+        buoySelector.classList.add('highlight-pulse');
+        setTimeout(() => buoySelector.classList.remove('highlight-pulse'), 2000);
+      }
+    }
+  }, 800);
+}
+
+// Scroll to map section and center on buoy
+function scrollToMap(buoyId) {
+  const mapSection = document.getElementById('map-section');
+  if (!mapSection) return;
+
+  // Smooth scroll to map section
+  mapSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // Wait for scroll to complete, then center map on buoy
+  setTimeout(() => {
+    if (typeof window.centerMapOnBuoy === 'function') {
+      window.centerMapOnBuoy(buoyId);
+
+      // Add highlight pulse effect
+      mapSection.classList.add('highlight-pulse');
+      setTimeout(() => mapSection.classList.remove('highlight-pulse'), 2000);
+    }
+  }, 800);
 }
 
 loadBuoyData();

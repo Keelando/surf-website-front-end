@@ -5,6 +5,7 @@
 let tideCurrentData = null;
 let tideTimeseriesData = null;
 let tideHighLowData = null;
+let stationsMetadata = null;
 let tideChart = null;
 
 // Station name formatting
@@ -27,11 +28,12 @@ const STATION_DISPLAY_NAMES = {
 
 async function loadTideData() {
   try {
-    // Load all three tide JSON files
-    const [currentRes, timeseriesRes, highlowRes] = await Promise.all([
+    // Load all three tide JSON files plus stations metadata
+    const [currentRes, timeseriesRes, highlowRes, stationsRes] = await Promise.all([
       fetch(`/data/tide-latest.json?t=${Date.now()}`),
       fetch(`/data/tide-timeseries.json?t=${Date.now()}`),
-      fetch(`/data/tide-hi-low.json?t=${Date.now()}`)
+      fetch(`/data/tide-hi-low.json?t=${Date.now()}`),
+      fetch(`/data/stations.json?t=${Date.now()}`)
     ]);
 
     if (!currentRes.ok || !timeseriesRes.ok || !highlowRes.ok) {
@@ -41,6 +43,11 @@ async function loadTideData() {
     tideCurrentData = await currentRes.json();
     tideTimeseriesData = await timeseriesRes.json();
     tideHighLowData = await highlowRes.json();
+
+    if (stationsRes.ok) {
+      const allStations = await stationsRes.json();
+      stationsMetadata = allStations.tides || {};
+    }
 
     populateStationDropdown();
     updateTimestamp();
@@ -126,6 +133,9 @@ function displayStation(stationKey) {
   const stationName = STATION_DISPLAY_NAMES[stationKey] || stationKey;
   document.getElementById('station-name').textContent = stationName;
 
+  // Display station metadata
+  displayStationMetadata(stationKey);
+
   // Display current observation
   displayCurrentObservation(currentStation);
 
@@ -145,6 +155,39 @@ function displayStation(stationKey) {
 function hideStation() {
   document.getElementById('tide-current-section').style.display = 'none';
   document.getElementById('tide-loading').style.display = 'block';
+}
+
+/* =====================================================
+   Station Metadata Display
+   ===================================================== */
+
+function displayStationMetadata(stationKey) {
+  const container = document.getElementById('station-metadata');
+
+  if (!stationsMetadata || !stationsMetadata[stationKey]) {
+    container.innerHTML = '';
+    return;
+  }
+
+  const metadata = stationsMetadata[stationKey];
+  const isPermanent = metadata.type === 'PERMANENT';
+  const typeClass = isPermanent ? 'station-type-permanent' : 'station-type-temporary';
+  const typeLabel = isPermanent ? '📡 Permanent Station' : '📊 Prediction Only';
+
+  container.innerHTML = `
+    <div class="metadata-item">
+      <span class="station-type-badge ${typeClass}">${typeLabel}</span>
+    </div>
+    <div class="metadata-item">
+      <strong>Code:</strong> <span>${metadata.code}</span>
+    </div>
+    <div class="metadata-item">
+      <strong>📍 Coordinates:</strong> <span>${metadata.lat.toFixed(4)}°N, ${Math.abs(metadata.lon).toFixed(4)}°W</span>
+    </div>
+    <div class="metadata-item">
+      <strong>Location:</strong> <span>${metadata.location}</span>
+    </div>
+  `;
 }
 
 /* =====================================================

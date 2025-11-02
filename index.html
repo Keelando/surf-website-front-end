@@ -27,6 +27,31 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
     crossorigin=""/>
+  
+  <style>
+    header {
+      margin-bottom: 0;
+    }
+    
+    .site-tagline {
+      background: linear-gradient(to bottom, rgba(224, 242, 255, 0.5), rgba(224, 242, 255, 0.8));
+      text-align: center;
+      font-size: 1rem;
+      font-style: italic;
+      color: #2c5282;
+      padding: 1rem 1.5rem;
+      margin: 0;
+      border-bottom: 1px solid rgba(66, 153, 225, 0.2);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    @media (max-width: 768px) {
+      .site-tagline {
+        font-size: 0.9rem;
+        padding: 0.85rem 1rem;
+      }
+    }
+  </style>
 </head>
 
 <body>
@@ -39,6 +64,10 @@
   <header>
     <h1>Salish Sea Wave Conditions</h1>
   </header>
+  
+  <div class="site-tagline">
+    Real-time wave, wind, and tide conditions across the Salish Sea, Strait of Georgia, and Juan de Fuca Strait.
+  </div>
 
   <main id="buoy-container">
     <p>Loading latest buoy data…</p>
@@ -57,6 +86,11 @@
   <section id="charts-section">
     <h2>24-Hour Trends</h2>
     <div id="wave-comparison-chart" style="width: 100%; height: 400px;"></div>
+    <div style="margin-top: 0.75rem; padding: 0.75rem 1rem; background: #f5f9fc; border-radius: 6px; font-size: 0.9rem; color: #555; text-align: center; line-height: 1.6;">
+      <strong>Wave Breaking Thresholds:</strong>
+      <span style="color: #ff9800; font-weight: 600;">0.7m</span> — Small wind-driven waves may begin to break on exposed sandy beaches |
+      <span style="color: #e53935; font-weight: 600;">1.2m</span> — Moderate waves begin breaking on exposed sandy beaches
+    </div>
     <div id="buoy-selector">
       <label for="chart-buoy-select">Select Buoy:</label>
       <select id="chart-buoy-select">
@@ -143,4 +177,3 @@
   <script src="assets/js/storm_surge_chart.js"></script>
 </body>
 </html>
-

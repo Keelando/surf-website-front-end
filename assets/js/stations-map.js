@@ -5,6 +5,7 @@
 
 let stationsMap = null;
 let markersLayer = null;
+let buoyMarkers = {}; // Store buoy markers by ID for easy access
 
 // Initialize the map
 function initStationsMap() {
@@ -88,6 +89,9 @@ function addBuoyMarker(buoy) {
 
   marker.bindPopup(popupContent);
   marker.addTo(markersLayer);
+
+  // Store marker reference for later access
+  buoyMarkers[buoy.id] = marker;
 }
 
 // Add tide station marker to map
@@ -146,6 +150,31 @@ function loadFallbackStations() {
   fallbackBuoys.forEach(buoy => addBuoyMarker(buoy));
   fallbackTides.forEach(tide => addTideMarker(tide));
 }
+
+// Center map on specific buoy and open popup
+function centerMapOnBuoy(buoyId) {
+  if (!stationsMap || !buoyMarkers[buoyId]) {
+    console.warn(`Map or marker not ready for buoy ${buoyId}`);
+    return;
+  }
+
+  const marker = buoyMarkers[buoyId];
+  const latlng = marker.getLatLng();
+
+  // Center map on buoy with animation
+  stationsMap.setView(latlng, 10, {
+    animate: true,
+    duration: 1.0
+  });
+
+  // Open popup after centering
+  setTimeout(() => {
+    marker.openPopup();
+  }, 1100);
+}
+
+// Make function globally accessible
+window.centerMapOnBuoy = centerMapOnBuoy;
 
 // Initialize map when DOM is ready
 if (document.readyState === 'loading') {
