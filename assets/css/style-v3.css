@@ -329,15 +329,14 @@ footer {
 }
 
 /* -----------------------------
-   Direction Arrows
+   Direction Arrows - Basic Implementation
+   NOTE: Firefox on Android tablets has rendering issues with rotated Unicode arrows
+   This is a simplified version for maximum compatibility
 ----------------------------- */
 
-.direction-arrow {
+.dir-arrow {
   display: inline-block;
-  transition: transform 0.3s ease;
-  font-size: 1.2em;
-  margin-left: 0.3rem;
-  vertical-align: middle;
+  margin-left: 0.25rem;
   color: #004b7c;
 }
 

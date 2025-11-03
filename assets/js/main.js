@@ -1,11 +1,17 @@
 // Helper function to create rotated directional arrow
+// SVG approach - bulletproof across ALL browsers/devices (fixes Firefox Android tablet bug)
 function getDirectionalArrow(degrees, arrowType = 'wind') {
   if (degrees == null || degrees === '—') return '';
 
-  // Choose arrow symbol based on type
-  const arrow = arrowType === 'wind' ? '↓' : '➤';
+  // Meteorological convention: direction indicates WHERE wind/waves are COMING FROM
+  const rotation = arrowType === 'wind' ? degrees : degrees + 90;
 
-  return `<span class="direction-arrow" style="display: inline-block; transform: rotate(${degrees}deg);">${arrow}</span>`;
+  // SVG arrows: wind points down, wave points right
+  const svg = arrowType === 'wind'
+    ? `<svg width="16" height="16" viewBox="0 0 16 16"><path d="M8 2v12m0 0l-3-3m3 3l3-3" stroke="#004b7c" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`
+    : `<svg width="16" height="16" viewBox="0 0 16 16"><path d="M2 8h12m0 0l-3-3m3 3l-3 3" stroke="#004b7c" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;
+
+  return `<span style="display:inline-block;transform:rotate(${rotation}deg);margin-left:0.3rem;vertical-align:middle;">${svg}</span>`;
 }
 
 async function loadBuoyData() {
