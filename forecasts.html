@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Marine Forecasts | Salish Sea Wave Conditions</title>
+
+  <meta name="description" content="Marine weather forecasts for Strait of Georgia including wind warnings, gale watches, and extended forecasts from Environment Canada." />
+  <meta name="keywords" content="marine forecast, Strait of Georgia, gale warning, wind forecast, Environment Canada, BC marine weather, Salish Sea forecast" />
+  <meta name="author" content="Salish Sea Wave Conditions Project" />
+  <meta name="robots" content="index, follow" />
+
+  <link rel="canonical" href="https://halibutbank.ca/forecasts.html" />
+  <link rel="stylesheet" href="/assets/css/style-v3.css" />
+  <link rel="stylesheet" href="/assets/css/nav-tide-styles-v3.css" />
+  <link rel="stylesheet" href="/assets/css/warning-banner-v3.css" />
+
+  <style>
+    html {
+      scroll-behavior: smooth;
+    }
+
+    .forecast-main-content {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    .forecast-zone {
+      background: #fff;
+      border: 1px solid #e0e7ee;
+      border-radius: 8px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .forecast-zone h2 {
+      margin-top: 0;
+      color: #2c5282;
+      border-bottom: 3px solid #4299e1;
+      padding-bottom: 0.5rem;
+    }
+
+    .zone-warnings {
+      margin: 1.5rem 0;
+    }
+
+    .warning-card {
+      background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%);
+      border-left: 4px solid #d97706;
+      padding: 1rem 1.5rem;
+      margin-bottom: 1rem;
+      border-radius: 4px;
+    }
+
+    .warning-card.warning-storm {
+      background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+      border-left-color: #b91c1c;
+    }
+
+    .warning-card.warning-gale {
+      background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+      border-left-color: #ea580c;
+    }
+
+    .warning-card h3 {
+      margin: 0 0 0.5rem 0;
+      color: #78350f;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .warning-card.warning-storm h3,
+    .warning-card.warning-gale h3 {
+      color: #7c2d12;
+    }
+
+    .warning-card p {
+      margin: 0;
+      color: #451a03;
+    }
+
+    .forecast-section {
+      margin: 1.5rem 0;
+    }
+
+    .forecast-section h3 {
+      color: #2d3748;
+      margin-bottom: 0.75rem;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .forecast-content {
+      background: #f7fafc;
+      padding: 1rem 1.5rem;
+      border-radius: 4px;
+      border-left: 3px solid #4299e1;
+      line-height: 1.8;
+    }
+
+    .forecast-period {
+      margin-bottom: 0.75rem;
+      color: #2d3748;
+    }
+
+    .extended-forecast {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .extended-day {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 1rem;
+    }
+
+    .extended-day h4 {
+      margin: 0 0 0.5rem 0;
+      color: #2c5282;
+      font-size: 1rem;
+    }
+
+    .extended-day p {
+      margin: 0;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: #4a5568;
+    }
+
+    .forecast-metadata {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e2e8f0;
+      font-size: 0.9rem;
+      color: #718096;
+    }
+
+    .no-warnings {
+      background: #f0fff4;
+      border-left: 3px solid #48bb78;
+      padding: 1rem 1.5rem;
+      border-radius: 4px;
+      color: #22543d;
+    }
+
+    .loading-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #718096;
+    }
+
+    .error-state {
+      background: #fff5f5;
+      border: 1px solid #fc8181;
+      border-radius: 8px;
+      padding: 2rem;
+      text-align: center;
+      color: #742a2a;
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+      .forecast-zone {
+        padding: 1.5rem 1rem;
+      }
+
+      .extended-forecast {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Warning Banner Container (will be populated by warning-banner.js) -->
+  <div id="warning-banner-container"></div>
+
+  <!-- Navigation -->
+  <nav class="main-nav">
+    <a href="/" class="nav-link">Buoys</a>
+    <a href="/tides.html" class="nav-link">Tides</a>
+    <a href="/forecasts.html" class="nav-link active">Forecasts</a>
+  </nav>
+
+  <header>
+    <h1>Marine Weather Forecasts</h1>
+    <p style="margin-top: 0.5rem; color: #4a5568; font-size: 1rem;">Strait of Georgia - Environment Canada</p>
+  </header>
+
+  <main class="forecast-main-content">
+    <div id="forecast-container">
+      <div class="loading-state">
+        <p>Loading marine forecasts...</p>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>Marine forecasts provided by Environment Canada. Please independently verify this data and do not base recreational activities solely on this information.</p>
+    <p><small>Auto-updated from Environment Canada's marine weather API | <span id="timestamp">Loading...</span></small></p>
+  </footer>
+
+  <script src="/assets/js/warning-banner.js"></script>
+  <script src="/assets/js/forecasts.js"></script>
+</body>
+</html>

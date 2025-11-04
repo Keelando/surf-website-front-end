@@ -22,6 +22,7 @@
   <link rel="stylesheet" href="/assets/css/style-v3.css" />
   <link rel="stylesheet" href="/assets/css/nav-tide-styles-v3.css" />
   <link rel="stylesheet" href="/assets/css/stations-map-v3.css" />
+  <link rel="stylesheet" href="/assets/css/warning-banner-v3.css" />
 
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -55,10 +56,14 @@
 </head>
 
 <body>
+  <!-- Warning Banner Container -->
+  <div id="warning-banner-container"></div>
+
   <!-- Navigation -->
   <nav class="main-nav">
     <a href="/" class="nav-link active">Buoys</a>
     <a href="/tides.html" class="nav-link">Tides</a>
+    <a href="/forecasts.html" class="nav-link">Forecasts</a>
   </nav>
 
   <header>
@@ -165,6 +170,7 @@
     crossorigin=""></script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+  <script src="assets/js/warning-banner.js"></script>
   <script src="assets/js/main.js"></script>
   <script src="assets/js/stations-map.js"></script>
   <script src="assets/js/chart-utils.js"></script>
