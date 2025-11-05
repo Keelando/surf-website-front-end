@@ -81,11 +81,12 @@
   transform: scale(0.95);
 }
 
-/* Storm Warning - Most Severe */
+/* Storm Warning - Most Severe (48+ knots) */
 .warning-storm {
   background: linear-gradient(to right, #991b1b, #b91c1c);
   color: #fff;
-  border-left-color: #fef2f2;
+  border-left: 6px solid #fef2f2; /* Thicker border for urgency */
+  animation: stormPulse 2s ease-in-out infinite; /* More urgent animation */
 }
 
 .warning-storm .warning-details-link {
@@ -98,11 +99,11 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* Gale Warning - High Severity */
+/* Gale Warning - High Severity (34-47 knots) */
 .warning-gale {
   background: linear-gradient(to right, #c2410c, #ea580c);
   color: #fff;
-  border-left-color: #fff7ed;
+  border-left: 5px solid #fff7ed; /* Thicker border for high severity */
 }
 
 .warning-gale .warning-details-link {
@@ -115,11 +116,11 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* Strong Wind Warning - Moderate Severity */
+/* Strong Wind Warning - Moderate Severity (20-33 knots) */
 .warning-strong-wind {
   background: linear-gradient(to right, #b45309, #d97706);
   color: #fff;
-  border-left-color: #fef3c7;
+  border-left: 4px solid #fef3c7; /* Standard border */
 }
 
 .warning-strong-wind .warning-details-link {
@@ -149,7 +150,7 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* Pulse Animation (subtle) */
+/* Pulse Animation (subtle) - for gale/strong wind */
 @keyframes warningPulse {
   0%, 100% {
     opacity: 1;
@@ -159,8 +160,27 @@
   }
 }
 
+/* Storm Pulse Animation (more urgent) - for storm warnings only */
+@keyframes stormPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 2px 8px rgba(153, 27, 27, 0.4);
+  }
+  50% {
+    transform: scale(1.002);
+    box-shadow: 0 4px 16px rgba(153, 27, 27, 0.6);
+  }
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
+  /* Sticky positioning to keep warnings visible while scrolling */
+  #warning-banner-container {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+
   .warning-banner {
     padding: 0.5rem 2.5rem 0.5rem 0.5rem; /* Less padding, room for X */
     position: relative;

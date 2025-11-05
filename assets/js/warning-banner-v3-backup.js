@@ -1,13 +1,11 @@
 /**
- * Warning Banner Module - IMPROVED VERSION
+ * Warning Banner Module
  * Displays marine weather warnings from Environment Canada
  *
- * Key Improvements:
- * - Variable dismiss durations based on warning severity
- * - Storm warnings have 12h auto-restore (safety critical)
- * - Better visual hierarchy by severity
- * - Dismissal feedback messages
- * - Accessibility improvements
+ * Features:
+ * - Dismissible warnings with X button
+ * - State persisted across pages (localStorage)
+ * - Auto-expires after 24 hours
  *
  * Usage:
  *   1. Include this script in your HTML
@@ -17,18 +15,7 @@
 
 // Configuration
 const STORAGE_KEY = 'dismissed_marine_warnings';
-
-// Dismiss durations by warning severity (in milliseconds)
-const DISMISS_DURATIONS = {
-  'storm': 12 * 60 * 60 * 1000,      // 12 hours (storms are critical, re-check sooner)
-  'gale': 12 * 60 * 60 * 1000,       // 12 hours (typical gale duration)
-  'strong wind': 6 * 60 * 60 * 1000, // 6 hours
-  'wind': 6 * 60 * 60 * 1000,        // 6 hours
-  'default': 8 * 60 * 60 * 1000      // 8 hours for other warnings
-};
-
-// Maximum age before dismissal is always cleared (safety backstop)
-const MAX_DISMISS_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
+const DISMISS_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 /**
  * Generate unique ID for a warning
@@ -42,50 +29,21 @@ function getWarningId(warning) {
 }
 
 /**
- * Get dismiss duration for a specific warning type
- * @param {string} warningType - Warning type string
- * @returns {number} Duration in ms
- */
-function getDismissDuration(warningType) {
-  const typeLower = warningType.toLowerCase();
-
-  if (typeLower.includes('storm')) return DISMISS_DURATIONS.storm;
-  if (typeLower.includes('gale')) return DISMISS_DURATIONS.gale;
-  if (typeLower.includes('strong wind') || typeLower.includes('wind')) {
-    return DISMISS_DURATIONS['strong wind'];
-  }
-
-  return DISMISS_DURATIONS.default;
-}
-
-/**
  * Check if warning has been dismissed
  * @param {string} warningId - Warning ID
- * @param {string} warningType - Warning type for duration lookup
  * @returns {boolean} True if dismissed and not expired
  */
-function isWarningDismissed(warningId, warningType) {
+function isWarningDismissed(warningId) {
   try {
     const dismissed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
     const dismissedTime = dismissed[warningId];
 
     if (!dismissedTime) return false;
 
-    const now = Date.now();
-    const elapsed = now - dismissedTime;
-
-    // Always clear dismissals older than 24 hours (safety backstop)
-    if (elapsed > MAX_DISMISS_DURATION_MS) {
-      delete dismissed[warningId];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(dismissed));
-      return false;
-    }
-
-    // Get warning-specific duration
-    const duration = getDismissDuration(warningType);
-
-    // Check if dismissal has expired for this warning type
-    if (elapsed > duration) {
+    // Check if dismissal has expired
+    const elapsed = Date.now() - dismissedTime;
+    if (elapsed > DISMISS_DURATION_MS) {
+      // Expired - clean up
       delete dismissed[warningId];
       localStorage.setItem(STORAGE_KEY, JSON.stringify(dismissed));
       return false;
@@ -101,33 +59,16 @@ function isWarningDismissed(warningId, warningType) {
 /**
  * Dismiss a warning
  * @param {string} warningId - Warning ID to dismiss
- * @param {string} warningType - Warning type for feedback message
  */
-function dismissWarning(warningId, warningType) {
+function dismissWarning(warningId) {
   try {
     const dismissed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
     dismissed[warningId] = Date.now();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(dismissed));
 
-    // Get duration for feedback message
-    const duration = getDismissDuration(warningType);
-    let feedbackMsg = 'Warning hidden for 8 hours';
-
-    if (duration === DISMISS_DURATIONS.storm) {
-      feedbackMsg = 'Storm warning hidden for 12 hours - check conditions regularly';
-    } else if (duration === DISMISS_DURATIONS.gale) {
-      feedbackMsg = 'Warning hidden for 12 hours';
-    } else if (duration === DISMISS_DURATIONS['strong wind']) {
-      feedbackMsg = 'Warning hidden for 6 hours';
-    }
-
     // Remove warning banner from DOM
     const banner = document.querySelector(`[data-warning-id="${warningId}"]`);
     if (banner) {
-      // Show feedback message
-      showDismissalFeedback(banner, feedbackMsg);
-
-      // Fade out and remove
       banner.style.opacity = '0';
       banner.style.transition = 'opacity 0.3s ease';
 
@@ -147,42 +88,6 @@ function dismissWarning(warningId, warningType) {
 }
 
 /**
- * Show dismissal feedback message
- * @param {HTMLElement} banner - Warning banner element
- * @param {string} message - Feedback message
- */
-function showDismissalFeedback(banner, message) {
-  // Create feedback element
-  const feedback = document.createElement('div');
-  feedback.className = 'warning-dismissal-feedback';
-  feedback.textContent = message;
-  feedback.style.cssText = `
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(0, 0, 0, 0.85);
-    color: white;
-    padding: 1rem 2rem;
-    border-radius: 8px;
-    z-index: 10000;
-    font-size: 0.95rem;
-    text-align: center;
-    max-width: 90%;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  `;
-
-  document.body.appendChild(feedback);
-
-  // Fade out and remove after 3 seconds
-  setTimeout(() => {
-    feedback.style.transition = 'opacity 0.5s ease';
-    feedback.style.opacity = '0';
-    setTimeout(() => feedback.remove(), 500);
-  }, 3000);
-}
-
-/**
  * Fetch and display warning banners
  * @param {string} containerId - ID of container element (default: 'warning-banner-container')
  */
@@ -195,7 +100,7 @@ async function displayWarningBanners(containerId = 'warning-banner-container') {
   }
 
   try {
-    const response = await fetch(`/data/marine_forecast.json?t=${Date.now()}`);
+    const response = await fetch('/data/marine_forecast.json');
     if (!response.ok) {
       console.warn('Marine forecast data not available');
       return;
@@ -207,7 +112,7 @@ async function displayWarningBanners(containerId = 'warning-banner-container') {
     // Filter out dismissed warnings
     const activeWarnings = warnings.filter(warning => {
       const warningId = getWarningId(warning);
-      return !isWarningDismissed(warningId, warning.type);
+      return !isWarningDismissed(warningId);
     });
 
     if (activeWarnings.length === 0) {
@@ -229,7 +134,7 @@ async function displayWarningBanners(containerId = 'warning-banner-container') {
         dismissBtn.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
-          dismissWarning(warningId, warning.type);
+          dismissWarning(warningId);
         });
       }
     });
@@ -272,9 +177,7 @@ function collectActiveWarnings(data) {
       'Gale warning': 2,
       'Gale': 2,
       'Strong wind warning': 3,
-      'Strong wind': 3,
-      'Wind warning': 4,
-      'Wind': 4
+      'Strong wind': 3
     };
 
     const aSeverity = severityOrder[a.type] || 99;
@@ -295,30 +198,19 @@ function createWarningBanner(warning) {
   const severityClass = getWarningSeverityClass(warning.type);
   const icon = getWarningIcon(warning.type);
   const warningId = getWarningId(warning);
-  const duration = getDismissDuration(warning.type);
-
-  // Create dismiss button text based on duration
-  let dismissText = 'Dismiss for 8h';
-  if (duration === DISMISS_DURATIONS.storm) {
-    dismissText = 'Dismiss for 12h';
-  } else if (duration === DISMISS_DURATIONS.gale) {
-    dismissText = 'Dismiss for 12h';
-  } else if (duration === DISMISS_DURATIONS['strong wind']) {
-    dismissText = 'Dismiss for 6h';
-  }
 
   // Link to specific zone section on forecasts page
   const forecastLink = `/forecasts.html#${warning.zone_key}`;
 
   return `
-    <div class="warning-banner ${severityClass}" data-warning-id="${warningId}" role="alert" aria-live="assertive">
+    <div class="warning-banner ${severityClass}" data-warning-id="${warningId}">
       <div class="warning-banner-content">
         <span class="warning-icon" aria-hidden="true">${icon}</span>
         <div class="warning-text">
           <strong>${warning.type.toUpperCase()}</strong> in effect for ${warning.zone_name}
         </div>
         <a href="${forecastLink}" class="warning-details-link">View Forecast →</a>
-        <button class="warning-dismiss-btn" aria-label="${dismissText}" title="${dismissText}">×</button>
+        <button class="warning-dismiss-btn" aria-label="Dismiss warning" title="Dismiss for 24 hours">×</button>
       </div>
     </div>
   `;
@@ -334,9 +226,7 @@ function getWarningSeverityClass(type) {
 
   if (typeLower.includes('storm')) return 'warning-storm';
   if (typeLower.includes('gale')) return 'warning-gale';
-  if (typeLower.includes('strong wind') || typeLower.includes('wind')) {
-    return 'warning-strong-wind';
-  }
+  if (typeLower.includes('strong wind')) return 'warning-strong-wind';
 
   return 'warning-default';
 }
@@ -351,7 +241,7 @@ function getWarningIcon(type) {
 
   if (typeLower.includes('storm')) return '⚠️';
   if (typeLower.includes('gale')) return '💨';
-  if (typeLower.includes('strong wind') || typeLower.includes('wind')) return '🌬️';
+  if (typeLower.includes('strong wind')) return '🌬️';
 
   return '⚠️';
 }
