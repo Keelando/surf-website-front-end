@@ -18,18 +18,33 @@ async function loadBuoyData() {
   const container = document.getElementById("buoy-container");
   const timestamp = document.getElementById("timestamp");
 
-  // Order of display (match JSON buoy IDs)
-  const order = [
-    "4600146", // Halibut Bank
-    "4600304", // English Bay
-    "CRPILE",  // Crescent Pile (Boundary Bay)
-    "CRCHAN",  // Crescent Channel
-    "4600303", // Southern Georgia Strait
-    "4600131", // Sentry Shoal
-    "46087",   // Neah Bay
-    "46088",   // New Dungeness
-    // COLEB excluded - wind-only station, available in charts only
+  // Grouped by geographic region
+  const buoyGroups = [
+    {
+      region: "Strait of Georgia",
+      stations: [
+        "4600146", // Halibut Bank
+        "4600304", // English Bay
+        "4600303", // Southern Georgia Strait
+        "4600131", // Sentry Shoal
+      ]
+    },
+    {
+      region: "Boundary Bay",
+      stations: [
+        "CRPILE",  // Crescent Pile
+        "CRCHAN",  // Crescent Channel
+      ]
+    },
+    {
+      region: "Juan de Fuca Strait",
+      stations: [
+        "46087",   // Neah Bay
+        "46088",   // New Dungeness
+      ]
+    }
   ];
+  // COLEB excluded - wind-only station, available in charts only
 
   // Source links for each buoy
   const sourceLinks = {
@@ -77,23 +92,32 @@ async function loadBuoyData() {
       container.appendChild(updateHeader);
     }
 
-    order.forEach(id => {
-      const b = data[id];
-      if (!b) return;
+    // Render buoys grouped by region
+    buoyGroups.forEach(group => {
+      // Add region header
+      const regionHeader = document.createElement("div");
+      regionHeader.style.cssText = "margin: 2rem 0 1rem 0; padding: 0.5rem 1rem; background: linear-gradient(to right, #004b7c, #0077be); color: white; font-size: 1.2em; font-weight: bold; border-radius: 4px; text-align: left;";
+      regionHeader.textContent = group.region;
+      container.appendChild(regionHeader);
 
-      const card = document.createElement("div");
-      card.className = "buoy-card";
-      card.id = `buoy-${id}`; // Add ID for anchor linking from map
+      // Render stations in this region
+      group.stations.forEach(id => {
+        const b = data[id];
+        if (!b) return;
 
-      // Special styling for NOAA buoys
-      if (id === "46087" || id === "46088") {
-        card.style.borderLeft = "4px solid #003087";
-      }
+        const card = document.createElement("div");
+        card.className = "buoy-card";
+        card.id = `buoy-${id}`; // Add ID for anchor linking from map
 
-      // Special styling for Surrey FlowWorks stations
-      if (id === "CRPILE" || id === "CRCHAN" || id === "COLEB") {
-        card.style.borderLeft = "4px solid #006837";
-      }
+        // Special styling for NOAA buoys
+        if (id === "46087" || id === "46088") {
+          card.style.borderLeft = "4px solid #003087";
+        }
+
+        // Special styling for Surrey FlowWorks stations
+        if (id === "CRPILE" || id === "CRCHAN" || id === "COLEB") {
+          card.style.borderLeft = "4px solid #006837";
+        }
 
       // Format timestamp in Pacific Time (24-hour, no PT label)
       const updated = b.observation_time
@@ -297,10 +321,11 @@ if (id === "46087" || id === "46088") {
         `;
       }
 
-      cardContent += `</div>`;
-      card.innerHTML = cardContent;
-      container.appendChild(card);
-    });
+        cardContent += `</div>`;
+        card.innerHTML = cardContent;
+        container.appendChild(card);
+      }); // end stations forEach
+    }); // end buoyGroups forEach
 
     const now = new Date();
     timestamp.textContent = `Page refreshed at ${now.toLocaleString("en-US", {
