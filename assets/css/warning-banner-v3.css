@@ -174,11 +174,9 @@
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
-  /* Sticky positioning to keep warnings visible while scrolling */
+  /* Non-sticky - warnings appear at top but scroll away naturally */
   #warning-banner-container {
-    position: sticky;
-    top: 0;
-    z-index: 1000;
+    position: relative;
   }
 
   .warning-banner {
