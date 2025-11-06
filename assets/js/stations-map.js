@@ -139,7 +139,10 @@ function loadFallbackStations() {
     { id: "4600304", name: "English Bay", location: "Vancouver Harbor", lat: 49.291, lon: -123.181, source: "Environment Canada", data_types: ["wave_height", "wind_speed", "air_temp"] },
     { id: "4600131", name: "Sentry Shoal", location: "Northern Strait of Georgia", lat: 49.917, lon: -124.917, source: "Environment Canada", data_types: ["wave_height", "wind_speed", "air_temp"] },
     { id: "46087", name: "Neah Bay", location: "Cape Flattery, WA", lat: 48.495, lon: -124.728, source: "NOAA NDBC", data_types: ["wave_height", "wind_speed", "swell_height"] },
-    { id: "46088", name: "New Dungeness", location: "Hein Bank", lat: 48.333, lon: -123.167, source: "NOAA NDBC", data_types: ["wave_height", "wind_speed", "swell_height"] }
+    { id: "46088", name: "New Dungeness", location: "Hein Bank", lat: 48.333, lon: -123.167, source: "NOAA NDBC", data_types: ["wave_height", "wind_speed", "swell_height"] },
+    { id: "CRPILE", name: "Crescent Pile", location: "Crescent Beach, Surrey", lat: 49.0122, lon: -122.9411, source: "Surrey FlowWorks", data_types: ["wave_height", "wind_speed", "air_temp", "sea_temp"] },
+    { id: "CRCHAN", name: "Crescent Channel", location: "Boundary Bay Channel Marker", lat: 49.0536, lon: -122.8969, source: "Surrey FlowWorks", data_types: ["wave_height", "wind_speed", "air_temp"] },
+    { id: "COLEB", name: "Colebrook", location: "Colebrook Pump House", lat: 49.0858, lon: -122.845, source: "Surrey FlowWorks", data_types: ["wind_speed", "air_temp"] }
   ];
 
   const fallbackTides = [

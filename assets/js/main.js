@@ -22,10 +22,13 @@ async function loadBuoyData() {
   const order = [
     "4600146", // Halibut Bank
     "4600304", // English Bay
+    "CRPILE",  // Crescent Pile (Boundary Bay)
+    "CRCHAN",  // Crescent Channel
     "4600303", // Southern Georgia Strait
     "4600131", // Sentry Shoal
     "46087",   // Neah Bay
     "46088",   // New Dungeness
+    "COLEB",   // Colebrook (wind only)
   ];
 
   // Source links for each buoy
@@ -35,7 +38,10 @@ async function loadBuoyData() {
     "4600303": "https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46303",
     "4600131": "https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46131",
     "46087": "https://www.ndbc.noaa.gov/station_page.php?station=46087",
-    "46088": "https://www.ndbc.noaa.gov/station_page.php?station=46088"
+    "46088": "https://www.ndbc.noaa.gov/station_page.php?station=46088",
+    "CRPILE": "https://developers.flowworks.com/",
+    "CRCHAN": "https://developers.flowworks.com/",
+    "COLEB": "https://developers.flowworks.com/"
   };
 
   try {
@@ -78,10 +84,15 @@ async function loadBuoyData() {
       const card = document.createElement("div");
       card.className = "buoy-card";
       card.id = `buoy-${id}`; // Add ID for anchor linking from map
-      
+
       // Special styling for NOAA buoys
       if (id === "46087" || id === "46088") {
         card.style.borderLeft = "4px solid #003087";
+      }
+
+      // Special styling for Surrey FlowWorks stations
+      if (id === "CRPILE" || id === "CRCHAN" || id === "COLEB") {
+        card.style.borderLeft = "4px solid #006837";
       }
 
       // Format timestamp in Pacific Time (24-hour, no PT label)
