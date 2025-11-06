@@ -264,27 +264,46 @@ if (id === "46087" || id === "46088") {
 
         // Wind first
         cardContent += `<p class="buoy-metric"><b>💨 Wind:</b> ${windSpeed} kt G ${windGust} kt from ${b.wind_direction_cardinal ?? "—"} (${b.wind_direction ?? "—"}°) ${getDirectionalArrow(b.wind_direction, 'wind')}</p>`;
-        
-        // Wave data
+
+        // Surrey stations (CRPILE, CRCHAN) get special precision formatting
+        const isSurrey = (id === "CRPILE" || id === "CRCHAN");
+
+        // Wave height - 2 decimal places for Surrey, default for others
+        const waveHeight = b.wave_height_sig != null
+          ? (isSurrey ? b.wave_height_sig.toFixed(2) : b.wave_height_sig)
+          : "—";
+
+        // Wave period - 1 decimal place for Surrey
         let wavePeriod = "—";
         if (b.wave_period_avg != null) {
-          wavePeriod = b.wave_period_avg + " s";
+          const avgPeriod = isSurrey ? b.wave_period_avg.toFixed(1) : b.wave_period_avg;
+          wavePeriod = avgPeriod + " s";
           if (b.wave_period_peak != null) {
-            wavePeriod += ` (${b.wave_period_peak} s)`;
+            const peakPeriod = isSurrey ? b.wave_period_peak.toFixed(1) : b.wave_period_peak;
+            wavePeriod += ` (${peakPeriod} s)`;
           }
         } else if (b.wave_period_peak != null) {
-          wavePeriod = `(${b.wave_period_peak} s)`;
+          const peakPeriod = isSurrey ? b.wave_period_peak.toFixed(1) : b.wave_period_peak;
+          wavePeriod = `(${peakPeriod} s)`;
         }
 
         cardContent += `
-          <p class="buoy-metric" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #eee;"><b>🌊 Sig Wave Height:</b> ${b.wave_height_sig ?? "—"} m</p>
+          <p class="buoy-metric" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #eee;"><b>🌊 Sig Wave Height:</b> ${waveHeight} m</p>
           <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Wave Period:</b> ${wavePeriod}</p>
           <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Direction (Peak):</b> ${b.wave_direction_peak_cardinal ?? "—"} (${b.wave_direction_peak ?? "—"}°) ${getDirectionalArrow(b.wave_direction_peak, 'wave')}</p>
         `;
-        
+
+        // Temps - 1 decimal place for Surrey
+        const seaTemp = b.sea_temp != null
+          ? (isSurrey ? b.sea_temp.toFixed(1) : b.sea_temp)
+          : "—";
+        const airTemp = b.air_temp != null
+          ? (isSurrey ? b.air_temp.toFixed(1) : b.air_temp)
+          : "—";
+
         // Temps and pressure
         cardContent += `
-          <p class="buoy-metric" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #eee;"><b>🌡️ Sea Temperature:</b> ${b.sea_temp ?? "—"} °C | <b>Air:</b> ${b.air_temp ?? "—"} °C</p>
+          <p class="buoy-metric" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #eee;"><b>🌡️ Sea Temperature:</b> ${seaTemp} °C | <b>Air:</b> ${airTemp} °C</p>
           <p class="buoy-metric"><b>⏱️ Pressure:</b> ${b.pressure ?? "—"} hPa</p>
         `;
       }
