@@ -28,7 +28,7 @@ async function loadBuoyData() {
     "4600131", // Sentry Shoal
     "46087",   // Neah Bay
     "46088",   // New Dungeness
-    "COLEB",   // Colebrook (wind only)
+    // COLEB excluded - wind-only station, available in charts only
   ];
 
   // Source links for each buoy
