@@ -34,6 +34,38 @@ async function loadForecasts() {
 }
 
 /**
+ * Check if forecast data is stale
+ * @returns {Object} Staleness info {isStale, ageHours, message}
+ */
+function checkFreshness() {
+  if (!forecastData || !forecastData.generated_utc) {
+    return { isStale: true, ageHours: null, message: 'No timestamp available' };
+  }
+
+  const generatedDate = new Date(forecastData.generated_utc);
+  const now = new Date();
+  const ageMs = now - generatedDate;
+  const ageHours = ageMs / (1000 * 60 * 60);
+
+  // Marine forecasts updated 2-4x daily (05h, 11h, 18h UTC)
+  // Consider stale if > 12 hours old
+  const isStale = ageHours > 12;
+
+  let message = '';
+  if (ageHours > 24) {
+    message = `⚠️ Data is ${Math.floor(ageHours)} hours old - forecast may be outdated`;
+  } else if (ageHours > 12) {
+    message = `⚠️ Data is ${Math.floor(ageHours)} hours old - awaiting update`;
+  } else if (ageHours < 1) {
+    message = `✅ Fresh data (updated ${Math.floor(ageHours * 60)} minutes ago)`;
+  } else {
+    message = `✅ Recent data (updated ${Math.floor(ageHours)} hours ago)`;
+  }
+
+  return { isStale, ageHours, message };
+}
+
+/**
  * Display forecast data in the UI
  */
 function displayForecasts() {
@@ -45,6 +77,17 @@ function displayForecasts() {
   }
 
   let html = '';
+
+  // Check data freshness and add warning if stale
+  const freshness = checkFreshness();
+  if (freshness.isStale || freshness.ageHours < 1) {
+    const alertClass = freshness.isStale ? 'warning-card warning-gale' : 'no-warnings';
+    html += `
+      <div class="${alertClass}" style="margin-bottom: 1.5rem;">
+        <p style="margin: 0; font-weight: 500;">${freshness.message}</p>
+      </div>
+    `;
+  }
 
   // Display each zone
   const zones = [
@@ -76,9 +119,19 @@ function displayForecasts() {
 function renderZoneForecast(zoneKey, zoneData) {
   const zoneName = zoneData.zone_name || zoneKey.replace(/_/g, ' ');
 
+  // Get source link for this zone
+  const sourceLinks = {
+    'strait_georgia_north': 'https://weather.gc.ca/marine/forecast_e.html?mapID=03&siteID=14301',
+    'strait_georgia_south': 'https://weather.gc.ca/marine/forecast_e.html?mapID=03&siteID=14305'
+  };
+  const sourceLink = sourceLinks[zoneKey];
+
   let html = `
     <div class="forecast-zone" id="${zoneKey}">
-      <h2>${zoneName}</h2>
+      <h2>
+        ${zoneName}
+        ${sourceLink ? `<a href="${sourceLink}" target="_blank" rel="noopener" style="font-size: 0.75em; margin-left: 0.5rem; color: #4299e1; text-decoration: none;">📄 View Source</a>` : ''}
+      </h2>
   `;
 
   // Warnings section
