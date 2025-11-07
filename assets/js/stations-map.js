@@ -60,9 +60,22 @@ async function loadStationsAndMarkers() {
 
 // Add buoy marker to map
 function addBuoyMarker(buoy) {
+  // Determine marker icon and type label based on station type
+  let markerEmoji = '🌊'; // Default: wave buoy (includes pile-mounted wave stations)
+  let typeLabel = 'Wave Buoy';
+
+  if (buoy.type === 'pile_mounted_wave_station') {
+    // Keep wave icon since it measures waves
+    markerEmoji = '🌊';
+    typeLabel = 'Pile-Mounted Wave Station';
+  } else if (buoy.type === 'wind_monitoring_station') {
+    markerEmoji = '💨';
+    typeLabel = 'Wind Monitoring Station';
+  }
+
   const icon = L.divIcon({
-    className: 'station-marker buoy-marker',
-    html: `<div class="marker-icon">🌊</div>`,
+    className: `station-marker buoy-marker ${buoy.type || 'wave_buoy'}`,
+    html: `<div class="marker-icon">${markerEmoji}</div>`,
     iconSize: [30, 30],
     iconAnchor: [15, 15],
     popupAnchor: [0, -15]
@@ -76,7 +89,7 @@ function addBuoyMarker(buoy) {
       <p><strong>ID:</strong> ${buoy.id}</p>
       <p><strong>Location:</strong> ${buoy.location}</p>
       <p><strong>Source:</strong> ${buoy.source}</p>
-      <p><strong>Type:</strong> Wave Buoy</p>
+      <p><strong>Type:</strong> ${typeLabel}</p>
       <p><strong>Coordinates:</strong> ${buoy.lat.toFixed(3)}, ${buoy.lon.toFixed(3)}</p>
       <p><strong>Data Types:</strong></p>
       <ul class="data-types-list">
@@ -134,15 +147,15 @@ function addTideMarker(tide, stationKey) {
 function loadFallbackStations() {
   // Hardcoded fallback stations (will be replaced by fetch in production)
   const fallbackBuoys = [
-    { id: "4600146", name: "Halibut Bank", location: "Off Vancouver", lat: 49.337, lon: -123.731, source: "Environment Canada", data_types: ["wave_height", "wind_speed", "air_temp"] },
-    { id: "4600303", name: "Southern Georgia Strait", location: "Southern Strait", lat: 48.833, lon: -123.417, source: "Environment Canada", data_types: ["wave_height", "wind_speed", "air_temp"] },
-    { id: "4600304", name: "English Bay", location: "Vancouver Harbor", lat: 49.291, lon: -123.181, source: "Environment Canada", data_types: ["wave_height", "wind_speed", "air_temp"] },
-    { id: "4600131", name: "Sentry Shoal", location: "Northern Strait of Georgia", lat: 49.917, lon: -124.917, source: "Environment Canada", data_types: ["wave_height", "wind_speed", "air_temp"] },
-    { id: "46087", name: "Neah Bay", location: "Cape Flattery, WA", lat: 48.495, lon: -124.728, source: "NOAA NDBC", data_types: ["wave_height", "wind_speed", "swell_height"] },
-    { id: "46088", name: "New Dungeness", location: "Hein Bank", lat: 48.333, lon: -123.167, source: "NOAA NDBC", data_types: ["wave_height", "wind_speed", "swell_height"] },
-    { id: "CRPILE", name: "Crescent Pile", location: "Crescent Beach, Surrey", lat: 49.0122, lon: -122.9411, source: "Surrey FlowWorks", data_types: ["wave_height", "wind_speed", "air_temp", "sea_temp"] },
-    { id: "CRCHAN", name: "Crescent Channel", location: "Boundary Bay Channel Marker", lat: 49.0536, lon: -122.8969, source: "Surrey FlowWorks", data_types: ["wave_height", "wind_speed", "air_temp"] },
-    { id: "COLEB", name: "Colebrook", location: "Colebrook Pump House", lat: 49.0858, lon: -122.845, source: "Surrey FlowWorks", data_types: ["wind_speed", "air_temp"] }
+    { id: "4600146", name: "Halibut Bank", location: "Off Vancouver", lat: 49.337, lon: -123.731, source: "Environment Canada", type: "wave_buoy", data_types: ["wave_height", "wind_speed", "air_temp"] },
+    { id: "4600303", name: "Southern Georgia Strait", location: "Southern Strait", lat: 48.833, lon: -123.417, source: "Environment Canada", type: "wave_buoy", data_types: ["wave_height", "wind_speed", "air_temp"] },
+    { id: "4600304", name: "English Bay", location: "Vancouver Harbor", lat: 49.291, lon: -123.181, source: "Environment Canada", type: "wave_buoy", data_types: ["wave_height", "wind_speed", "air_temp"] },
+    { id: "4600131", name: "Sentry Shoal", location: "Northern Strait of Georgia", lat: 49.917, lon: -124.917, source: "Environment Canada", type: "wave_buoy", data_types: ["wave_height", "wind_speed", "air_temp"] },
+    { id: "46087", name: "Neah Bay", location: "Cape Flattery, WA", lat: 48.495, lon: -124.728, source: "NOAA NDBC", type: "wave_buoy", data_types: ["wave_height", "wind_speed", "swell_height"] },
+    { id: "46088", name: "New Dungeness", location: "Hein Bank", lat: 48.333, lon: -123.167, source: "NOAA NDBC", type: "wave_buoy", data_types: ["wave_height", "wind_speed", "swell_height"] },
+    { id: "CRPILE", name: "Crescent Beach Ocean", location: "Crescent Beach, Surrey", lat: 49.0122, lon: -122.9411, source: "Surrey FlowWorks", type: "pile_mounted_wave_station", data_types: ["wave_height", "wind_speed", "air_temp", "sea_temp"] },
+    { id: "CRCHAN", name: "Crescent Channel", location: "Boundary Bay Channel Marker", lat: 49.0536, lon: -122.8969, source: "Surrey FlowWorks", type: "pile_mounted_wave_station", data_types: ["wave_height", "wind_speed", "air_temp"] },
+    { id: "COLEB", name: "Colebrook", location: "Colebrook Pump House", lat: 49.0858, lon: -122.845, source: "Surrey FlowWorks", type: "wind_monitoring_station", data_types: ["wind_speed", "air_temp"] }
   ];
 
   const fallbackTides = [

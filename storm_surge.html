@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Storm Surge Forecasts | Salish Sea Wave Conditions</title>
+
+  <meta name="description" content="10-day storm surge forecasts and hindcast analysis for the Salish Sea region from Environment Canada GDSPS model." />
+  <meta name="keywords" content="storm surge, water level forecast, GDSPS, Salish Sea, tide forecast, Environment Canada, coastal flooding" />
+  <meta name="author" content="Salish Sea Wave Conditions Project" />
+  <meta name="robots" content="index, follow" />
+
+  <link rel="canonical" href="https://halibutbank.ca/storm_surge.html" />
+  <link rel="stylesheet" href="/assets/css/style-v3.css" />
+  <link rel="stylesheet" href="/assets/css/nav-tide-styles-v3.css" />
+  <link rel="stylesheet" href="/assets/css/warning-banner-v3.css" />
+
+  <style>
+    .storm-surge-content {
+      max-width: 1400px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    .section-container {
+      background: #fff;
+      border: 1px solid #e0e7ee;
+      border-radius: 8px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .section-container h2 {
+      margin-top: 0;
+      color: #2c5282;
+      border-bottom: 3px solid #4299e1;
+      padding-bottom: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .station-selector {
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    .station-selector label {
+      font-weight: 600;
+      margin-right: 0.5rem;
+      color: #2d3748;
+    }
+
+    .station-selector select {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      border: 1px solid #cbd5e0;
+      border-radius: 4px;
+      background: white;
+      cursor: pointer;
+    }
+
+    .station-indicator {
+      margin-left: 1rem;
+      color: #0077be;
+      font-weight: 500;
+    }
+
+    .chart-container {
+      width: 100%;
+      height: 500px;
+      margin-bottom: 1rem;
+    }
+
+    .metadata-display {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: #f7fafc;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      color: #4a5568;
+      line-height: 1.8;
+    }
+
+    .info-box {
+      background: #ebf8ff;
+      border-left: 4px solid #4299e1;
+      padding: 1rem 1.5rem;
+      margin: 1.5rem 0;
+      border-radius: 4px;
+    }
+
+    .info-box h3 {
+      margin: 0 0 0.5rem 0;
+      color: #2c5282;
+      font-size: 1rem;
+    }
+
+    .info-box p {
+      margin: 0;
+      color: #2d3748;
+      line-height: 1.6;
+    }
+
+    .loading-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #718096;
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+      .section-container {
+        padding: 1.5rem 1rem;
+      }
+
+      .chart-container {
+        height: 400px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Warning Banner Container -->
+  <div id="warning-banner-container"></div>
+
+  <!-- Navigation -->
+  <nav class="main-nav">
+    <a href="/" class="nav-link">Buoys</a>
+    <a href="/tides.html" class="nav-link">Tides</a>
+    <a href="/forecasts.html" class="nav-link">Forecasts</a>
+    <a href="/storm_surge.html" class="nav-link active">Storm Surge</a>
+  </nav>
+
+  <header>
+    <h1>Storm Surge Forecasts</h1>
+    <p style="margin-top: 0.5rem; color: #4a5568; font-size: 1rem;">GDSPS 10-Day Forecasts & Historical Analysis</p>
+  </header>
+
+  <main class="storm-surge-content">
+    <!-- Current Forecast Section -->
+    <section class="section-container">
+      <h2>10-Day Storm Surge Forecast</h2>
+
+      <div class="info-box">
+        <h3>What is Storm Surge?</h3>
+        <p>
+          Storm surge is the abnormal rise or fall in water level caused by weather patterns (wind, atmospheric pressure).
+          Values shown are <strong>relative to predicted astronomical tide</strong>. Positive values indicate higher water than predicted,
+          negative values indicate lower water than predicted. Total water level = Predicted tide + Storm surge.
+        </p>
+      </div>
+
+      <div class="station-selector">
+        <label for="forecast-station-select">Select Station:</label>
+        <select id="forecast-station-select">
+          <!-- Options populated by JavaScript -->
+        </select>
+        <span id="forecast-station-indicator" class="station-indicator"></span>
+      </div>
+
+      <div id="forecast-chart" class="chart-container"></div>
+      <div id="forecast-metadata" class="metadata-display"></div>
+    </section>
+
+    <!-- Hindcast Section -->
+    <section class="section-container">
+      <h2>Forecast Accuracy Analysis (Hindcast)</h2>
+
+      <div class="info-box">
+        <h3>About Hindcast Data</h3>
+        <p>
+          This chart shows storm surge predictions made <strong>48 hours in advance</strong> and compares them to more recent forecasts
+          or actual conditions. This helps evaluate forecast accuracy and identify patterns in model performance.
+          Data is collected daily from the 18Z model run (closest to noon Pacific time).
+        </p>
+      </div>
+
+      <div class="station-selector">
+        <label for="hindcast-station-select">Select Station:</label>
+        <select id="hindcast-station-select">
+          <!-- Options populated by JavaScript -->
+        </select>
+        <span id="hindcast-station-indicator" class="station-indicator"></span>
+      </div>
+
+      <div id="hindcast-chart" class="chart-container"></div>
+      <div id="hindcast-metadata" class="metadata-display"></div>
+    </section>
+
+    <!-- Model Information -->
+    <section class="section-container">
+      <h2>Model Information</h2>
+      <p><strong>Model:</strong> GDSPS (Global Deterministic Storm Surge Prediction System)</p>
+      <p><strong>Provider:</strong> Environment and Climate Change Canada</p>
+      <p><strong>Resolution:</strong> 15 km horizontal resolution</p>
+      <p><strong>Update Frequency:</strong> 4 times daily (00Z, 06Z, 12Z, 18Z)</p>
+      <p><strong>Forecast Horizon:</strong> 10 days (240 hours)</p>
+      <p style="margin-top: 1rem; font-size: 0.9rem; color: #718096;">
+        More information: <a href="https://eccc-msc.github.io/open-data/msc-data/nwp_gdsps/readme_gdsps_en/" target="_blank" style="color: #4299e1;">GDSPS Documentation</a>
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <p>Storm surge forecasts provided by Environment Canada GDSPS model. Please independently verify this data and do not base activities solely on this information.</p>
+    <p><small>Auto-updated from Environment Canada GeoMet | <span id="timestamp">Loading...</span></small></p>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+  <script src="/assets/js/warning-banner.js"></script>
+  <script src="/assets/js/storm_surge_page.js"></script>
+</body>
+</html>

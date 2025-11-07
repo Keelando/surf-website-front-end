@@ -64,6 +64,7 @@
     <a href="/" class="nav-link active">Buoys</a>
     <a href="/tides.html" class="nav-link">Tides</a>
     <a href="/forecasts.html" class="nav-link">Forecasts</a>
+    <a href="/storm_surge.html" class="nav-link">Storm Surge</a>
   </nav>
 
   <header>
@@ -83,7 +84,8 @@
     <h2>Monitoring Stations</h2>
     <div id="stations-map"></div>
     <div class="map-legend">
-      <span class="legend-item"><span class="legend-icon">🌊</span> Wave Buoy</span>
+      <span class="legend-item"><span class="legend-icon">🌊</span> Wave Station</span>
+      <span class="legend-item"><span class="legend-icon">💨</span> Wind Station</span>
       <span class="legend-item"><span class="legend-icon">📍</span> Tide Station</span>
     </div>
   </section>
@@ -101,13 +103,12 @@
       <select id="chart-buoy-select">
         <option value="4600146">Halibut Bank</option>
         <option value="4600304">English Bay</option>
-        <option value="CRPILE">Crescent Pile (Boundary Bay)</option>
+        <option value="CRPILE">Crescent Beach Ocean (Boundary Bay)</option>
         <option value="CRCHAN">Crescent Channel</option>
         <option value="4600303">Southern Georgia Strait</option>
         <option value="4600131">Sentry Shoal</option>
         <option value="46087">Neah Bay</option>
         <option value="46088">New Dungeness (Hein Bank)</option>
-        <option value="COLEB">Colebrook (wind only)</option>
       </select>
     </div>
 
@@ -149,22 +150,45 @@
     <h3>About</h3>
     <p>
       <strong>Salish Sea Wave Conditions</strong> provides real-time marine data for
-      <strong>Halibut Bank</strong>, <strong>English Bay</strong>, and the
-      <strong>Strait of Georgia</strong>. Data is automatically collected from
-      Environment Canada and NOAA buoys, processed locally, and displayed here for
-      research and recreational awareness.
+      <strong>Halibut Bank</strong>, <strong>English Bay</strong>, <strong>Boundary Bay</strong>,
+      and the <strong>Strait of Georgia</strong>. Data is automatically collected from
+      Environment Canada, NOAA, DFO, and City of Surrey monitoring stations, processed locally,
+      and displayed here for research and recreational awareness.
     </p>
 
     <p>
-      Features include hourly <em>wave height</em>, <em>wind speed</em>,
+      Features include <em>wave height</em>, <em>wind speed</em>, <em>tide predictions</em>,
       <em>storm surge forecasts</em>, and <em>temperature trends</em> across the
       BC coast and Salish Sea region.
     </p>
+
+    <p style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #ddd;">
+      This site is <strong>actively developed</strong> and open source.
+      For feature requests or feedback, email <a href="mailto:keelan_w@hotmail.com" style="color: #0077be;">windwaves604@outlook.com</a>
+      or visit the <a href="https://github.com/Keelando/surf-website" target="_blank" rel="noopener" style="color: #0077be;">GitHub repository</a>.
+    </p>
+
+    <div style="margin-top: 1.5rem; padding: 1.25rem; background: #f5f9fc; border-radius: 8px; text-align: center; border: 1px solid #e0e7ee;">
+      <p style="margin: 0 0 0.75rem 0; color: #2c5282; font-weight: 600;">Support This Project</p>
+      <p style="margin: 0 0 1rem 0; font-size: 0.95rem; color: #555;">
+        Help keep the server running and data flowing. All donations go toward hosting costs and infrastructure.
+      </p>
+      <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+        <a href="https://paypal.me/yourusername" target="_blank" rel="noopener"
+           style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1.25rem; background: #0070ba; color: white; text-decoration: none; border-radius: 6px; font-weight: 500; transition: background 0.2s;">
+          <span>☕</span> PayPal
+        </a>
+        <a href="https://ko-fi.com/yourusername" target="_blank" rel="noopener"
+           style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1.25rem; background: #ff5e5b; color: white; text-decoration: none; border-radius: 6px; font-weight: 500; transition: background 0.2s;">
+          <span>☕</span> Ko-fi
+        </a>
+      </div>
+    </div>
   </section>
 
   <footer>
-    <p>Please independently verify this data and do not base recreational activities around this information. This website is in no way affiliated with either environment Canada or NOAA. </p>
-    <p><small>Auto-updated using Environment Canada and NOAA's weather data APIs | <span id="timestamp">Loading...</span></small></p>
+    <p>Please independently verify this data and do not base recreational activities around this information. This website is in no way affiliated with Environment Canada, NOAA, DFO, or City of Surrey.</p>
+    <p><small>Data sources: Environment Canada, NOAA NDBC, DFO IWLS, City of Surrey FlowWorks | <span id="timestamp">Loading...</span></small></p>
   </footer>
 
   <!-- Leaflet JS -->

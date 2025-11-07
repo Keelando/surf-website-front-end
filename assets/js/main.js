@@ -32,7 +32,7 @@ async function loadBuoyData() {
     {
       region: "Boundary Bay",
       stations: [
-        "CRPILE",  // Crescent Pile
+        "CRPILE",  // Crescent Beach Ocean
         "CRCHAN",  // Crescent Channel
       ]
     },
@@ -80,7 +80,7 @@ async function loadBuoyData() {
     // Add "Last Updated" header (24-hour, no PT label)
     if (mostRecentTime) {
       const updateHeader = document.createElement("div");
-      updateHeader.style.cssText = "text-align: center; font-size: 1.1em; margin-bottom: 1.5rem; color: #004b7c; font-weight: bold;";
+      updateHeader.className = "last-updated-header";
       updateHeader.textContent = `Last Updated: ${mostRecentTime.toLocaleString("en-US", {
         month: "short",
         day: "numeric",
@@ -94,11 +94,19 @@ async function loadBuoyData() {
 
     // Render buoys grouped by region
     buoyGroups.forEach(group => {
+      // Create region group container
+      const regionGroup = document.createElement("div");
+      regionGroup.className = "region-group";
+
       // Add region header
       const regionHeader = document.createElement("div");
-      regionHeader.style.cssText = "margin: 2rem 0 1rem 0; padding: 0.5rem 1rem; background: linear-gradient(to right, #004b7c, #0077be); color: white; font-size: 1.2em; font-weight: bold; border-radius: 4px; text-align: left;";
+      regionHeader.className = "region-header";
       regionHeader.textContent = group.region;
-      container.appendChild(regionHeader);
+      regionGroup.appendChild(regionHeader);
+
+      // Create grid container for this region's cards
+      const cardsGrid = document.createElement("div");
+      cardsGrid.className = "buoy-cards-grid";
 
       // Render stations in this region
       group.stations.forEach(id => {
@@ -342,8 +350,12 @@ if (id === "46087" || id === "46088") {
 
         cardContent += `</div>`;
         card.innerHTML = cardContent;
-        container.appendChild(card);
+        cardsGrid.appendChild(card);
       }); // end stations forEach
+
+      // Add grid to region group, then add region group to container
+      regionGroup.appendChild(cardsGrid);
+      container.appendChild(regionGroup);
     }); // end buoyGroups forEach
 
     const now = new Date();

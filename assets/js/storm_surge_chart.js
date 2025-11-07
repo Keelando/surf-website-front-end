@@ -8,7 +8,11 @@ let surgeData = null;
 // Station display order
 const STATION_ORDER = [
   "Point_Atkinson",
-  "Crescent_Beach_Channel"
+  "Crescent_Beach_Channel",
+  "Campbell_River",
+  "Neah_Bay",
+  "New_Dungeness",
+  "Tofino"
 ];
 
 async function loadStormSurgeData() {

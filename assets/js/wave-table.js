@@ -13,7 +13,7 @@ function generateWaveHeightTable(chartData) {
   const table = document.getElementById("wave-height-table");
   if (!table) return;
 
-  const buoyOrder = ["4600146", "4600304", "4600303", "4600131", "46087", "46088"];
+  const buoyOrder = ["4600146", "4600304", "CRPILE", "4600303", "4600131", "46087", "46088"];
   const hourMap = new Map();
 
   buoyOrder.forEach((buoyId) => {
@@ -48,6 +48,7 @@ function generateWaveHeightTable(chartData) {
         <th>Time</th>
         <th>Halibut Bank</th>
         <th>English Bay</th>
+        <th>Crescent Beach Ocean</th>
         <th>Southern Georgia Strait</th>
         <th>Sentry Shoal</th>
         <th>Neah Bay<br><span style="font-size: 0.8em; font-weight: normal; color: #666;">(Swell)</span></th>
@@ -80,6 +81,7 @@ function generateWaveHeightTable(chartData) {
         <td><strong>${timeLabel}</strong></td>
         <td>${values["4600146"] != null ? values["4600146"] + " m" : "—"}</td>
         <td>${values["4600304"] != null ? values["4600304"] + " m" : "—"}</td>
+        <td>${values["CRPILE"] != null ? values["CRPILE"].toFixed(2) + " m" : "—"}</td>
         <td>${values["4600303"] != null ? values["4600303"] + " m" : "—"}</td>
         <td>${values["4600131"] != null ? values["4600131"] + " m" : "—"}</td>
         <td>${values["46087"] != null ? values["46087"] + " m" : "—"}</td>

@@ -27,25 +27,132 @@ footer {
 ----------------------------- */
 
 #buoy-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  max-width: 1400px;
+  margin: 0 auto;
   padding: 1rem;
-  gap: 1rem;
+}
+
+/* Last Updated header styling */
+.last-updated-header {
+  max-width: 600px;
+  margin: 0 auto 2rem auto;
+  padding: 0.75rem 1.5rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+  text-align: center;
+  font-size: 1.1em;
+  color: #004b7c;
+  font-weight: 600;
+}
+
+/* Region groups */
+.region-group {
+  margin-bottom: 3rem;
+}
+
+/* Region headers - styled as section dividers */
+.region-header {
+  margin: 0 0 1.5rem 0;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(to right, #004b7c, #0077be);
+  color: white;
+  font-size: 1.3em;
+  font-weight: bold;
+  border-radius: 8px;
+  text-align: left;
+  box-shadow: 0 2px 6px rgba(0,75,124,0.2);
+}
+
+/* Cards grid layout */
+.buoy-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
 }
 
 .buoy-card {
   background: white;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  padding: 1rem;
-  width: 280px;
-  transition: transform 0.2s;
+  padding: 1.25rem;
+  transition: transform 0.2s, box-shadow 0.2s;
   animation: fadeIn 0.4s ease-in;
+  display: flex;
+  flex-direction: column;
 }
 
 .buoy-card:hover {
   transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Responsive grid adjustments */
+@media (min-width: 768px) and (max-width: 1200px) {
+  /* Tablets: 2 columns */
+  .buoy-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1201px) {
+  /* Desktop: 3 columns */
+  .buoy-cards-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  /* Mobile: 1 column */
+  .buoy-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .region-header {
+    font-size: 1.15em;
+    padding: 0.6rem 1rem;
+    margin-bottom: 1rem;
+  }
+
+  #buoy-container {
+    padding: 0.75rem;
+  }
+
+  .last-updated-header {
+    font-size: 1em;
+    padding: 0.6rem 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .region-group {
+    margin-bottom: 2rem;
+  }
+
+  .buoy-card {
+    padding: 1rem;
+  }
+
+  /* Fix buoy selector overflow on mobile (Firefox) */
+  #buoy-selector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  #buoy-selector label {
+    display: block;
+    margin: 0;
+  }
+
+  #chart-buoy-select {
+    max-width: 100%;
+    width: 100%;
+    margin-left: 0;
+    font-size: 0.9rem;
+  }
 }
 
 .buoy-card h2 {
