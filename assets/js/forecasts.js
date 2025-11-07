@@ -47,14 +47,14 @@ function checkFreshness() {
   const ageMs = now - generatedDate;
   const ageHours = ageMs / (1000 * 60 * 60);
 
-  // Marine forecasts updated 2-4x daily (05h, 11h, 18h UTC)
-  // Consider stale if > 12 hours old
-  const isStale = ageHours > 12;
+  // Marine forecasts updated every ~6 hours (05h, 11h, 18h UTC)
+  // Consider stale if > 8 hours old (missed update + grace period)
+  const isStale = ageHours > 8;
 
   let message = '';
-  if (ageHours > 24) {
+  if (ageHours > 12) {
     message = `⚠️ Data is ${Math.floor(ageHours)} hours old - forecast may be outdated`;
-  } else if (ageHours > 12) {
+  } else if (ageHours > 8) {
     message = `⚠️ Data is ${Math.floor(ageHours)} hours old - awaiting update`;
   } else if (ageHours < 1) {
     message = `✅ Fresh data (updated ${Math.floor(ageHours * 60)} minutes ago)`;
@@ -78,12 +78,11 @@ function displayForecasts() {
 
   let html = '';
 
-  // Check data freshness and add warning if stale
+  // Check data freshness and show warning only if stale
   const freshness = checkFreshness();
-  if (freshness.isStale || freshness.ageHours < 1) {
-    const alertClass = freshness.isStale ? 'warning-card warning-gale' : 'no-warnings';
+  if (freshness.isStale) {
     html += `
-      <div class="${alertClass}" style="margin-bottom: 1.5rem;">
+      <div class="warning-card warning-gale" style="margin-bottom: 1.5rem;">
         <p style="margin: 0; font-weight: 500;">${freshness.message}</p>
       </div>
     `;
