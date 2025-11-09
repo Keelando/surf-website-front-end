@@ -5,8 +5,11 @@
 let tideCurrentData = null;
 let tideTimeseriesData = null;
 let tideHighLowData = null;
+let combinedWaterLevelData = null;
 let stationsMetadata = null;
 let tideChart = null;
+let currentDayOffset = 0; // 0 = today, 1 = tomorrow, 2 = day after
+let currentStationKey = null;
 
 // Station name formatting
 const STATION_DISPLAY_NAMES = {
@@ -28,11 +31,12 @@ const STATION_DISPLAY_NAMES = {
 
 async function loadTideData() {
   try {
-    // Load all three tide JSON files plus stations metadata
-    const [currentRes, timeseriesRes, highlowRes, stationsRes] = await Promise.all([
+    // Load all tide JSON files plus stations metadata and combined water level
+    const [currentRes, timeseriesRes, highlowRes, combinedRes, stationsRes] = await Promise.all([
       fetch(`/data/tide-latest.json?t=${Date.now()}`),
       fetch(`/data/tide-timeseries.json?t=${Date.now()}`),
       fetch(`/data/tide-hi-low.json?t=${Date.now()}`),
+      fetch(`/data/combined-water-level.json?t=${Date.now()}`),
       fetch(`/data/stations.json?t=${Date.now()}`)
     ]);
 
@@ -43,6 +47,13 @@ async function loadTideData() {
     tideCurrentData = await currentRes.json();
     tideTimeseriesData = await timeseriesRes.json();
     tideHighLowData = await highlowRes.json();
+
+    if (combinedRes.ok) {
+      combinedWaterLevelData = await combinedRes.json();
+      console.log('✅ Loaded combined water level data');
+    } else {
+      console.warn('Combined water level data not available');
+    }
 
     if (stationsRes.ok) {
       const allStations = await stationsRes.json();
@@ -125,6 +136,10 @@ function displayStation(stationKey) {
   loading.style.display = 'none';
   error.style.display = 'none';
 
+  // Save current station and reset day offset
+  currentStationKey = stationKey;
+  currentDayOffset = 0;
+
   // Get station data
   const currentStation = tideCurrentData.stations[stationKey];
   const highlowStation = tideHighLowData.stations[stationKey];
@@ -148,8 +163,11 @@ function displayStation(stationKey) {
   // Show the section first (so chart can measure properly)
   section.style.display = 'block';
 
+  // Setup day navigation buttons
+  setupDayNavigation();
+
   // Display tide chart after section is visible
-  displayTideChart(stationKey);
+  displayTideChart(stationKey, currentDayOffset);
 }
 
 function hideStation() {
@@ -298,36 +316,189 @@ function displayHighLowTable(station) {
 }
 
 /* =====================================================
+   Day Navigation
+   ===================================================== */
+
+function setupDayNavigation() {
+  const prevBtn = document.getElementById('prev-day-btn');
+  const nextBtn = document.getElementById('next-day-btn');
+
+  // Remove existing listeners by cloning
+  const newPrevBtn = prevBtn.cloneNode(true);
+  const newNextBtn = nextBtn.cloneNode(true);
+  prevBtn.replaceWith(newPrevBtn);
+  nextBtn.replaceWith(newNextBtn);
+
+  // Add new listeners
+  newPrevBtn.addEventListener('click', () => {
+    if (currentDayOffset > 0) {
+      currentDayOffset--;
+      updateChartForDay();
+    }
+  });
+
+  newNextBtn.addEventListener('click', () => {
+    if (currentDayOffset < 2) {
+      currentDayOffset++;
+      updateChartForDay();
+    }
+  });
+
+  updateDayLabel();
+  updateNavigationButtons();
+}
+
+function updateChartForDay() {
+  if (currentStationKey) {
+    displayTideChart(currentStationKey, currentDayOffset);
+    updateDayLabel();
+    updateNavigationButtons();
+  }
+}
+
+function updateDayLabel() {
+  const label = document.getElementById('chart-date-label');
+  const pacific = 'America/Vancouver';
+  const today = new Date();
+  const targetDate = new Date(today);
+  targetDate.setDate(today.getDate() + currentDayOffset);
+
+  const dateStr = targetDate.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    timeZone: pacific
+  });
+
+  if (currentDayOffset === 0) {
+    label.textContent = `Today (${dateStr})`;
+  } else if (currentDayOffset === 1) {
+    label.textContent = `Tomorrow (${dateStr})`;
+  } else {
+    label.textContent = dateStr;
+  }
+}
+
+function updateNavigationButtons() {
+  const prevBtn = document.getElementById('prev-day-btn');
+  const nextBtn = document.getElementById('next-day-btn');
+
+  prevBtn.disabled = currentDayOffset === 0;
+  nextBtn.disabled = currentDayOffset === 2;
+
+  prevBtn.style.opacity = currentDayOffset === 0 ? '0.3' : '1';
+  nextBtn.style.opacity = currentDayOffset === 2 ? '0.3' : '1';
+  prevBtn.style.cursor = currentDayOffset === 0 ? 'not-allowed' : 'pointer';
+  nextBtn.style.cursor = currentDayOffset === 2 ? 'not-allowed' : 'pointer';
+}
+
+/* =====================================================
    Tide Chart Display
    ===================================================== */
 
-function displayTideChart(stationKey) {
+function displayTideChart(stationKey, dayOffset = 0) {
   const chartContainer = document.getElementById('tide-chart');
 
   if (!chartContainer) return;
-
-  // Get timeseries data for this station
-  const stationData = tideTimeseriesData?.stations?.[stationKey];
-
-  if (!stationData || !stationData.predictions || stationData.predictions.length === 0) {
-    chartContainer.innerHTML = '<p style="text-align: center; color: #999; padding: 2rem;">No prediction data available</p>';
-    return;
-  }
 
   // Initialize chart if needed
   if (!tideChart) {
     tideChart = echarts.init(chartContainer);
   }
 
-  // Extract predictions data
-  const predictions = stationData.predictions;
+  // Calculate target day range (Pacific timezone)
+  const pacific = 'America/Vancouver';
+  const now = new Date();
+  const targetDay = new Date(now);
+  targetDay.setDate(now.getDate() + dayOffset);
+
+  // Get start and end of target day in Pacific timezone
+  const dayStart = new Date(targetDay.toLocaleString('en-US', { timeZone: pacific }));
+  dayStart.setHours(0, 0, 0, 0);
+
+  const dayEnd = new Date(dayStart);
+  dayEnd.setDate(dayStart.getDate() + 1);
+  dayEnd.setMilliseconds(-1);
+
+  // Helper function to filter data by day
+  function filterByDay(dataArray, timeKey) {
+    return dataArray.filter(item => {
+      const itemDate = new Date(item[timeKey]);
+      return itemDate >= dayStart && itemDate <= dayEnd;
+    });
+  }
+
+  // Get astronomical tide predictions and observations
+  let predictions = [];
+  let observations = [];
+
+  if (dayOffset === 0) {
+    // Today: Use tide-timeseries.json for predictions and observations
+    const stationData = tideTimeseriesData?.stations?.[stationKey];
+
+    if (!stationData) {
+      chartContainer.innerHTML = '<p style="text-align: center; color: #999; padding: 2rem;">No tide data available for this station</p>';
+      return;
+    }
+
+    predictions = filterByDay(stationData.predictions || [], 'time');
+    observations = filterByDay(stationData.observations || [], 'time');
+  } else {
+    // Future days: Extract predictions from combined water level data
+    if (combinedWaterLevelData && combinedWaterLevelData.stations && combinedWaterLevelData.stations[stationKey]) {
+      const combinedStation = combinedWaterLevelData.stations[stationKey];
+      const forecast = combinedStation.forecast || [];
+
+      // Extract astronomical tide from combined forecast
+      const filtered = forecast.filter(item => {
+        const itemDate = new Date(item.time);
+        return itemDate >= dayStart && itemDate <= dayEnd;
+      });
+
+      predictions = filtered.map(item => ({
+        time: item.time,
+        value: item.astronomical_tide_m
+      }));
+    }
+  }
+
+  if (predictions.length === 0) {
+    chartContainer.innerHTML = '<p style="text-align: center; color: #999; padding: 2rem;">No prediction data available for this day</p>';
+    return;
+  }
+
   const times = predictions.map(p => new Date(p.time));
   const values = predictions.map(p => p.value);
-
-  // Get observations if available
-  const observations = stationData.observations || [];
   const obsTimes = observations.map(o => new Date(o.time));
   const obsValues = observations.map(o => o.value);
+
+  // Get combined water level data if available (for all days including today)
+  let combinedData = [];
+  let surgeData = [];
+  let hasCombinedData = false;
+
+  if (combinedWaterLevelData && combinedWaterLevelData.stations && combinedWaterLevelData.stations[stationKey]) {
+    const stationCombined = combinedWaterLevelData.stations[stationKey];
+    const forecast = stationCombined.forecast || [];
+
+    // Filter by day
+    const filteredCombined = forecast.filter(item => {
+      const itemDate = new Date(item.time);
+      return itemDate >= dayStart && itemDate <= dayEnd;
+    });
+
+    // Extract combined water level (tide + surge) and storm surge
+    combinedData = filteredCombined.map(item => [
+      new Date(item.time),
+      item.total_water_level_m
+    ]);
+
+    surgeData = filteredCombined.map(item => [
+      new Date(item.time),
+      item.storm_surge_m
+    ]);
+
+    hasCombinedData = combinedData.length > 0;
+  }
 
   // Chart options
   const option = {
@@ -345,15 +516,25 @@ function displayTideChart(stationKey) {
         });
         let result = `${timeStr}<br/>`;
         params.forEach(param => {
-          result += `${param.marker} ${param.seriesName}: ${param.value[1].toFixed(2)} m<br/>`;
+          const value = param.value[1];
+          if (value !== null && value !== undefined) {
+            result += `${param.marker} ${param.seriesName}: ${value.toFixed(3)} m<br/>`;
+          }
         });
         return result;
       }
     },
+    legend: {
+      data: hasCombinedData
+        ? ['Astronomical Tide', 'Observation', 'Storm Surge', 'Total Water Level']
+        : ['Astronomical Tide', 'Observation'],
+      top: 10,
+      textStyle: { fontSize: 12 }
+    },
     grid: {
       left: window.innerWidth < 600 ? '12%' : '10%',
       right: window.innerWidth < 600 ? '12%' : '10%',
-      top: '10%',
+      top: hasCombinedData ? '15%' : '10%',
       bottom: '20%',
       containLabel: true
     },
@@ -383,7 +564,7 @@ function displayTideChart(stationKey) {
     },
     series: [
       {
-        name: 'Prediction',
+        name: 'Astronomical Tide',
         type: 'line',
         data: times.map((t, i) => [t, values[i]]),
         smooth: true,
@@ -399,8 +580,8 @@ function displayTideChart(stationKey) {
     ]
   };
 
-  // Add observations if available
-  if (observations.length > 0) {
+  // Add observations if available (only show for today)
+  if (observations.length > 0 && dayOffset === 0) {
     option.series.push({
       name: 'Observation',
       type: 'scatter',
@@ -408,7 +589,45 @@ function displayTideChart(stationKey) {
       itemStyle: {
         color: '#43a047'
       },
-      symbolSize: 6
+      symbolSize: 6,
+      z: 10
+    });
+  }
+
+  // Add storm surge and combined water level series
+  if (hasCombinedData) {
+    // Storm surge series (small but useful to see the component)
+    option.series.push({
+      name: 'Storm Surge',
+      type: 'line',
+      data: surgeData,
+      smooth: true,
+      lineStyle: {
+        color: '#ff9800',
+        width: 2,
+        type: 'dashed'
+      },
+      itemStyle: {
+        color: '#ff9800'
+      },
+      showSymbol: false
+    });
+
+    // Total water level series (tide + surge)
+    option.series.push({
+      name: 'Total Water Level',
+      type: 'line',
+      data: combinedData,
+      smooth: true,
+      lineStyle: {
+        color: '#9c27b0',
+        width: 3
+      },
+      itemStyle: {
+        color: '#9c27b0'
+      },
+      showSymbol: false,
+      z: 5
     });
   }
 

@@ -94,7 +94,14 @@
 
       <!-- Tide Prediction Chart -->
       <div class="tide-data-group">
-        <h3>Tide Prediction (28 hours)</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h3 style="margin: 0;">Tide & Water Level Forecast</h3>
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <button id="prev-day-btn" style="padding: 0.5rem 1rem; font-size: 1.2rem; cursor: pointer; border: 1px solid #ccc; background: white; border-radius: 4px;" title="Previous day">◀</button>
+            <span id="chart-date-label" style="font-weight: bold; min-width: 150px; text-align: center;">Today</span>
+            <button id="next-day-btn" style="padding: 0.5rem 1rem; font-size: 1.2rem; cursor: pointer; border: 1px solid #ccc; background: white; border-radius: 4px;" title="Next day">▶</button>
+          </div>
+        </div>
         <div id="tide-chart" style="width: 100%; height: 500px;"></div>
       </div>
     </section>
@@ -114,13 +121,25 @@
   <section class="about-section">
     <h3>About Tide Data</h3>
     <p>
-      Tide observations are updated every 30 minutes from DFO (Fisheries and Oceans Canada) 
-      water level stations. Predictions are astronomical tide forecasts based on harmonic 
+      <strong>Tide observations</strong> are updated every 30 minutes from DFO (Fisheries and Oceans Canada)
+      water level stations. <strong>Astronomical tide predictions</strong> are based on harmonic
       constituents and are updated daily.
     </p>
     <p>
-      High and low tide times represent the predicted maximum and minimum water levels for 
-      the current day in Pacific Time.
+      <strong>Total Water Level</strong> combines astronomical tides with storm surge forecasts from
+      Environment Canada's GDSPS model. Storm surge is the elevation of water caused by wind stress
+      and atmospheric pressure changes during weather systems.
+    </p>
+    <p>
+      <strong>Chart Legend:</strong><br>
+      • <span style="color: #0077be;">━━</span> Astronomical Tide (predicted)<br>
+      • <span style="color: #43a047;">●</span> Observation (real-time, today only)<br>
+      • <span style="color: #ff9800;">╌╌</span> Storm Surge (forecast anomaly)<br>
+      • <span style="color: #9c27b0; font-weight: bold;">━━</span> Total Water Level (tide + surge)
+    </p>
+    <p>
+      High and low tide times represent the predicted maximum and minimum water levels for
+      the current day in Pacific Time. Use the arrow buttons to view forecasts for the next 2 days.
     </p>
   </section>
 
