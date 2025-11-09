@@ -6,6 +6,7 @@ let forecastChart = null;
 let hindcastChart = null;
 let forecastData = null;
 let hindcastData = null;
+let observedSurgeData = null;
 
 // Station display order
 const STATION_ORDER = [
@@ -265,6 +266,22 @@ function updateForecastMetadata(station, times, values) {
 }
 
 /* ======================================
+   Observed Surge Data
+   ====================================== */
+
+async function loadObservedSurgeData() {
+  try {
+    const response = await fetch(`/data/storm_surge/observed_surge.json?t=${Date.now()}`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    observedSurgeData = await response.json();
+    console.log(`✅ Loaded observed surge data for ${Object.keys(observedSurgeData.stations || {}).length} stations`);
+  } catch (err) {
+    console.warn("Observed surge data not available:", err.message);
+    observedSurgeData = null;
+  }
+}
+
+/* ======================================
    Hindcast Section
    ====================================== */
 
@@ -384,6 +401,26 @@ function updateHindcastChart(stationId) {
       lineStyle: { width: 2 }
     };
   });
+
+  // Add observed surge data if available for this station
+  if (observedSurgeData?.stations?.[stationId]) {
+    const obsStation = observedSurgeData.stations[stationId];
+    const obsData = obsStation.data.map(d => [d.time, d.observed_surge_m]);
+
+    series.push({
+      name: "Observed Surge (Actual)",
+      type: "line",
+      data: obsData,
+      smooth: false,
+      symbol: "circle",
+      symbolSize: 3,
+      itemStyle: { color: "#000000" },
+      lineStyle: { width: 3, type: "solid" },
+      z: 10 // Render on top
+    });
+
+    console.log(`  ✅ Added ${obsData.length} observed surge points`);
+  }
 
   // Get all unique times for x-axis (only from filtered data)
   const allTimes = [...new Set(
@@ -548,9 +585,11 @@ function initPage() {
     }) + " PT";
   }
 
-  // Load both datasets
-  loadForecastData();
-  loadHindcastData();
+  // Load all datasets (observed surge first, then charts)
+  loadObservedSurgeData().then(() => {
+    loadForecastData();
+    loadHindcastData();
+  });
 }
 
 // Initialize on page load
@@ -558,6 +597,8 @@ document.addEventListener("DOMContentLoaded", initPage);
 
 // Refresh data every 2 hours
 setInterval(() => {
-  loadForecastData();
-  loadHindcastData();
+  loadObservedSurgeData().then(() => {
+    loadForecastData();
+    loadHindcastData();
+  });
 }, 2 * 60 * 60 * 1000);
