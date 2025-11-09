@@ -17,6 +17,17 @@ const STATION_ORDER = [
   "Tofino"
 ];
 
+// Minimum date for hindcast data per station (YYYY-MM-DD format)
+// Earlier data may be unreliable due to pipeline setup issues
+const HINDCAST_MIN_DATE = {
+  "Point_Atkinson": "2025-10-30",        // Reliable from start
+  "Crescent_Beach_Channel": "2025-10-30", // Reliable from start
+  "Campbell_River": "2025-11-06",         // Only reliable from Nov 6+
+  "Neah_Bay": "2025-11-06",              // Only reliable from Nov 6+
+  "New_Dungeness": "2025-11-06",         // Only reliable from Nov 6+
+  "Tofino": "2025-11-06"                 // Only reliable from Nov 6+
+};
+
 /* ======================================
    Forecast Section
    ====================================== */
@@ -319,10 +330,18 @@ function updateHindcastChart(stationId) {
   }
 
   // Prepare data - group by forecast date
+  // Filter out data before the minimum date for this station
+  const minDate = HINDCAST_MIN_DATE[stationId] || "2025-11-06"; // Default to Nov 6
   const forecastDates = {};
 
   station.hindcast.forEach(point => {
     const date = point.forecast_date;
+
+    // Skip data before the minimum date
+    if (date < minDate) {
+      return;
+    }
+
     if (!forecastDates[date]) {
       forecastDates[date] = {
         times: [],
@@ -335,6 +354,15 @@ function updateHindcastChart(stationId) {
 
   // Sort dates
   const sortedDates = Object.keys(forecastDates).sort();
+
+  // Check if we have any data after filtering
+  if (sortedDates.length === 0) {
+    const container = document.getElementById("hindcast-chart");
+    if (container) {
+      container.innerHTML = `<p style="text-align:center;color:#999;">No hindcast data available for this station from ${minDate} onwards. Data accumulates over time.</p>`;
+    }
+    return;
+  }
 
   // Prepare series for each forecast date
   const series = sortedDates.map((date, index) => {
@@ -357,8 +385,12 @@ function updateHindcastChart(stationId) {
     };
   });
 
-  // Get all unique times for x-axis
-  const allTimes = [...new Set(station.hindcast.map(p => p.time))].sort();
+  // Get all unique times for x-axis (only from filtered data)
+  const allTimes = [...new Set(
+    station.hindcast
+      .filter(p => p.forecast_date >= minDate)
+      .map(p => p.time)
+  )].sort();
 
   // Initialize chart if needed
   if (!hindcastChart) {
