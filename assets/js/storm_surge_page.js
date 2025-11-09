@@ -130,7 +130,7 @@ function updateForecastChart(stationId) {
   const yMin = Math.floor((minVal - padding) * 10) / 10;
   const yMax = Math.ceil((maxVal + padding) * 10) / 10;
 
-  // Set chart options
+  // Set chart options (notMerge: true to replace all data when switching stations)
   forecastChart.setOption({
     title: {
       text: `${station.station_name} - 10-Day Storm Surge Forecast`,
@@ -223,7 +223,7 @@ function updateForecastChart(stationId) {
         data: [{ yAxis: 0 }]
       }
     }]
-  });
+  }, true); // notMerge: true to prevent old data from persisting
 
   // Update metadata
   updateForecastMetadata(station, times, values);
@@ -398,7 +398,7 @@ function updateHindcastChart(stationId) {
     window.addEventListener("resize", () => hindcastChart.resize());
   }
 
-  // Set chart options
+  // Set chart options (notMerge: true to replace all data when switching stations)
   hindcastChart.setOption({
     title: {
       text: `${station.station_name} - Hindcast Comparison (48h Predictions)`,
@@ -480,7 +480,7 @@ function updateHindcastChart(stationId) {
       showSymbol: false,
       silent: true
     }])
-  });
+  }, true); // notMerge: true to prevent old data from persisting
 
   // Update metadata
   updateHindcastMetadata(station);
