@@ -349,13 +349,27 @@ function updateHindcastChart(stationId) {
   // Prepare data - group by forecast date
   // Filter out data before the minimum date for this station
   const minDate = HINDCAST_MIN_DATE[stationId] || "2025-11-06"; // Default to Nov 6
+
+  // Calculate midnight tonight (Pacific time) - only show up to today
+  const now = new Date();
+  const pacificNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Vancouver' }));
+  const midnightTonight = new Date(pacificNow);
+  midnightTonight.setHours(23, 59, 59, 999);
+  const midnightTonightUTC = new Date(midnightTonight.toLocaleString('en-US', { timeZone: 'UTC' }));
+
   const forecastDates = {};
 
   station.hindcast.forEach(point => {
     const date = point.forecast_date;
+    const pointTime = new Date(point.time);
 
     // Skip data before the minimum date
     if (date < minDate) {
+      return;
+    }
+
+    // Skip data beyond midnight tonight (Pacific) - only show today
+    if (pointTime > midnightTonightUTC) {
       return;
     }
 
