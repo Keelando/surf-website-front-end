@@ -301,21 +301,25 @@ function displayCurrentPrediction(station) {
       const futureEvents = stationEvents.events.filter(e => new Date(e.time).getTime() > now);
       if (futureEvents.length > 0) {
         const nextEvent = futureEvents[0];
-        const eventTime = new Date(nextEvent.time);
-        const eventTimeStr = eventTime.toLocaleTimeString('en-US', {
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true,
-          timeZone: 'America/Vancouver'
-        });
-        const eventType = nextEvent.type === 'high' ? 'High' : 'Low';
-        const eventHeight = nextEvent.height.toFixed(2);
 
-        nextEventHtml = `
-          <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #eee; font-size: 0.85rem;">
-            <div style="color: #666;">Next ${eventType} Tide: <strong style="color: #0077be;">${eventHeight} m</strong> at ${eventTimeStr}</div>
-          </div>
-        `;
+        // Only display if we have valid event data
+        if (nextEvent.time && nextEvent.type && nextEvent.height != null) {
+          const eventTime = new Date(nextEvent.time);
+          const eventTimeStr = eventTime.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+            timeZone: 'America/Vancouver'
+          });
+          const eventType = nextEvent.type === 'high' ? 'High' : 'Low';
+          const eventHeight = nextEvent.height.toFixed(2);
+
+          nextEventHtml = `
+            <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #eee; font-size: 0.85rem;">
+              <div style="color: #666;">Next ${eventType} Tide: <strong style="color: #0077be;">${eventHeight} m</strong> at ${eventTimeStr}</div>
+            </div>
+          `;
+        }
       }
     }
   }
