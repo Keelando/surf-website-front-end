@@ -4,16 +4,15 @@
    ----------------------------- */
 
 /**
- * Create wind direction arrow graphics for chart overlay
+ * Create wind direction arrow data for scatter series
  * @param {Array} windDirectionData - Array of {time, value} wind direction points
  * @param {Array} windSpeedData - Array of {time, value} wind speed points for positioning
- * @param {Object} chart - ECharts instance
- * @returns {Array} Array of graphic elements (arrows)
+ * @returns {Array} Array of [timestamp, speed, direction] for scatter plot
  */
-function createWindDirectionArrows(windDirectionData, windSpeedData, chart) {
+function createWindDirectionArrowData(windDirectionData, windSpeedData) {
   if (!windDirectionData || windDirectionData.length === 0) return [];
 
-  const graphics = [];
+  const arrowData = [];
 
   // Sample every 3 hours to avoid overcrowding (assuming hourly data)
   const sampleInterval = 3;
@@ -30,28 +29,14 @@ function createWindDirectionArrows(windDirectionData, windSpeedData, chart) {
     const direction = dirPoint.value; // Meteorological direction (coming FROM)
     const speed = speedPoint.value;
 
-    // Create arrow pointing where wind is blowing TO
-    // ECharts rotation: 0° = right, 90° = down, 180° = left, 270° = up
-    // For down arrow (↓), rotation = direction points where wind blows TO
-    graphics.push({
-      type: 'path',
-      position: [timestamp, speed],
-      shape: {
-        // SVG path for down arrow (↓)
-        pathData: 'M 0,-8 L 0,8 M -4,4 L 0,8 L 4,4',
-      },
-      style: {
-        stroke: '#1e88e5',
-        lineWidth: 2,
-        fill: 'transparent'
-      },
-      rotation: (direction * Math.PI) / 180, // Convert to radians
-      origin: [0, 0], // Rotate around arrow center
-      z: 100 // Render on top
+    // Store as [time, speed, direction] for use in scatter series
+    arrowData.push({
+      value: [timestamp, speed],
+      direction: direction
     });
   }
 
-  return graphics;
+  return arrowData;
 }
 
 /**
@@ -65,8 +50,8 @@ function renderWindChart(windChart, buoy) {
   const windGustData = ts.wind_gust?.data || [];
   const windDirectionData = ts.wind_direction?.data || [];
 
-  // Create direction arrows
-  const directionArrows = createWindDirectionArrows(windDirectionData, windSpeedData, windChart);
+  // Create direction arrow data
+  const arrowData = createWindDirectionArrowData(windDirectionData, windSpeedData);
 
   windChart.setOption({
     title: { text: `${buoy.name} - Wind Conditions`, left: "center" },
@@ -78,6 +63,7 @@ function renderWindChart(windChart, buoy) {
         const time = formatTimeAxis(new Date(params[0].value[0]).toISOString());
         let res = `<b>${time}</b><br/>`;
         params.forEach((p) => {
+          if (p.seriesName === "Wind Direction") return; // Skip arrow series in tooltip
           if (p.value[1] != null) {
             res += `${p.marker} ${p.seriesName}: ${p.value[1]} kt<br/>`;
           }
@@ -129,11 +115,26 @@ function renderWindChart(windChart, buoy) {
         lineStyle: { type: "dashed" },
         itemStyle: { color: "#e53935" },
       },
-    ],
-    graphic: directionArrows.map(arrow => ({
-      ...arrow,
-      $action: 'replace' // Replace graphics on each update
-    }))
+      {
+        name: "Wind Direction",
+        type: "scatter",
+        data: arrowData,
+        symbol: 'arrow', // Use built-in arrow symbol
+        symbolSize: 12,
+        symbolRotate: (params) => {
+          // Rotate arrow based on wind direction
+          // Arrow symbol points right (0°) by default
+          // We want it to point where wind is blowing TO
+          return params.data.direction || 0;
+        },
+        itemStyle: {
+          color: '#1e88e5',
+          opacity: 0.8
+        },
+        silent: true, // Don't trigger mouse events
+        z: 10 // Render on top of lines
+      }
+    ]
   });
 }
 
