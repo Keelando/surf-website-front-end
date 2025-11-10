@@ -7,7 +7,7 @@
  * Create wind direction arrow data for scatter series
  * @param {Array} windDirectionData - Array of {time, value} wind direction points
  * @param {Array} windSpeedData - Array of {time, value} wind speed points for positioning
- * @returns {Array} Array of [timestamp, speed, direction] for scatter plot
+ * @returns {Array} Array of data points with individual itemStyle and symbolRotate
  */
 function createWindDirectionArrowData(windDirectionData, windSpeedData) {
   if (!windDirectionData || windDirectionData.length === 0) return [];
@@ -29,10 +29,14 @@ function createWindDirectionArrowData(windDirectionData, windSpeedData) {
     const direction = dirPoint.value; // Meteorological direction (coming FROM)
     const speed = speedPoint.value;
 
-    // Store as [time, speed, direction] for use in scatter series
+    // Each data point with its own rotation
     arrowData.push({
       value: [timestamp, speed],
-      direction: direction
+      symbolRotate: direction, // Set rotation per data point
+      itemStyle: {
+        color: '#1e88e5',
+        opacity: 0.8
+      }
     });
   }
 
@@ -120,17 +124,7 @@ function renderWindChart(windChart, buoy) {
         type: "scatter",
         data: arrowData,
         symbol: 'arrow', // Use built-in arrow symbol
-        symbolSize: 12,
-        symbolRotate: (params) => {
-          // Rotate arrow based on wind direction
-          // Arrow symbol points right (0°) by default
-          // We want it to point where wind is blowing TO
-          return params.data.direction || 0;
-        },
-        itemStyle: {
-          color: '#1e88e5',
-          opacity: 0.8
-        },
+        symbolSize: 15,
         silent: true, // Don't trigger mouse events
         z: 10 // Render on top of lines
       }
