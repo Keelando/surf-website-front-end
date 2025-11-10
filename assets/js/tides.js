@@ -248,14 +248,14 @@ function displayCurrentObservation(station) {
   const isStale = obs.stale || false;
 
   container.innerHTML = `
-    <div style="font-size: 2rem; font-weight: bold; color: ${isStale ? '#e53935' : '#43a047'};">
+    <div style="font-size: 1.5rem; font-weight: bold; color: ${isStale ? '#e53935' : '#43a047'};">
       ${observedLevel} m
     </div>
-    <div style="color: #666; margin-top: 0.5rem;">
+    <div style="color: #666; margin-top: 0.25rem; font-size: 0.9rem;">
       at ${timeStr}
       <span style="color: ${isStale ? '#e53935' : '#999'};">(${ageStr})</span>
     </div>
-    ${isStale ? '<div style="color: #e53935; margin-top: 0.5rem; font-size: 0.9rem;">⚠ Data may be stale</div>' : ''}
+    ${isStale ? '<div style="color: #e53935; margin-top: 0.25rem; font-size: 0.85rem;">⚠ Data may be stale</div>' : ''}
   `;
 }
 
@@ -276,13 +276,60 @@ function displayCurrentPrediction(station) {
   const predTime = new Date(pred.time);
   const timeStr = formatTime(predTime);
 
+  // Determine tide direction (rising, falling, slack)
+  let tideDirection = '';
+  let tideArrow = '';
+  if (pred.trend) {
+    if (pred.trend === 'rising') {
+      tideDirection = 'Rising';
+      tideArrow = '↗️';
+    } else if (pred.trend === 'falling') {
+      tideDirection = 'Falling';
+      tideArrow = '↘️';
+    } else if (pred.trend === 'slack') {
+      tideDirection = 'Slack';
+      tideArrow = '→';
+    }
+  }
+
+  // Get next high/low event
+  let nextEventHtml = '';
+  if (tideHighLowData && tideHighLowData.stations && currentStationKey) {
+    const stationEvents = tideHighLowData.stations[currentStationKey];
+    if (stationEvents && stationEvents.events) {
+      const now = Date.now();
+      const futureEvents = stationEvents.events.filter(e => new Date(e.time).getTime() > now);
+      if (futureEvents.length > 0) {
+        const nextEvent = futureEvents[0];
+        const eventTime = new Date(nextEvent.time);
+        const eventTimeStr = eventTime.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+          timeZone: 'America/Vancouver'
+        });
+        const eventType = nextEvent.type === 'high' ? 'High' : 'Low';
+        const eventHeight = nextEvent.height.toFixed(2);
+
+        nextEventHtml = `
+          <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #eee; font-size: 0.85rem;">
+            <div style="color: #666;">Next ${eventType} Tide: <strong style="color: #0077be;">${eventHeight} m</strong> at ${eventTimeStr}</div>
+          </div>
+        `;
+      }
+    }
+  }
+
   container.innerHTML = `
-    <div style="font-size: 2rem; font-weight: bold; color: #0077be;">
-      ${tideLevel} m
+    <div>
+      <div style="font-size: 1.5rem; font-weight: bold; color: #0077be;">
+        ${tideLevel} m ${tideArrow}
+      </div>
+      <div style="color: #666; margin-top: 0.25rem; font-size: 0.9rem;">
+        at ${timeStr}${tideDirection ? ` <span style="color: #0077be;">(${tideDirection})</span>` : ''}
+      </div>
     </div>
-    <div style="color: #666; margin-top: 0.5rem;">
-      at ${timeStr}
-    </div>
+    ${nextEventHtml}
   `;
 }
 
@@ -302,52 +349,65 @@ function displayStormSurge(station) {
   const predTime = new Date(station.prediction_now.time);
   const timeStr = formatTime(predTime);
 
-  // Get peak surge data from combinedWaterLevelData if available
+  // Get today's peak surge data from combinedWaterLevelData if available
   let peakHtml = '';
   if (combinedWaterLevelData && combinedWaterLevelData.stations && combinedWaterLevelData.stations[currentStationKey]) {
     const stationData = combinedWaterLevelData.stations[currentStationKey];
     if (stationData.peak) {
       const peak = stationData.peak;
       const peakTime = new Date(peak.time);
-      const peakTimeStr = peakTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' +
-                          peakTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 
-      peakHtml = `
-        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #ddd;">
-          <div style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">
-            <strong>Next 3-Day Peak:</strong>
-          </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.95rem;">
-            <div>
-              <div style="color: #666;">Peak Surge</div>
-              <div style="font-weight: bold; color: #ff9800; font-size: 1.2rem;">
-                ${peak.storm_surge_m >= 0 ? '+' : ''}${peak.storm_surge_m.toFixed(3)} m
+      // Only show peak if it's today (Pacific time)
+      const now = new Date();
+      const pacificNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Vancouver' }));
+      const pacificPeak = new Date(peakTime.toLocaleString('en-US', { timeZone: 'America/Vancouver' }));
+
+      const isToday = pacificNow.getDate() === pacificPeak.getDate() &&
+                      pacificNow.getMonth() === pacificPeak.getMonth() &&
+                      pacificNow.getFullYear() === pacificPeak.getFullYear();
+
+      if (isToday) {
+        const peakTimeStr = peakTime.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+          timeZone: 'America/Vancouver'
+        });
+
+        peakHtml = `
+          <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #ddd;">
+            <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">
+              <strong>Today's Peak:</strong>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.9rem;">
+              <div>
+                <div style="color: #666; font-size: 0.85rem;">Peak Surge</div>
+                <div style="font-weight: bold; color: #ff9800; font-size: 1.1rem;">
+                  ${peak.storm_surge_m >= 0 ? '+' : ''}${peak.storm_surge_m.toFixed(3)} m
+                </div>
+              </div>
+              <div>
+                <div style="color: #666; font-size: 0.85rem;">Total Water Level</div>
+                <div style="font-weight: bold; color: #9c27b0; font-size: 1.1rem;">
+                  ${peak.total_water_level_m.toFixed(2)} m
+                </div>
               </div>
             </div>
-            <div>
-              <div style="color: #666;">Total Water Level</div>
-              <div style="font-weight: bold; color: #9c27b0; font-size: 1.2rem;">
-                ${peak.total_water_level_m.toFixed(2)} m
-              </div>
+            <div style="color: #666; margin-top: 0.5rem; font-size: 0.85rem;">
+              at ${peakTimeStr}
             </div>
           </div>
-          <div style="color: #666; margin-top: 0.5rem; font-size: 0.9rem;">
-            ${peakTimeStr}
-          </div>
-        </div>
-      `;
+        `;
+      }
     }
   }
 
   container.innerHTML = `
     <div>
-      <div style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">
-        <strong>Current Forecast:</strong>
-      </div>
-      <div style="font-size: 2rem; font-weight: bold; color: #ff9800;">
+      <div style="font-size: 1.5rem; font-weight: bold; color: #ff9800;">
         ${surge >= 0 ? '+' : ''}${surge.toFixed(3)} m
       </div>
-      <div style="color: #666; margin-top: 0.5rem;">
+      <div style="color: #666; margin-top: 0.25rem; font-size: 0.9rem;">
         at ${timeStr}
       </div>
     </div>
