@@ -435,5 +435,151 @@ function scrollToMap(buoyId) {
   }, 800);
 }
 
+// Toggle region collapse/expand
+function toggleRegion(regionName) {
+  const regionGroup = document.getElementById(`region-${regionName.replace(/\s+/g, '-')}`);
+  if (!regionGroup) return;
+
+  const cardsGrid = regionGroup.querySelector('.buoy-cards-grid');
+  const toggleBtn = regionGroup.querySelector('.region-toggle-btn');
+
+  if (cardsGrid && toggleBtn) {
+    const isHidden = cardsGrid.style.display === 'none';
+    cardsGrid.style.display = isHidden ? 'grid' : 'none';
+    toggleBtn.textContent = isHidden ? '▼' : '▶';
+
+    // Save state to localStorage
+    const regionKey = `region-${regionName}-collapsed`;
+    localStorage.setItem(regionKey, isHidden ? 'false' : 'true');
+  }
+}
+
+// Toggle card details (full metrics)
+function toggleCardDetails(buoyId) {
+  const detailsDiv = document.getElementById(`card-details-${buoyId}`);
+  const button = document.querySelector(`#buoy-${buoyId} .toggle-details-btn`);
+
+  if (detailsDiv && button) {
+    const isHidden = detailsDiv.style.display === 'none';
+    detailsDiv.style.display = isHidden ? 'block' : 'none';
+    button.textContent = isHidden ? '▲ Hide Details' : '▼ Show Details';
+  }
+}
+
+// Toggle card history table
+async function toggleCardHistory(buoyId) {
+  const historyDiv = document.getElementById(`card-history-${buoyId}`);
+  const button = document.querySelector(`#buoy-${buoyId} .toggle-history-btn`);
+
+  if (!historyDiv || !button) return;
+
+  const isHidden = historyDiv.style.display === 'none';
+
+  if (isHidden) {
+    // Load and display history
+    button.textContent = 'Loading...';
+    button.disabled = true;
+
+    try {
+      const response = await fetch(`/data/buoy_timeseries_24h.json?t=${Date.now()}`);
+      if (!response.ok) throw new Error('Failed to fetch timeseries data');
+
+      const timeseriesData = await response.json();
+      const buoyData = timeseriesData[buoyId];
+
+      if (buoyData && buoyData.timeseries) {
+        historyDiv.innerHTML = renderHistoryTable(buoyId, buoyData.timeseries);
+        historyDiv.style.display = 'block';
+        button.textContent = '▲ Hide History';
+        button.disabled = false;
+      } else {
+        historyDiv.innerHTML = '<p style="color: #999; text-align: center; padding: 1rem;">No historical data available</p>';
+        historyDiv.style.display = 'block';
+        button.textContent = '▲ Hide History';
+        button.disabled = false;
+      }
+    } catch (error) {
+      console.error('Error loading history:', error);
+      historyDiv.innerHTML = '<p style="color: #e53935; text-align: center; padding: 1rem;">Error loading historical data</p>';
+      historyDiv.style.display = 'block';
+      button.textContent = '▲ Hide History';
+      button.disabled = false;
+    }
+  } else {
+    historyDiv.style.display = 'none';
+    button.textContent = '▼ Show History (24h)';
+  }
+}
+
+// Render history table
+function renderHistoryTable(buoyId, timeseries) {
+  // Get the most recent 12 hourly observations
+  const windSpeed = timeseries.wind_speed?.data || [];
+  const windDir = timeseries.wind_direction?.data || [];
+  const windGust = timeseries.wind_gust?.data || [];
+  const waveHeight = timeseries.wave_height_sig?.data || [];
+  const wavePeriod = timeseries.wave_period_avg?.data || [];
+  const airTemp = timeseries.air_temp?.data || [];
+  const seaTemp = timeseries.sea_temp?.data || [];
+
+  // Find common timestamps
+  const times = windSpeed.map(d => d.time).slice(-12);
+
+  let tableHTML = `
+    <div style="overflow-x: auto; margin-top: 1rem;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+        <thead>
+          <tr style="background: #f5f5f5;">
+            <th style="padding: 0.5rem; border: 1px solid #ddd; text-align: left;">Time</th>
+            <th style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">Wind</th>
+            <th style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">Gust</th>
+            <th style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">Wave Ht</th>
+            <th style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">Period</th>
+            <th style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">Air °C</th>
+            <th style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">Sea °C</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  times.forEach(time => {
+    const windSpeedVal = windSpeed.find(d => d.time === time)?.value;
+    const windGustVal = windGust.find(d => d.time === time)?.value;
+    const waveHeightVal = waveHeight.find(d => d.time === time)?.value;
+    const wavePeriodVal = wavePeriod.find(d => d.time === time)?.value;
+    const airTempVal = airTemp.find(d => d.time === time)?.value;
+    const seaTempVal = seaTemp.find(d => d.time === time)?.value;
+
+    const timeStr = new Date(time).toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'America/Vancouver'
+    });
+
+    tableHTML += `
+      <tr>
+        <td style="padding: 0.5rem; border: 1px solid #ddd;">${timeStr}</td>
+        <td style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">${windSpeedVal != null ? Math.round(windSpeedVal) + ' kt' : '—'}</td>
+        <td style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">${windGustVal != null ? Math.round(windGustVal) + ' kt' : '—'}</td>
+        <td style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">${waveHeightVal != null ? waveHeightVal.toFixed(2) + ' m' : '—'}</td>
+        <td style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">${wavePeriodVal != null ? wavePeriodVal.toFixed(1) + ' s' : '—'}</td>
+        <td style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">${airTempVal != null ? airTempVal.toFixed(1) : '—'}</td>
+        <td style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">${seaTempVal != null ? seaTempVal.toFixed(1) : '—'}</td>
+      </tr>
+    `;
+  });
+
+  tableHTML += `
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  return tableHTML;
+}
+
 loadBuoyData();
 setInterval(loadBuoyData, 5 * 60 * 1000);

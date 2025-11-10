@@ -157,6 +157,9 @@ function displayStation(stationKey) {
   // Display current prediction (also from currentStation which has prediction_now)
   displayCurrentPrediction(currentStation);
 
+  // Display storm surge
+  displayStormSurge(currentStation);
+
   // Display high/low table
   displayHighLowTable(highlowStation);
 
@@ -238,15 +241,15 @@ function displayCurrentObservation(station) {
   }
 
   const obs = station.observation;
-  const waterLevel = obs.value.toFixed(2);
+  const observedLevel = obs.value.toFixed(2);
   const obsTime = new Date(obs.time);
   const timeStr = formatTime(obsTime);
   const ageStr = getAgeString(obsTime);
   const isStale = obs.stale || false;
 
   container.innerHTML = `
-    <div style="font-size: 2rem; font-weight: bold; color: ${isStale ? '#e53935' : '#0077be'};">
-      ${waterLevel} m
+    <div style="font-size: 2rem; font-weight: bold; color: ${isStale ? '#e53935' : '#43a047'};">
+      ${observedLevel} m
     </div>
     <div style="color: #666; margin-top: 0.5rem;">
       at ${timeStr}
@@ -269,17 +272,86 @@ function displayCurrentPrediction(station) {
   }
 
   const pred = station.prediction_now;
-  const waterLevel = pred.value.toFixed(2);
+  const tideLevel = pred.value.toFixed(2);
   const predTime = new Date(pred.time);
   const timeStr = formatTime(predTime);
 
   container.innerHTML = `
-    <div style="font-size: 2rem; font-weight: bold; color: #43a047;">
-      ${waterLevel} m
+    <div style="font-size: 2rem; font-weight: bold; color: #0077be;">
+      ${tideLevel} m
     </div>
     <div style="color: #666; margin-top: 0.5rem;">
       at ${timeStr}
     </div>
+  `;
+}
+
+/* =====================================================
+   Storm Surge Display
+   ===================================================== */
+
+function displayStormSurge(station) {
+  const container = document.getElementById('storm-surge');
+
+  if (!station || !station.prediction_now || !station.prediction_now.surge) {
+    container.innerHTML = '<p style="color: #999;">No storm surge forecast available</p>';
+    return;
+  }
+
+  const surge = station.prediction_now.surge;
+  const predTime = new Date(station.prediction_now.time);
+  const timeStr = formatTime(predTime);
+
+  // Get peak surge data from combinedWaterLevelData if available
+  let peakHtml = '';
+  if (combinedWaterLevelData && combinedWaterLevelData.stations && combinedWaterLevelData.stations[currentStationKey]) {
+    const stationData = combinedWaterLevelData.stations[currentStationKey];
+    if (stationData.peak) {
+      const peak = stationData.peak;
+      const peakTime = new Date(peak.time);
+      const peakTimeStr = peakTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' +
+                          peakTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+
+      peakHtml = `
+        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #ddd;">
+          <div style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">
+            <strong>Next 3-Day Peak:</strong>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.95rem;">
+            <div>
+              <div style="color: #666;">Peak Surge</div>
+              <div style="font-weight: bold; color: #ff9800; font-size: 1.2rem;">
+                ${peak.storm_surge_m >= 0 ? '+' : ''}${peak.storm_surge_m.toFixed(3)} m
+              </div>
+            </div>
+            <div>
+              <div style="color: #666;">Total Water Level</div>
+              <div style="font-weight: bold; color: #9c27b0; font-size: 1.2rem;">
+                ${peak.total_water_level_m.toFixed(2)} m
+              </div>
+            </div>
+          </div>
+          <div style="color: #666; margin-top: 0.5rem; font-size: 0.9rem;">
+            ${peakTimeStr}
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  container.innerHTML = `
+    <div>
+      <div style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">
+        <strong>Current Forecast:</strong>
+      </div>
+      <div style="font-size: 2rem; font-weight: bold; color: #ff9800;">
+        ${surge >= 0 ? '+' : ''}${surge.toFixed(3)} m
+      </div>
+      <div style="color: #666; margin-top: 0.5rem;">
+        at ${timeStr}
+      </div>
+    </div>
+    ${peakHtml}
   `;
 }
 
@@ -604,8 +676,7 @@ function displayTideChart(stationKey, dayOffset = 0) {
       smooth: true,
       lineStyle: {
         color: '#ff9800',
-        width: 2,
-        type: 'dashed'
+        width: 2
       },
       itemStyle: {
         color: '#ff9800'
