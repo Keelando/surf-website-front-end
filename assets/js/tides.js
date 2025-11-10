@@ -303,7 +303,7 @@ function displayCurrentPrediction(station) {
         const nextEvent = futureEvents[0];
 
         // Only display if we have valid event data
-        if (nextEvent.time && nextEvent.type && nextEvent.height != null) {
+        if (nextEvent.time && nextEvent.type && nextEvent.value != null) {
           const eventTime = new Date(nextEvent.time);
           const eventTimeStr = eventTime.toLocaleTimeString('en-US', {
             hour: 'numeric',
@@ -312,7 +312,7 @@ function displayCurrentPrediction(station) {
             timeZone: 'America/Vancouver'
           });
           const eventType = nextEvent.type === 'high' ? 'High' : 'Low';
-          const eventHeight = nextEvent.height.toFixed(2);
+          const eventHeight = nextEvent.value.toFixed(2);
 
           // Calculate time remaining
           const msUntil = eventTime.getTime() - Date.now();

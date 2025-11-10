@@ -6,11 +6,20 @@
 /**
  * Create wind direction arrow data for scatter series
  * @param {Array} windDirectionData - Array of {time, value} wind direction points
- * @param {Array} windSpeedData - Array of {time, value} wind speed points for positioning
- * @returns {Array} Array of data points with individual itemStyle and symbolRotate
+ * @param {Array} windSpeedData - Array of {time, value} wind speed points for max calculation
+ * @param {Array} windGustData - Array of {time, value} wind gust points for max calculation
+ * @returns {Object} Object with arrowData and maxValue for y-axis scaling
  */
-function createWindDirectionArrowData(windDirectionData, windSpeedData) {
-  if (!windDirectionData || windDirectionData.length === 0) return [];
+function createWindDirectionArrowData(windDirectionData, windSpeedData, windGustData) {
+  if (!windDirectionData || windDirectionData.length === 0) return { arrowData: [], maxValue: null };
+
+  // Find maximum wind speed/gust to position arrows at top
+  const allSpeeds = [...windSpeedData, ...windGustData]
+    .map(d => d.value)
+    .filter(v => v != null && !isNaN(v));
+
+  const maxSpeed = allSpeeds.length > 0 ? Math.max(...allSpeeds) : 20;
+  const arrowYPosition = maxSpeed * 1.05; // Position arrows 5% above max value
 
   const arrowData = [];
 
@@ -21,17 +30,16 @@ function createWindDirectionArrowData(windDirectionData, windSpeedData) {
     const dirPoint = windDirectionData[i];
     if (!dirPoint || dirPoint.value == null) continue;
 
-    // Find corresponding wind speed for this time to position arrow vertically
+    // Find corresponding wind speed for this time (for validation)
     const speedPoint = windSpeedData.find(s => s.time === dirPoint.time);
     if (!speedPoint || speedPoint.value == null) continue;
 
     const timestamp = new Date(dirPoint.time).getTime();
     const direction = dirPoint.value; // Meteorological direction (coming FROM)
-    const speed = speedPoint.value;
 
-    // Each data point with its own rotation
+    // Each data point with its own rotation, positioned at top of chart
     arrowData.push({
-      value: [timestamp, speed],
+      value: [timestamp, arrowYPosition],
       symbolRotate: direction, // Set rotation per data point
       itemStyle: {
         color: '#1e88e5',
@@ -40,7 +48,7 @@ function createWindDirectionArrowData(windDirectionData, windSpeedData) {
     });
   }
 
-  return arrowData;
+  return { arrowData, maxValue: arrowYPosition };
 }
 
 /**
@@ -54,8 +62,11 @@ function renderWindChart(windChart, buoy) {
   const windGustData = ts.wind_gust?.data || [];
   const windDirectionData = ts.wind_direction?.data || [];
 
-  // Create direction arrow data
-  const arrowData = createWindDirectionArrowData(windDirectionData, windSpeedData);
+  // Create direction arrow data (now returns object with arrowData and maxValue)
+  const { arrowData, maxValue } = createWindDirectionArrowData(windDirectionData, windSpeedData, windGustData);
+
+  // Calculate y-axis max to ensure arrows are visible
+  const yAxisMax = maxValue ? Math.ceil(maxValue * 1.1) : null;
 
   windChart.setOption({
     title: { text: `${buoy.name} - Wind Conditions`, left: "center" },
@@ -99,7 +110,11 @@ function renderWindChart(windChart, buoy) {
       axisTick: { show: true },
       splitLine: { show: true, lineStyle: { color: "#eee" } },
     },
-    yAxis: { type: "value", name: "Speed (kt)" },
+    yAxis: {
+      type: "value",
+      name: "Speed (kt)",
+      max: yAxisMax // Set max to accommodate arrows at top
+    },
     series: [
       {
         name: "Wind Speed",
