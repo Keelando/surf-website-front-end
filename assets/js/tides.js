@@ -314,9 +314,54 @@ function displayCurrentPrediction(station) {
           const eventType = nextEvent.type === 'high' ? 'High' : 'Low';
           const eventHeight = nextEvent.height.toFixed(2);
 
+          // Calculate time remaining
+          const msUntil = eventTime.getTime() - Date.now();
+          const minutesUntil = Math.floor(msUntil / 60000);
+          const hoursUntil = Math.floor(minutesUntil / 60);
+          const remainingMinutes = minutesUntil % 60;
+
+          let timeUntilStr = '';
+          if (hoursUntil > 0) {
+            timeUntilStr = `in ${hoursUntil}h ${remainingMinutes}m`;
+          } else if (minutesUntil > 0) {
+            timeUntilStr = `in ${minutesUntil}m`;
+          } else {
+            timeUntilStr = 'now';
+          }
+
+          // Try to find storm surge forecast at this time for combined water level
+          let combinedWaterLevel = null;
+          if (combinedWaterLevelData && combinedWaterLevelData.stations && combinedWaterLevelData.stations[currentStationKey]) {
+            const stationData = combinedWaterLevelData.stations[currentStationKey];
+            if (stationData.forecast) {
+              // Find forecast entry closest to the event time
+              const eventTimeTs = eventTime.getTime();
+              let closestForecast = null;
+              let minDiff = Infinity;
+
+              stationData.forecast.forEach(f => {
+                const forecastTime = new Date(f.time).getTime();
+                const diff = Math.abs(forecastTime - eventTimeTs);
+                if (diff < minDiff && diff < 900000) { // Within 15 minutes
+                  minDiff = diff;
+                  closestForecast = f;
+                }
+              });
+
+              if (closestForecast && closestForecast.total_water_level_m != null) {
+                combinedWaterLevel = closestForecast.total_water_level_m.toFixed(2);
+              }
+            }
+          }
+
           nextEventHtml = `
             <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #eee; font-size: 0.85rem;">
-              <div style="color: #666;">Next ${eventType} Tide: <strong style="color: #0077be;">${eventHeight} m</strong> at ${eventTimeStr}</div>
+              <div style="color: #666;">
+                Next ${eventType} Tide: <strong style="color: #0077be;">${eventHeight} m</strong>
+                ${combinedWaterLevel ? `<span style="color: #9c27b0; font-weight: 600;">(${combinedWaterLevel} m total)</span>` : ''}
+                <span style="color: #43a047; font-weight: 600;">${timeUntilStr}</span>
+                <span style="color: #999;">(${eventTimeStr})</span>
+              </div>
             </div>
           `;
         }
