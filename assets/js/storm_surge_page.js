@@ -93,6 +93,62 @@ function updateStationIndicator(elementId, stationId) {
   }
 }
 
+function updatePeakToday(stationId) {
+  const display = document.getElementById("peak-today-display");
+  const peakValue = document.getElementById("peak-value");
+  const peakTime = document.getElementById("peak-time");
+
+  if (!display || !peakValue || !peakTime) return;
+
+  const station = forecastData?.stations?.[stationId];
+  if (!station?.forecast) {
+    display.style.display = "none";
+    return;
+  }
+
+  // Get today's date range in Pacific time
+  const now = new Date();
+  const pacificNow = new Date(now.toLocaleString("en-US", { timeZone: "America/Vancouver" }));
+  const todayStart = new Date(pacificNow.getFullYear(), pacificNow.getMonth(), pacificNow.getDate());
+  const todayEnd = new Date(todayStart);
+  todayEnd.setDate(todayEnd.getDate() + 1);
+
+  // Filter forecast data for today
+  let peakSurge = null;
+  let peakTimeStr = null;
+
+  Object.entries(station.forecast).forEach(([timeStr, value]) => {
+    const forecastTime = new Date(timeStr);
+    const pacificForecastTime = new Date(forecastTime.toLocaleString("en-US", { timeZone: "America/Vancouver" }));
+
+    if (pacificForecastTime >= todayStart && pacificForecastTime < todayEnd) {
+      if (peakSurge === null || Math.abs(value) > Math.abs(peakSurge)) {
+        peakSurge = value;
+        peakTimeStr = timeStr;
+      }
+    }
+  });
+
+  // Display peak if found
+  if (peakSurge !== null && peakTimeStr) {
+    const sign = peakSurge >= 0 ? "+" : "";
+    peakValue.textContent = `${sign}${peakSurge.toFixed(2)} m`;
+
+    const peakDate = new Date(peakTimeStr);
+    const timeFormatted = peakDate.toLocaleString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: "America/Vancouver"
+    });
+    peakTime.textContent = `at ${timeFormatted}`;
+
+    display.style.display = "block";
+  } else {
+    display.style.display = "none";
+  }
+}
+
 function updateForecastChart(stationId) {
   if (!forecastData?.stations?.[stationId]) {
     console.warn(`No forecast data found for station: ${stationId}`);
@@ -105,6 +161,9 @@ function updateForecastChart(stationId) {
     console.warn(`No forecast data for ${stationId}`);
     return;
   }
+
+  // Update peak display
+  updatePeakToday(stationId);
 
   // Prepare data
   const times = [];

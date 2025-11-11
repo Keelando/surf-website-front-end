@@ -60,6 +60,45 @@
   overflow: visible;
 }
 
+/* Chart date controls */
+.chart-date-controls {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.chart-date-label-container {
+  text-align: center;
+}
+
+#chart-date-label {
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.chart-nav-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+#prev-day-btn,
+#next-day-btn {
+  padding: 0.5rem 1rem;
+  font-size: 1.2rem;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  background: white;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+#prev-day-btn:hover,
+#next-day-btn:hover {
+  background: #f5f5f5;
+}
+
 /* =====================================================
    Tide Page Styles
    ===================================================== */
@@ -223,6 +262,23 @@
   #highlow-table td {
     padding: 0.5rem;
     font-size: 0.9rem;
+  }
+
+  /* Stack date selection controls vertically */
+  .chart-date-controls {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  #chart-date-label {
+    font-size: 0.95rem;
+  }
+
+  #prev-day-btn,
+  #next-day-btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 1.1rem;
   }
 }
 

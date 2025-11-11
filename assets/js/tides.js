@@ -15,14 +15,16 @@ let currentStationKey = null;
 const STATION_DISPLAY_NAMES = {
   'point_atkinson': 'Point Atkinson',
   'kitsilano': 'Kitsilano',
-  'vancouver': 'Vancouver',
-  'vancouver_harbour': 'Vancouver Harbour',
   'tsawwassen': 'Tsawwassen',
   'whiterock': 'White Rock',
   'crescent_pile': 'Crescent Beach',
-  'nanaimo': 'Nanaimo',
+  'nanaimo': 'Nanoose Bay',
   'new_westminster': 'New Westminster',
-  'campbell_river': 'Campbell River'
+  'campbell_river': 'Campbell River',
+  'tofino': 'Tofino',
+  'ucluelet': 'Ucluelet',
+  'port_renfrew': 'Port Renfrew',
+  'victoria_harbor': 'Victoria Harbor'
 };
 
 /* =====================================================
@@ -191,9 +193,14 @@ function displayStationMetadata(stationKey) {
   }
 
   const metadata = stationsMetadata[stationKey];
+
+  // Check if station has observations by looking at series array
+  const hasObservations = metadata.series && metadata.series.includes('wlo');
   const isPermanent = metadata.type === 'PERMANENT';
-  const typeClass = isPermanent ? 'station-type-permanent' : 'station-type-temporary';
-  const typeLabel = isPermanent ? '📡 Permanent Station' : '📊 Prediction Only';
+
+  // Determine badge based on observation capability
+  const typeClass = hasObservations ? 'station-type-permanent' : 'station-type-temporary';
+  const typeLabel = hasObservations ? '📡 Real-Time Observations' : '📊 Predictions Only';
 
   container.innerHTML = `
     <div class="metadata-item">
@@ -398,24 +405,37 @@ function displayStormSurge(station) {
   const predTime = new Date(station.prediction_now.time);
   const timeStr = formatTime(predTime);
 
-  // Get today's peak surge data from combinedWaterLevelData if available
+  // Calculate today's peak from forecast data
   let peakHtml = '';
   if (combinedWaterLevelData && combinedWaterLevelData.stations && combinedWaterLevelData.stations[currentStationKey]) {
     const stationData = combinedWaterLevelData.stations[currentStationKey];
-    if (stationData.peak) {
-      const peak = stationData.peak;
-      const peakTime = new Date(peak.time);
+    const forecast = stationData.forecast || [];
 
-      // Only show peak if it's today (Pacific time)
+    if (forecast.length > 0) {
+      // Get today's date range in Pacific time
       const now = new Date();
       const pacificNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Vancouver' }));
-      const pacificPeak = new Date(peakTime.toLocaleString('en-US', { timeZone: 'America/Vancouver' }));
+      const todayStart = new Date(pacificNow);
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date(pacificNow);
+      todayEnd.setHours(23, 59, 59, 999);
 
-      const isToday = pacificNow.getDate() === pacificPeak.getDate() &&
-                      pacificNow.getMonth() === pacificPeak.getMonth() &&
-                      pacificNow.getFullYear() === pacificPeak.getFullYear();
+      // Filter forecast for today only and find peak
+      let todayPeak = null;
+      forecast.forEach(entry => {
+        const entryTime = new Date(entry.time);
+        const pacificEntryTime = new Date(entryTime.toLocaleString('en-US', { timeZone: 'America/Vancouver' }));
 
-      if (isToday) {
+        // Check if this entry is today
+        if (pacificEntryTime >= todayStart && pacificEntryTime <= todayEnd) {
+          if (!todayPeak || entry.total_water_level_m > todayPeak.total_water_level_m) {
+            todayPeak = entry;
+          }
+        }
+      });
+
+      if (todayPeak) {
+        const peakTime = new Date(todayPeak.time);
         const peakTimeStr = peakTime.toLocaleTimeString('en-US', {
           hour: 'numeric',
           minute: '2-digit',
@@ -425,25 +445,15 @@ function displayStormSurge(station) {
 
         peakHtml = `
           <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #ddd;">
-            <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">
-              <strong>Today's Peak:</strong>
+            <div style="font-size: 0.9rem; color: #666; margin-bottom: 0.75rem;">
+              <strong>Today's Peak Tide Forecast</strong>
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.9rem;">
-              <div>
-                <div style="color: #666; font-size: 0.85rem;">Peak Surge</div>
-                <div style="font-weight: bold; color: #ff9800; font-size: 1.1rem;">
-                  ${peak.storm_surge_m >= 0 ? '+' : ''}${peak.storm_surge_m.toFixed(3)} m
-                </div>
-              </div>
-              <div>
-                <div style="color: #666; font-size: 0.85rem;">Total Water Level</div>
-                <div style="font-weight: bold; color: #9c27b0; font-size: 1.1rem;">
-                  ${peak.total_water_level_m.toFixed(2)} m
-                </div>
-              </div>
-            </div>
-            <div style="color: #666; margin-top: 0.5rem; font-size: 0.85rem;">
-              at ${peakTimeStr}
+            <div style="font-size: 0.95rem; line-height: 1.6;">
+              Today's forecasted peak water level is
+              <strong style="color: #9c27b0; font-size: 1.1rem;">${todayPeak.total_water_level_m.toFixed(2)} m</strong>
+              with a storm surge of
+              <strong style="color: #ff9800;">${todayPeak.storm_surge_m >= 0 ? '+' : ''}${todayPeak.storm_surge_m.toFixed(3)} m</strong>
+              at <strong style="color: #0077be;">${peakTimeStr}</strong>.
             </div>
           </div>
         `;
@@ -457,7 +467,7 @@ function displayStormSurge(station) {
         ${surge >= 0 ? '+' : ''}${surge.toFixed(3)} m
       </div>
       <div style="color: #666; margin-top: 0.25rem; font-size: 0.9rem;">
-        at ${timeStr}
+        Current (at ${timeStr})
       </div>
     </div>
     ${peakHtml}

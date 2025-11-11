@@ -73,7 +73,7 @@
 
       <!-- Storm Surge -->
       <div class="tide-data-group">
-        <h3>Predicted Storm Surge</h3>
+        <h3>Storm Surge Forecast</h3>
         <div id="storm-surge" class="tide-value">
           <p>Loading...</p>
         </div>
@@ -102,12 +102,14 @@
 
       <!-- Tide Prediction Chart -->
       <div class="tide-data-group">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-          <h3 style="margin: 0;">Tide & Water Level Forecast</h3>
-          <div style="display: flex; align-items: center; gap: 1rem;">
-            <button id="prev-day-btn" style="padding: 0.5rem 1rem; font-size: 1.2rem; cursor: pointer; border: 1px solid #ccc; background: white; border-radius: 4px;" title="Previous day">◀</button>
-            <span id="chart-date-label" style="font-weight: bold; min-width: 150px; text-align: center;">Today</span>
-            <button id="next-day-btn" style="padding: 0.5rem 1rem; font-size: 1.2rem; cursor: pointer; border: 1px solid #ccc; background: white; border-radius: 4px;" title="Next day">▶</button>
+        <h3>Tide & Water Level Forecast</h3>
+        <div class="chart-date-controls">
+          <div class="chart-date-label-container">
+            <span id="chart-date-label">Today</span>
+          </div>
+          <div class="chart-nav-buttons">
+            <button id="prev-day-btn" title="Previous day">◀</button>
+            <button id="next-day-btn" title="Next day">▶</button>
           </div>
         </div>
         <div id="tide-chart" style="width: 100%; height: 500px;"></div>

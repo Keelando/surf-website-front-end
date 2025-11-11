@@ -1,3 +1,11 @@
+// Helper function to convert degrees to cardinal direction
+function degreesToCardinal(degrees) {
+  if (degrees == null) return null;
+  const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+  const index = Math.round(degrees / 22.5) % 16;
+  return directions[index];
+}
+
 // Helper function to create rotated directional arrow
 // SVG approach - bulletproof across ALL browsers/devices (fixes Firefox Android tablet bug)
 function getDirectionalArrow(degrees, arrowType = 'wind') {
@@ -98,11 +106,15 @@ async function loadBuoyData() {
       const regionGroup = document.createElement("div");
       regionGroup.className = "region-group";
 
-      // Add region header
+      // Add region header (clickable to collapse/expand)
       const regionHeader = document.createElement("div");
       regionHeader.className = "region-header";
-      regionHeader.textContent = group.region;
+      regionHeader.style.cursor = "pointer";
+      regionHeader.style.userSelect = "none";
+      regionHeader.innerHTML = `<span class="region-toggle-btn">▼</span> ${group.region} <span style="font-size: 0.8em; font-weight: normal; opacity: 0.8;">(${group.stations.length} stations)</span>`;
+      regionHeader.onclick = () => toggleRegion(group.region);
       regionGroup.appendChild(regionHeader);
+      regionGroup.id = `region-${group.region.replace(/\s+/g, '-')}`;
 
       // Create grid container for this region's cards
       const cardsGrid = document.createElement("div");
@@ -159,176 +171,144 @@ async function loadBuoyData() {
       if (id === "46087" || id === "46088") {
         cardContent += ` <span style="font-size: 0.7em; color: #003087; font-weight: normal;">🇺🇸 NOAA</span>`;
       } else if (id === "CRPILE" || id === "CRCHAN" || id === "COLEB") {
-        cardContent += ` <span style="font-size: 0.7em; color: #006837; font-weight: normal;">🏛️ City of Surrey</span>`;
+        cardContent += ` <span style="font-size: 0.7em; color: #006837; font-weight: normal;">🏛️ Surrey (FlowWorks)</span>`;
       } else {
         cardContent += ` <span style="font-size: 0.7em; color: #006400; font-weight: normal;">🇨🇦 Env Canada</span>`;
       }
       
       cardContent += `</h2>`;
       cardContent += `<p style="font-size: 0.9em; color: #666; margin-top: -0.5rem;">Last Update: ${updated}${ageWarning}</p>`;
-      cardContent += `<div style="margin-top: 1rem;">`;
 
-      // NOAA buoys get enhanced wave display with collapse
-if (id === "46087" || id === "46088") {
-  // Wind first
-  cardContent += `<p class="buoy-metric"><b>💨 Wind:</b> ${windSpeed} kt G ${windGust} kt from ${b.wind_direction_cardinal ?? "—"} (${b.wind_direction ?? "—"}°) ${getDirectionalArrow(b.wind_direction, 'wind')}</p>`;
-  
-  // Special display for Dungeness (46088) - straddles open sea/inland transition
-  if (id === "46088") {
-    // Primary: Combined significant wave height
-    cardContent += `
-      <p class="buoy-metric" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #eee;"><b>🌊 Significant Wave Height:</b> ${b.wave_height_sig ?? "—"} m</p>
-      <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Average Period:</b> ${b.wave_period_avg ?? "—"} s</p>
-      <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Peak Direction:</b> ${b.wave_direction_peak_cardinal ?? "—"} (${b.wave_direction_peak ?? "—"}°) ${getDirectionalArrow(b.wave_direction_peak, 'wave')}</p>
-    `;
+      // === CONDENSED VIEW (Always visible) ===
+      cardContent += `<div class="card-compact-view" style="margin-top: 1rem;">`;
 
-    // Collapsible detailed wave breakdown
-    const detailsId = `details-${id}`;
-    cardContent += `
-      <button class="expand-btn" onclick="toggleDetails('${detailsId}')" style="
-        margin-top: 0.75rem;
-        padding: 0.5rem 1rem;
-        background: #f0f4f8;
-        border: 1px solid #d0d7de;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 0.9em;
-        color: #004b7c;
-        font-weight: 600;
-        width: 100%;
-        text-align: center;
-        transition: background 0.2s;
-      " onmouseover="this.style.background='#e1e8ed'" onmouseout="this.style.background='#f0f4f8'">
-        ▼ Show Wave Component Breakdown
-      </button>
-      
-      <div id="${detailsId}" style="display: none; margin-top: 0.75rem;">
-        <p class="buoy-metric" style="font-weight: 600; color: #004b7c; border-bottom: 1px solid #e0e0e0; padding-bottom: 0.25rem;">
-          💨 Wind Waves (Local Chop)
-        </p>
-        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Height:</b> ${b.wind_wave_height ?? "—"} m</p>
-        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Period:</b> ${b.wind_wave_period ?? "—"} s</p>
-        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Direction:</b> ${b.wind_wave_direction_cardinal ?? "—"} (${b.wind_wave_direction ?? "—"}°) ${getDirectionalArrow(b.wind_wave_direction, 'wave')}</p>
+      // Compact Wind Line
+      const windDisplay = windSpeed !== "—"
+        ? `${windSpeed} kt ${windGust !== "—" ? `G${windGust}` : ''} from ${b.wind_direction_cardinal ?? "—"} ${getDirectionalArrow(b.wind_direction, 'wind')}`
+        : "No data";
+      cardContent += `<p class="buoy-metric" style="margin: 0.5rem 0;"><b>💨 Wind:</b> ${windDisplay}</p>`;
 
-        <p class="buoy-metric" style="margin-top: 0.75rem; font-weight: 600; color: #004b7c; border-bottom: 1px solid #e0e0e0; padding-bottom: 0.25rem;">
-          🌊 Ocean Swell (Long Period)
-        </p>
-        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Height:</b> ${b.swell_height ?? "—"} m</p>
-        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Period:</b> ${b.swell_period ?? "—"} s</p>
-        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Direction:</b> ${b.swell_direction_cardinal ?? "—"} (${b.swell_direction ?? "—"}°) ${getDirectionalArrow(b.swell_direction, 'wave')}</p>
-      </div>
-    `;
-  } else {
-    // Standard NOAA display for 46087 (Neah Bay) - primary swell data
-    cardContent += `
-      <p class="buoy-metric" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #eee;"><b>🌊 Swell Height:</b> ${b.swell_height ?? "—"} m</p>
-      <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Swell Period:</b> ${b.swell_period ?? "—"} s</p>
-      <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Direction:</b> ${b.swell_direction_cardinal ?? "—"} (${b.swell_direction ?? "—"}°) ${getDirectionalArrow(b.swell_direction, 'wave')}</p>
-    `;
+      // Compact Wave Line
+      const waveHeight = b.wave_height_sig != null ? b.wave_height_sig.toFixed(2) : "—";
+      const wavePeriod = b.wave_period_avg != null ? b.wave_period_avg.toFixed(1) : b.wave_period_peak != null ? b.wave_period_peak.toFixed(1) : "—";
+      const waveDir = b.wave_direction_peak_cardinal ?? b.swell_direction_cardinal ?? "—";
+      const waveDisplay = waveHeight !== "—" && wavePeriod !== "—"
+        ? `${waveHeight} m @ ${wavePeriod} s from ${waveDir} ${getDirectionalArrow(b.wave_direction_peak ?? b.swell_direction, 'wave')}`
+        : "No data";
+      cardContent += `<p class="buoy-metric" style="margin: 0.5rem 0;"><b>🌊 Wave:</b> ${waveDisplay}</p>`;
 
-    // Collapsible detailed wave data
-    const detailsId = `details-${id}`;
-    cardContent += `
-      <button class="expand-btn" onclick="toggleDetails('${detailsId}')" style="
-        margin-top: 0.75rem;
-        padding: 0.5rem 1rem;
-        background: #f0f4f8;
-        border: 1px solid #d0d7de;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 0.9em;
-        color: #004b7c;
-        font-weight: 600;
-        width: 100%;
-        text-align: center;
-        transition: background 0.2s;
-      " onmouseover="this.style.background='#e1e8ed'" onmouseout="this.style.background='#f0f4f8'">
-        ▼ Show Detailed Wave Data
-      </button>
-      
-      <div id="${detailsId}" style="display: none; margin-top: 0.75rem;">
-        <p class="buoy-metric" style="font-weight: 600; color: #004b7c; border-bottom: 1px solid #e0e0e0; padding-bottom: 0.25rem;">
-          💨 Wind Waves (Local Chop)
-        </p>
-        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Height:</b> ${b.wind_wave_height ?? "—"} m</p>
-        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Period:</b> ${b.wind_wave_period ?? "—"} s</p>
-        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Direction:</b> ${b.wind_wave_direction_cardinal ?? "—"} (${b.wind_wave_direction ?? "—"}°) ${getDirectionalArrow(b.wind_wave_direction, 'wave')}</p>
+      cardContent += `</div>`; // End compact view
 
-        <p class="buoy-metric" style="margin-top: 0.75rem; font-weight: 600; color: #004b7c; border-bottom: 1px solid #e0e0e0; padding-bottom: 0.25rem;">
-          📊 Combined Wave Metrics
-        </p>
-        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Sig. Wave Height:</b> ${b.wave_height_sig ?? "—"} m</p>
-        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Average Period:</b> ${b.wave_period_avg ?? "—"} s</p>
-        <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Peak Direction:</b> ${b.wave_direction_peak_cardinal ?? "—"} (${b.wave_direction_peak ?? "—"}°) ${getDirectionalArrow(b.wave_direction_peak, 'wave')}</p>
-      </div>
-    `;
-  }
-  
-  // Temps and pressure (same for all NOAA buoys)
-  cardContent += `
-    <p class="buoy-metric" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #eee;"><b>🌡️ Sea Temperature:</b> ${b.sea_temp ?? "—"} °C | <b>Air:</b> ${b.air_temp ?? "—"} °C</p>
-    <p class="buoy-metric"><b>⏱️ Pressure:</b> ${b.pressure ?? "—"} hPa</p>
-  `;
-      } else {
-        // Standard Environment Canada wave display
+      // === EXPANDABLE BUTTONS ===
+      cardContent += `
+        <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
+          <button class="toggle-details-btn" onclick="toggleCardDetails('${id}')" style="
+            flex: 1;
+            padding: 0.5rem;
+            background: #f0f4f8;
+            border: 1px solid #d0d7de;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            color: #004b7c;
+            font-weight: 600;
+            transition: background 0.2s;
+          " onmouseover="this.style.background='#e1e8ed'" onmouseout="this.style.background='#f0f4f8'">
+            ▼ Show Details
+          </button>
+          <button class="toggle-history-btn" onclick="toggleCardHistory('${id}')" style="
+            flex: 1;
+            padding: 0.5rem;
+            background: #f0f4f8;
+            border: 1px solid #d0d7de;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            color: #004b7c;
+            font-weight: 600;
+            transition: background 0.2s;
+          " onmouseover="this.style.background='#e1e8ed'" onmouseout="this.style.background='#f0f4f8'">
+            📈 Show History (24h)
+          </button>
+        </div>
+      `;
 
-        // Wind first
-        cardContent += `<p class="buoy-metric"><b>💨 Wind:</b> ${windSpeed} kt G ${windGust} kt from ${b.wind_direction_cardinal ?? "—"} (${b.wind_direction ?? "—"}°) ${getDirectionalArrow(b.wind_direction, 'wind')}</p>`;
+      // === EXPANDABLE DETAILS SECTION (Hidden by default) ===
+      cardContent += `<div id="card-details-${id}" style="display: none; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e0e0e0;">`;
 
-        // Surrey stations (CRPILE, CRCHAN) get special precision formatting
-        const isSurrey = (id === "CRPILE" || id === "CRCHAN");
+      // Check if NOAA buoy with spectral data
+      const isNOAA = (id === "46087" || id === "46088");
 
-        // Wave height - 2 decimal places for Surrey, default for others
-        const waveHeight = b.wave_height_sig != null
-          ? (isSurrey ? b.wave_height_sig.toFixed(2) : b.wave_height_sig)
-          : "—";
+      if (isNOAA) {
+        // NOAA Spectral Wave Breakdown
+        cardContent += `<p class="buoy-metric" style="font-weight: 600; color: #004b7c; margin-bottom: 0.5rem;">Detailed Wave Metrics</p>`;
 
-        // Wave period - 1 decimal place for Surrey
-        let wavePeriod = "—";
-        if (b.wave_period_avg != null) {
-          const avgPeriod = isSurrey ? b.wave_period_avg.toFixed(1) : b.wave_period_avg;
-          wavePeriod = avgPeriod + " s";
-          if (b.wave_period_peak != null) {
-            const peakPeriod = isSurrey ? b.wave_period_peak.toFixed(1) : b.wave_period_peak;
-            wavePeriod += ` (${peakPeriod} s)`;
-          }
-        } else if (b.wave_period_peak != null) {
-          const peakPeriod = isSurrey ? b.wave_period_peak.toFixed(1) : b.wave_period_peak;
-          wavePeriod = `(${peakPeriod} s)`;
-        }
-
+        // Spectral wave breakdown
         cardContent += `
-          <p class="buoy-metric" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #eee;"><b>🌊 Sig Wave Height:</b> ${waveHeight} m</p>
-          <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Wave Period:</b> ${wavePeriod}</p>
-          <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Direction (Peak):</b> ${b.wave_direction_peak_cardinal ?? "—"} (${b.wave_direction_peak ?? "—"}°) ${getDirectionalArrow(b.wave_direction_peak, 'wave')}</p>
-        `;
+          <p class="buoy-metric" style="font-weight: 600; color: #004b7c; margin-bottom: 0.5rem;">💨 Wind Waves (Local Chop)</p>
+          <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Height:</b> ${b.wind_wave_height ?? "—"} m</p>
+          <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Period:</b> ${b.wind_wave_period ?? "—"} s</p>
+          <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Direction:</b> ${b.wind_wave_direction_cardinal ?? "—"} (${b.wind_wave_direction ?? "—"}°) ${getDirectionalArrow(b.wind_wave_direction, 'wave')}</p>
 
-        // Temps - 1 decimal place for Surrey
-        const seaTemp = b.sea_temp != null
-          ? (isSurrey ? b.sea_temp.toFixed(1) : b.sea_temp)
-          : "—";
-        const airTemp = b.air_temp != null
-          ? (isSurrey ? b.air_temp.toFixed(1) : b.air_temp)
-          : "—";
+          <p class="buoy-metric" style="margin-top: 0.75rem; font-weight: 600; color: #004b7c; margin-bottom: 0.5rem;">🌊 Ocean Swell (Long Period)</p>
+          <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Height:</b> ${b.swell_height ?? "—"} m</p>
+          <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Period:</b> ${b.swell_period ?? "—"} s</p>
+          <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Direction:</b> ${b.swell_direction_cardinal ?? "—"} (${b.swell_direction ?? "—"}°) ${getDirectionalArrow(b.swell_direction, 'wave')}</p>
 
-        // Temps and pressure
-        cardContent += `
-          <p class="buoy-metric" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #eee;"><b>🌡️ Sea Temperature:</b> ${seaTemp} °C | <b>Air:</b> ${airTemp} °C</p>
-          <p class="buoy-metric"><b>⏱️ Pressure:</b> ${b.pressure ?? "—"} hPa</p>
+          <p class="buoy-metric" style="margin-top: 0.75rem; font-weight: 600; color: #004b7c; margin-bottom: 0.5rem;">📊 Combined Metrics</p>
+          <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Sig. Wave Height:</b> ${b.wave_height_sig ?? "—"} m</p>
+          <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Average Period:</b> ${b.wave_period_avg ?? "—"} s</p>
+          <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Peak Direction:</b> ${b.wave_direction_peak_cardinal ?? "—"} (${b.wave_direction_peak ?? "—"}°) ${getDirectionalArrow(b.wave_direction_peak, 'wave')}</p>
         `;
       }
 
-      // Check if we have sufficient data for charts
+      // Temperatures and pressure (all stations)
+      const isSurrey = (id === "CRPILE" || id === "CRCHAN");
+      const seaTemp = b.sea_temp != null ? (isSurrey ? b.sea_temp.toFixed(1) : b.sea_temp) : "—";
+      const airTemp = b.air_temp != null ? (isSurrey ? b.air_temp.toFixed(1) : b.air_temp) : "—";
+
+      cardContent += `
+        <p class="buoy-metric" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #eee;"><b>🌡️ Sea:</b> ${seaTemp} °C | <b>Air:</b> ${airTemp} °C</p>
+        <p class="buoy-metric"><b>⏱️ Pressure:</b> ${b.pressure ?? "—"} hPa</p>
+      `;
+
+      cardContent += `</div>`; // Close expandable details section
+
+      // === EXPANDABLE HISTORY SECTION (Hidden by default) ===
+      cardContent += `<div id="card-history-${id}" style="display: none; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e0e0e0;"></div>`;
+
+      // === NAVIGATION LINKS ===
       const hasChartData = b.wave_height_sig != null || b.wind_speed != null;
       const chartButtonDisabled = !hasChartData ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : '';
 
-      // Add navigation links
       cardContent += `
-        <div class="buoy-nav-links">
-          <button class="buoy-nav-link" onclick="scrollToMap('${id}')">
+        <div class="buoy-nav-links" style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
+          <button class="buoy-nav-link" onclick="scrollToMap('${id}')" style="
+            flex: 1;
+            padding: 0.5rem;
+            background: #004b7c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: 600;
+            transition: background 0.2s;
+          " onmouseover="this.style.background='#003a5d'" onmouseout="this.style.background='#004b7c'">
             📍 View Location
           </button>
-          <button class="buoy-nav-link" onclick="scrollToCharts('${id}')" ${chartButtonDisabled}>
+          <button class="buoy-nav-link" onclick="scrollToCharts('${id}')" ${chartButtonDisabled} style="
+            flex: 1;
+            padding: 0.5rem;
+            background: #004b7c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: 600;
+            transition: background 0.2s;
+          " onmouseover="this.style.background='#003a5d'" onmouseout="this.style.background='#004b7c'">
             📊 View Charts
           </button>
         </div>
@@ -358,6 +338,15 @@ if (id === "46087" || id === "46088") {
       // Add grid to region group, then add region group to container
       regionGroup.appendChild(cardsGrid);
       container.appendChild(regionGroup);
+
+      // Collapse Boundary Bay and Juan de Fuca by default (keep Strait of Georgia expanded)
+      if (group.region !== "Strait of Georgia") {
+        const toggleBtn = regionHeader.querySelector('.region-toggle-btn');
+        if (toggleBtn && cardsGrid) {
+          cardsGrid.style.display = 'none';
+          toggleBtn.textContent = '▶';
+        }
+      }
     }); // end buoyGroups forEach
 
     const now = new Date();
@@ -372,20 +361,6 @@ if (id === "46087" || id === "46088") {
     console.error("Error loading buoy data:", err);
     container.innerHTML =
       `<p class="error">⚠️ Error loading buoy data. Please try again later.</p>`;
-  }
-}
-
-// Toggle function for expandable details
-function toggleDetails(detailsId) {
-  const details = document.getElementById(detailsId);
-  const button = event.target;
-
-  if (details.style.display === "none") {
-    details.style.display = "block";
-    button.textContent = "▲ Hide Detailed Wave Data";
-  } else {
-    details.style.display = "none";
-    button.textContent = "▼ Show Detailed Wave Data";
   }
 }
 
@@ -524,8 +499,8 @@ function renderHistoryTable(buoyId, timeseries) {
   const airTemp = timeseries.air_temp?.data || [];
   const seaTemp = timeseries.sea_temp?.data || [];
 
-  // Find common timestamps
-  const times = windSpeed.map(d => d.time).slice(-12);
+  // Find common timestamps - get last 12 and reverse for newest-first
+  const times = windSpeed.map(d => d.time).slice(-12).reverse();
 
   let tableHTML = `
     <div style="overflow-x: auto; margin-top: 1rem;">
@@ -546,6 +521,7 @@ function renderHistoryTable(buoyId, timeseries) {
 
   times.forEach(time => {
     const windSpeedVal = windSpeed.find(d => d.time === time)?.value;
+    const windDirVal = windDir.find(d => d.time === time)?.value;
     const windGustVal = windGust.find(d => d.time === time)?.value;
     const waveHeightVal = waveHeight.find(d => d.time === time)?.value;
     const wavePeriodVal = wavePeriod.find(d => d.time === time)?.value;
@@ -561,10 +537,20 @@ function renderHistoryTable(buoyId, timeseries) {
       timeZone: 'America/Vancouver'
     });
 
+    // Format wind with cardinal direction
+    let windDisplay = '—';
+    if (windSpeedVal != null) {
+      const cardinal = degreesToCardinal(windDirVal);
+      windDisplay = Math.round(windSpeedVal) + ' kt';
+      if (cardinal) {
+        windDisplay = cardinal + ' ' + windDisplay;
+      }
+    }
+
     tableHTML += `
       <tr>
         <td style="padding: 0.5rem; border: 1px solid #ddd;">${timeStr}</td>
-        <td style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">${windSpeedVal != null ? Math.round(windSpeedVal) + ' kt' : '—'}</td>
+        <td style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">${windDisplay}</td>
         <td style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">${windGustVal != null ? Math.round(windGustVal) + ' kt' : '—'}</td>
         <td style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">${waveHeightVal != null ? waveHeightVal.toFixed(2) + ' m' : '—'}</td>
         <td style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">${wavePeriodVal != null ? wavePeriodVal.toFixed(1) + ' s' : '—'}</td>
