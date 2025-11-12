@@ -69,7 +69,11 @@ function renderWindChart(windChart, buoy) {
   const yAxisMax = maxValue ? Math.ceil(maxValue * 1.1) : null;
 
   windChart.setOption({
-    title: { text: `${buoy.name} - Wind Conditions`, left: "center" },
+    title: {
+      text: `${buoy.name} - Wind Conditions`,
+      left: "center",
+      textStyle: { fontSize: window.innerWidth < 600 ? 12 : 14 }
+    },
     tooltip: {
       trigger: "axis",
       axisPointer: { type: "cross" },

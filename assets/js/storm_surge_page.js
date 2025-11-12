@@ -195,7 +195,7 @@ function updateForecastChart(stationId) {
     title: {
       text: `${station.station_name} - 10-Day Storm Surge Forecast`,
       left: "center",
-      textStyle: { fontSize: 16, fontWeight: 'bold' }
+      textStyle: { fontSize: window.innerWidth < 600 ? 12 : 14, fontWeight: 'bold' }
     },
     tooltip: {
       trigger: "axis",
@@ -513,7 +513,7 @@ function updateHindcastChart(stationId) {
     title: {
       text: `${station.station_name} - Hindcast Comparison (48h Predictions)`,
       left: "center",
-      textStyle: { fontSize: 16, fontWeight: 'bold' }
+      textStyle: { fontSize: window.innerWidth < 600 ? 12 : 14, fontWeight: 'bold' }
     },
     tooltip: {
       trigger: "axis",

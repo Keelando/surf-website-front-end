@@ -85,18 +85,18 @@ async function loadBuoyData() {
       }
     });
 
-    // Add "Last Updated" header (24-hour, no PT label)
+    // Add "Last Updated" header (24-hour, shorter format: "11/11 19:58")
     if (mostRecentTime) {
       const updateHeader = document.createElement("div");
       updateHeader.className = "last-updated-header";
       updateHeader.textContent = `Last Updated: ${mostRecentTime.toLocaleString("en-US", {
-        month: "short",
+        month: "numeric",
         day: "numeric",
         hour: "2-digit",
         minute: "2-digit",
         hour12: false,
         timeZone: "America/Vancouver"
-      })}`;
+      }).replace(',', '')}`;
       container.appendChild(updateHeader);
     }
 
@@ -139,16 +139,16 @@ async function loadBuoyData() {
           card.style.borderLeft = "4px solid #006837";
         }
 
-      // Format timestamp in Pacific Time (24-hour, no PT label)
+      // Format timestamp in Pacific Time (24-hour, shorter format: "11/11 19:58")
       const updated = b.observation_time
         ? new Date(b.observation_time).toLocaleString("en-US", {
-            month: "short",
+            month: "numeric",
             day: "numeric",
             hour: "2-digit",
             minute: "2-digit",
             hour12: false,
             timeZone: "America/Vancouver",
-          })
+          }).replace(',', '')
         : "—";
 
       // Calculate data age for staleness warning
@@ -182,20 +182,66 @@ async function loadBuoyData() {
       // === CONDENSED VIEW (Always visible) ===
       cardContent += `<div class="card-compact-view" style="margin-top: 1rem;">`;
 
-      // Compact Wind Line
-      const windDisplay = windSpeed !== "—"
-        ? `${windSpeed} kt ${windGust !== "—" ? `G${windGust}` : ''} from ${b.wind_direction_cardinal ?? "—"} ${getDirectionalArrow(b.wind_direction, 'wind')}`
-        : "No data";
+      // Compact Wind Line - Format: "WNW 15 G 20 kn (350°)"
+      let windDisplay = "No data";
+      if (windSpeed !== "—") {
+        const windCardinal = b.wind_direction_cardinal ?? "—";
+        const windDegrees = b.wind_direction != null ? ` (${Math.round(b.wind_direction)}°)` : "";
+        const gustPart = windGust !== "—" ? ` G ${windGust}` : "";
+        windDisplay = `${windCardinal} ${windSpeed}${gustPart} kn${windDegrees} ${getDirectionalArrow(b.wind_direction, 'wind')}`;
+      }
       cardContent += `<p class="buoy-metric" style="margin: 0.5rem 0;"><b>💨 Wind:</b> ${windDisplay}</p>`;
 
-      // Compact Wave Line
-      const waveHeight = b.wave_height_sig != null ? b.wave_height_sig.toFixed(2) : "—";
-      const wavePeriod = b.wave_period_avg != null ? b.wave_period_avg.toFixed(1) : b.wave_period_peak != null ? b.wave_period_peak.toFixed(1) : "—";
-      const waveDir = b.wave_direction_peak_cardinal ?? b.swell_direction_cardinal ?? "—";
-      const waveDisplay = waveHeight !== "—" && wavePeriod !== "—"
-        ? `${waveHeight} m @ ${wavePeriod} s from ${waveDir} ${getDirectionalArrow(b.wave_direction_peak ?? b.swell_direction, 'wave')}`
-        : "No data";
-      cardContent += `<p class="buoy-metric" style="margin: 0.5rem 0;"><b>🌊 Wave:</b> ${waveDisplay}</p>`;
+      // Compact Wave Line - Format: "W 0.4m @ 3.3s (270°)"
+      // For Neah Bay (46087), prioritize swell data as it measures continuous open swells
+      let waveDisplay = "No data";
+      let waveLabel = "🌊 Wave:";
+
+      // Determine decimal precision for wave height (Boundary Bay stations use 2 decimals)
+      const isBoundaryBay = (id === "CRPILE" || id === "CRCHAN");
+      const heightPrecision = isBoundaryBay ? 2 : 1;
+
+      if (id === "46087") {
+        // Neah Bay - show swell info
+        waveLabel = "🌊 Swell:";
+        const swellHeight = b.swell_height != null ? b.swell_height.toFixed(heightPrecision) : "—";
+        const swellPeriod = b.swell_period != null ? b.swell_period.toFixed(1) : null;
+        const swellDir = b.swell_direction_cardinal ?? null;
+        const swellDegrees = b.swell_direction != null ? ` (${Math.round(b.swell_direction)}°)` : "";
+        if (swellHeight !== "—") {
+          const dirDisplay = swellDir ? `${swellDir} ` : "";
+          const arrowDisplay = b.swell_direction != null ? ` ${getDirectionalArrow(b.swell_direction, 'wave')}` : "";
+          const periodDisplay = swellPeriod != null ? ` @ ${swellPeriod}s` : "";
+          waveDisplay = `${dirDisplay}${swellHeight}m${periodDisplay}${swellDegrees}${arrowDisplay}`;
+        }
+      } else if (id === "46088") {
+        // New Dungeness - show significant wave height and average period
+        const waveHeight = b.wave_height_sig != null ? b.wave_height_sig.toFixed(heightPrecision) : "—";
+        const wavePeriod = b.wave_period_avg != null ? b.wave_period_avg.toFixed(1) : null;
+        const waveDir = b.wave_direction_peak_cardinal ?? null;
+        const waveDegrees = b.wave_direction_peak != null ? ` (${Math.round(b.wave_direction_peak)}°)` : "";
+        if (waveHeight !== "—") {
+          const dirDisplay = waveDir ? `${waveDir} ` : "";
+          const arrowDisplay = b.wave_direction_peak != null ? ` ${getDirectionalArrow(b.wave_direction_peak, 'wave')}` : "";
+          const periodDisplay = wavePeriod != null ? ` @ ${wavePeriod}s` : "";
+          waveDisplay = `${dirDisplay}${waveHeight}m${periodDisplay}${waveDegrees}${arrowDisplay}`;
+        }
+      } else {
+        // Other buoys - show combined wave data
+        const waveHeight = b.wave_height_sig != null ? b.wave_height_sig.toFixed(heightPrecision) : "—";
+        const wavePeriod = b.wave_period_avg != null ? b.wave_period_avg.toFixed(1) : b.wave_period_peak != null ? b.wave_period_peak.toFixed(1) : null;
+        const waveDir = b.wave_direction_peak_cardinal ?? b.swell_direction_cardinal ?? null;
+        const waveDirectionValue = b.wave_direction_peak ?? b.swell_direction;
+        const waveDegrees = waveDirectionValue != null ? ` (${Math.round(waveDirectionValue)}°)` : "";
+
+        if (waveHeight !== "—") {
+          const dirDisplay = waveDir ? `${waveDir} ` : "";
+          const arrowDisplay = waveDirectionValue != null ? ` ${getDirectionalArrow(waveDirectionValue, 'wave')}` : "";
+          const periodDisplay = wavePeriod != null ? ` @ ${wavePeriod}s` : "";
+          waveDisplay = `${dirDisplay}${waveHeight}m${periodDisplay}${waveDegrees}${arrowDisplay}`;
+        }
+      }
+      cardContent += `<p class="buoy-metric" style="margin: 0.5rem 0;"><b>${waveLabel}</b> ${waveDisplay}</p>`;
 
       cardContent += `</div>`; // End compact view
 
@@ -228,7 +274,7 @@ async function loadBuoyData() {
             font-weight: 600;
             transition: background 0.2s;
           " onmouseover="this.style.background='#e1e8ed'" onmouseout="this.style.background='#f0f4f8'">
-            📈 Show History (24h)
+            📈 Show History (12h)
           </button>
         </div>
       `;
@@ -357,6 +403,9 @@ async function loadBuoyData() {
       hour12: false,
       timeZone: "America/Vancouver"
     })}`;
+
+    // Handle hash navigation after cards are loaded
+    handleHashNavigation();
   } catch (err) {
     console.error("Error loading buoy data:", err);
     container.innerHTML =
@@ -453,6 +502,14 @@ async function toggleCardHistory(buoyId) {
   const isHidden = historyDiv.style.display === 'none';
 
   if (isHidden) {
+    // Auto-collapse Details section when opening History
+    const detailsDiv = document.getElementById(`card-details-${buoyId}`);
+    const detailsButton = document.querySelector(`#buoy-${buoyId} .toggle-details-btn`);
+    if (detailsDiv && detailsDiv.style.display !== 'none') {
+      detailsDiv.style.display = 'none';
+      if (detailsButton) detailsButton.textContent = '▼ Show Details';
+    }
+
     // Load and display history
     button.textContent = 'Loading...';
     button.disabled = true;
@@ -484,7 +541,7 @@ async function toggleCardHistory(buoyId) {
     }
   } else {
     historyDiv.style.display = 'none';
-    button.textContent = '▼ Show History (24h)';
+    button.textContent = '▼ Show History (12h)';
   }
 }
 
@@ -494,30 +551,71 @@ function renderHistoryTable(buoyId, timeseries) {
   const windSpeed = timeseries.wind_speed?.data || [];
   const windDir = timeseries.wind_direction?.data || [];
   const windGust = timeseries.wind_gust?.data || [];
-  const waveHeight = timeseries.wave_height_sig?.data || [];
-  const wavePeriod = timeseries.wave_period_avg?.data || [];
+
+  // For Neah Bay, use swell data (long-period ocean waves)
+  // For other buoys, use combined wave metrics
+  const isNeahBay = (buoyId === "46087");
+  const waveHeight = isNeahBay
+    ? (timeseries.swell_height?.data || [])
+    : (timeseries.wave_height_sig?.data || []);
+  const wavePeriod = isNeahBay
+    ? (timeseries.swell_period?.data || [])
+    : (timeseries.wave_period_avg?.data || []);
+
   const airTemp = timeseries.air_temp?.data || [];
   const seaTemp = timeseries.sea_temp?.data || [];
 
-  // Find common timestamps - get last 12 and reverse for newest-first
-  const times = windSpeed.map(d => d.time).slice(-12).reverse();
+  console.log(`[History] ${buoyId}: windSpeed=${windSpeed.length}, waveHeight=${waveHeight.length} points`);
+
+  // Show all rows where wave data exists (wind may have gaps)
+  let allTimes = waveHeight.map(d => d.time);
+
+  // For Crescent stations, filter to hourly intervals only (on the hour)
+  const isCrescentStation = (buoyId === "CRPILE" || buoyId === "CRCHAN");
+  if (isCrescentStation) {
+    allTimes = allTimes.filter(time => {
+      const date = new Date(time);
+      return date.getMinutes() === 0; // Only include times on the hour
+    });
+  }
+
+  // Get last 12 hours of wave data
+  const now = new Date();
+  const twelveHoursAgo = new Date(now - 12 * 60 * 60 * 1000);
+  const times = allTimes.filter(time => new Date(time) >= twelveHoursAgo).sort().reverse();
+
+  console.log(`[History] ${buoyId}: Showing ${times.length} rows (all wave data, wind when available)`);
+
+  console.log(`[History] ${buoyId}: Generated ${times.length} time entries for table`);
+
+  // Responsive scroll indicator - only show on mobile, positioned OUTSIDE table
+  const scrollIndicator = window.innerWidth < 768
+    ? `<div style="text-align: center; margin-bottom: 0.25rem; padding: 0.25rem 0.5rem; background: rgba(0, 75, 124, 0.1); font-size: 0.65rem; color: #004b7c; border-radius: 4px;">← Scroll table horizontally →</div>`
+    : '';
 
   let tableHTML = `
-    <div style="overflow-x: auto; margin-top: 1rem;">
-      <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+    ${scrollIndicator}
+    <div style="overflow-x: auto; margin-top: 0.5rem; width: 100%; max-width: 100%; -webkit-overflow-scrolling: touch; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+      <table style="border-collapse: collapse; font-size: 0.8rem; width: max-content; min-width: 100%; table-layout: auto;">
         <thead>
           <tr style="background: #f5f5f5;">
-            <th style="padding: 0.5rem; border: 1px solid #ddd; text-align: left;">Time</th>
-            <th style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">Wind</th>
-            <th style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">Gust</th>
-            <th style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">Wave Ht</th>
-            <th style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">Period</th>
-            <th style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">Air °C</th>
-            <th style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">Sea °C</th>
+            <th style="padding: 0.4rem 0.3rem; border-bottom: 1px solid #ddd; border-right: 1px solid #ddd; text-align: left; white-space: nowrap; min-width: 80px;">Time</th>
+            <th style="padding: 0.4rem 0.3rem; border-bottom: 1px solid #ddd; border-right: 1px solid #ddd; text-align: center; white-space: nowrap; min-width: 95px;">Wind [kn]</th>
+            <th style="padding: 0.4rem 0.3rem; border-bottom: 1px solid #ddd; border-right: 1px solid #ddd; text-align: center; white-space: nowrap; min-width: 65px;">Wave Ht [m]</th>
+            <th style="padding: 0.4rem 0.3rem; border-bottom: 1px solid #ddd; border-right: 1px solid #ddd; text-align: center; white-space: nowrap; min-width: 60px;">Period [s]</th>
+            <th style="padding: 0.4rem 0.3rem; border-bottom: 1px solid #ddd; border-right: 1px solid #ddd; text-align: center; white-space: nowrap; min-width: 55px;">Sea [°C]</th>
+            <th style="padding: 0.4rem 0.3rem; border-bottom: 1px solid #ddd; text-align: center; white-space: nowrap; min-width: 55px;">Air [°C]</th>
           </tr>
         </thead>
         <tbody>
   `;
+
+  // Determine wave height precision based on buoy type
+  const isBoundaryBay = (buoyId === "CRPILE" || buoyId === "CRCHAN");
+  const waveHeightDecimals = isBoundaryBay ? 2 : 1;
+
+  // Track previous date for conditional date display
+  let previousDate = null;
 
   times.forEach(time => {
     const windSpeedVal = windSpeed.find(d => d.time === time)?.value;
@@ -528,34 +626,44 @@ function renderHistoryTable(buoyId, timeseries) {
     const airTempVal = airTemp.find(d => d.time === time)?.value;
     const seaTempVal = seaTemp.find(d => d.time === time)?.value;
 
-    const timeStr = new Date(time).toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-      timeZone: 'America/Vancouver'
-    });
+    const dateObj = new Date(time);
 
-    // Format wind with cardinal direction
+    // Format: "Mo-11 08h10" (2-letter weekday, day, hour, minutes if not :00)
+    const dayOfWeek = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'][dateObj.getDay()];
+    const dayOfMonth = dateObj.toLocaleString('en-US', { day: 'numeric', timeZone: 'America/Vancouver' });
+    const hour = dateObj.toLocaleString('en-US', { hour: '2-digit', hour12: false, timeZone: 'America/Vancouver' });
+    const minute = dateObj.toLocaleString('en-US', { minute: '2-digit', timeZone: 'America/Vancouver' });
+
+    // Only show date prefix if it changed from previous row
+    const currentDate = `${dayOfWeek}-${dayOfMonth}`;
+    const minuteSuffix = minute !== '00' ? minute : '';
+    let timeStr;
+    if (currentDate !== previousDate) {
+      // New date: show date on first line, hour+minutes on second line
+      timeStr = `${currentDate}<br/>${hour}h${minuteSuffix}`;
+      previousDate = currentDate;
+    } else {
+      // Same date: just show hour+minutes
+      timeStr = `${hour}h${minuteSuffix}`;
+    }
+
+    // Format wind with cardinal direction and gust: "WNW 10 gust 15"
     let windDisplay = '—';
     if (windSpeedVal != null) {
       const cardinal = degreesToCardinal(windDirVal);
-      windDisplay = Math.round(windSpeedVal) + ' kt';
-      if (cardinal) {
-        windDisplay = cardinal + ' ' + windDisplay;
-      }
+      const cardinalStr = cardinal ? `${cardinal} ` : '';
+      const gustStr = windGustVal != null ? ` gust ${Math.round(windGustVal)}` : '';
+      windDisplay = `${cardinalStr}${Math.round(windSpeedVal)}${gustStr}`;
     }
 
     tableHTML += `
       <tr>
-        <td style="padding: 0.5rem; border: 1px solid #ddd;">${timeStr}</td>
-        <td style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">${windDisplay}</td>
-        <td style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">${windGustVal != null ? Math.round(windGustVal) + ' kt' : '—'}</td>
-        <td style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">${waveHeightVal != null ? waveHeightVal.toFixed(2) + ' m' : '—'}</td>
-        <td style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">${wavePeriodVal != null ? wavePeriodVal.toFixed(1) + ' s' : '—'}</td>
-        <td style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">${airTempVal != null ? airTempVal.toFixed(1) : '—'}</td>
-        <td style="padding: 0.5rem; border: 1px solid #ddd; text-align: center;">${seaTempVal != null ? seaTempVal.toFixed(1) : '—'}</td>
+        <td style="padding: 0.4rem 0.3rem; border-bottom: 1px solid #eee; border-right: 1px solid #eee; white-space: nowrap;">${timeStr}</td>
+        <td style="padding: 0.4rem 0.3rem; border-bottom: 1px solid #eee; border-right: 1px solid #eee; text-align: center; white-space: nowrap;">${windDisplay}</td>
+        <td style="padding: 0.4rem 0.3rem; border-bottom: 1px solid #eee; border-right: 1px solid #eee; text-align: center;">${waveHeightVal != null ? waveHeightVal.toFixed(waveHeightDecimals) : '—'}</td>
+        <td style="padding: 0.4rem 0.3rem; border-bottom: 1px solid #eee; border-right: 1px solid #eee; text-align: center;">${wavePeriodVal != null ? wavePeriodVal.toFixed(1) : '—'}</td>
+        <td style="padding: 0.4rem 0.3rem; border-bottom: 1px solid #eee; border-right: 1px solid #eee; text-align: center;">${seaTempVal != null ? seaTempVal.toFixed(1) : '—'}</td>
+        <td style="padding: 0.4rem 0.3rem; border-bottom: 1px solid #eee; text-align: center;">${airTempVal != null ? airTempVal.toFixed(1) : '—'}</td>
       </tr>
     `;
   });
@@ -566,8 +674,52 @@ function renderHistoryTable(buoyId, timeseries) {
     </div>
   `;
 
+  // Add note for Neah Bay explaining swell data
+  if (isNeahBay) {
+    tableHTML += `
+      <div style="margin-top: 0.5rem; padding: 0.5rem; background: #f0f8ff; border-left: 3px solid #003087; font-size: 0.75rem; color: #555; line-height: 1.4;">
+        <strong>Note:</strong> Neah Bay displays <strong>swell data</strong> (long-period ocean waves from distant storms) rather than combined wave metrics. Wind waves are typically much smaller at this location.
+      </div>
+    `;
+  }
+
+  console.log(`[History] ${buoyId}: Rendered table with ${times.length} rows`);
   return tableHTML;
+}
+
+// Handle hash navigation from map (e.g., /#buoy-46087)
+function handleHashNavigation() {
+  const hash = window.location.hash;
+  if (hash && hash.startsWith('#buoy-')) {
+    const buoyId = hash.replace('#buoy-', '');
+    const buoyCard = document.getElementById(`buoy-${buoyId}`);
+
+    if (buoyCard) {
+      // Find the parent region
+      const regionGroup = buoyCard.closest('.region-group');
+      if (regionGroup) {
+        const cardsGrid = regionGroup.querySelector('.buoy-cards-grid');
+        const toggleBtn = regionGroup.querySelector('.region-toggle-btn');
+
+        // Expand region if collapsed
+        if (cardsGrid && cardsGrid.style.display === 'none') {
+          cardsGrid.style.display = 'grid';
+          if (toggleBtn) toggleBtn.textContent = '▼';
+        }
+      }
+
+      // Scroll to the card after a short delay to ensure rendering
+      setTimeout(() => {
+        buoyCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        buoyCard.classList.add('highlight-pulse');
+        setTimeout(() => buoyCard.classList.remove('highlight-pulse'), 2000);
+      }, 300);
+    }
+  }
 }
 
 loadBuoyData();
 setInterval(loadBuoyData, 5 * 60 * 1000);
+
+// Handle hash navigation when hash changes (clicking map links)
+window.addEventListener('hashchange', handleHashNavigation);

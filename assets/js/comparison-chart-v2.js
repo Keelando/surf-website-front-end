@@ -57,7 +57,11 @@ function renderComparisonChart(waveComparisonChart, chartData) {
     .filter(Boolean);
 
   waveComparisonChart.setOption({
-    title: { text: "Sig Wave Height (All)", left: "center" },
+    title: {
+      text: "Sig Wave Height (All)",
+      left: "center",
+      textStyle: { fontSize: window.innerWidth < 600 ? 12 : 14 }
+    },
 
     tooltip: {
       trigger: "axis",

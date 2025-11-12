@@ -145,6 +145,9 @@ footer {
 
   .buoy-card {
     padding: 1rem;
+    max-width: 100%;
+    width: 100%;
+    overflow: hidden;
   }
 
   /* Fix buoy selector overflow on mobile (Firefox) */

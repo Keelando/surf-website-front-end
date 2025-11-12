@@ -39,7 +39,11 @@ function renderNewDungenessCharts(waveChart, buoy, ts) {
   });
 
   waveChart.setOption({
-    title: { text: `${buoy.name} - Wave Height Components`, left: "center" },
+    title: {
+      text: `${buoy.name} - Wave Height Components`,
+      left: "center",
+      textStyle: { fontSize: window.innerWidth < 600 ? 12 : 14 }
+    },
     tooltip: {
       trigger: "axis",
       axisPointer: { type: "cross" },
@@ -144,7 +148,11 @@ function renderNewDungenessCharts(waveChart, buoy, ts) {
     }
 
     window.wavePeriodChart.setOption({
-      title: { text: `${buoy.name} - Wave Period Components`, left: "center" },
+      title: {
+        text: `${buoy.name} - Wave Period Components`,
+        left: "center",
+        textStyle: { fontSize: window.innerWidth < 600 ? 12 : 14 }
+      },
       tooltip: {
         trigger: "axis",
         axisPointer: { type: "cross" },
@@ -262,7 +270,11 @@ function renderStandardWaveChart(waveChart, buoy, buoyId, ts) {
   }
 
   waveChart.setOption({
-    title: { text: chartTitle, left: "center" },
+    title: {
+      text: chartTitle,
+      left: "center",
+      textStyle: { fontSize: window.innerWidth < 600 ? 12 : 14 }
+    },
     tooltip: {
       trigger: "axis",
       axisPointer: { type: "cross" },

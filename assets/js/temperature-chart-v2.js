@@ -14,7 +14,11 @@ function renderTemperatureChart(tempChart, buoy) {
   const seaTempData = ts.sea_temp?.data || [];
 
   tempChart.setOption({
-    title: { text: `${buoy.name} - Temperature`, left: "center" },
+    title: {
+      text: `${buoy.name} - Temperature`,
+      left: "center",
+      textStyle: { fontSize: window.innerWidth < 600 ? 12 : 14 }
+    },
     tooltip: {
       trigger: "axis",
       axisPointer: { type: "cross" },

@@ -119,7 +119,7 @@ function updateSurgeChart(stationId) {
     title: {
       text: `${station.station_name} - Storm Surge Forecast`,
       left: "center",
-      textStyle: { fontSize: 16 }
+      textStyle: { fontSize: window.innerWidth < 600 ? 12 : 14 }
     },
     tooltip: {
       trigger: "axis",
