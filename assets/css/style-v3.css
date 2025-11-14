@@ -750,3 +750,33 @@ header h2 {
     min-width: 200px;
   }
 }
+
+/* -----------------------------
+   Reusable Link & Button Styles
+----------------------------- */
+
+/* GitHub link hover effect (replaces inline onmouseover/onmouseout) */
+.github-link {
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.github-link:hover {
+  opacity: 1;
+}
+
+/* Button primary (replaces inline button styles) */
+.button-primary {
+  padding: 0.5rem 1rem;
+  background: #0077be;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.button-primary:hover {
+  background: #005a8f;
+}
