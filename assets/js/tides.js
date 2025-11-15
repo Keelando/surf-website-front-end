@@ -18,7 +18,7 @@ const STATION_DISPLAY_NAMES = {
   'tsawwassen': 'Tsawwassen',
   'whiterock': 'White Rock',
   'crescent_pile': 'Crescent Beach',
-  'nanaimo': 'Nanoose Bay',
+  'nanaimo': 'Nanoose Bay (Nanaimo)',
   'new_westminster': 'New Westminster',
   'campbell_river': 'Campbell River',
   'tofino': 'Tofino',
@@ -93,7 +93,13 @@ function populateStationDropdown() {
   stations.forEach(stationKey => {
     const option = document.createElement('option');
     option.value = stationKey;
-    option.textContent = STATION_DISPLAY_NAMES[stationKey] || stationKey;
+
+    // Check if station has observations
+    const metadata = stationsMetadata?.[stationKey];
+    const hasObservations = metadata?.series && metadata.series.includes('wlo');
+    const indicator = hasObservations ? ' 📡' : '';
+
+    option.textContent = (STATION_DISPLAY_NAMES[stationKey] || stationKey) + indicator;
     select.appendChild(option);
   });
 
