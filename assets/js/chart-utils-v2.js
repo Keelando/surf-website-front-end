@@ -84,3 +84,47 @@ function getResponsiveGridConfig(isComparisonChart = false) {
     };
   }
 }
+
+/**
+ * Display error message in chart container
+ * @param {HTMLElement|string} container - DOM element or element ID
+ * @param {string} chartName - Name of the chart for error message
+ * @param {Error} error - The error object
+ */
+function showChartError(container, chartName, error) {
+  const element = typeof container === 'string'
+    ? document.getElementById(container)
+    : container;
+
+  if (!element) {
+    console.error(`Chart container not found: ${container}`);
+    return;
+  }
+
+  console.error(`Error rendering ${chartName}:`, error);
+
+  element.innerHTML = `
+    <div style="display: flex; align-items: center; justify-content: center; height: 100%; min-height: 200px; padding: 2rem; text-align: center;">
+      <div>
+        <div style="color: #e53935; font-size: 1.2rem; margin-bottom: 0.5rem;">⚠️ Chart Error</div>
+        <div style="color: #666; font-size: 0.9rem;">Unable to load ${chartName}</div>
+        <div style="color: #999; font-size: 0.8rem; margin-top: 0.5rem;">Check console for details</div>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Safely render chart with error handling
+ * @param {Function} renderFn - Chart rendering function
+ * @param {HTMLElement|string} container - DOM element or element ID
+ * @param {string} chartName - Name of the chart for error messages
+ * @param {...any} args - Arguments to pass to renderFn
+ */
+function safeRenderChart(renderFn, container, chartName, ...args) {
+  try {
+    renderFn(...args);
+  } catch (error) {
+    showChartError(container, chartName, error);
+  }
+}

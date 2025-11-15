@@ -8,12 +8,13 @@
  * @param {Object} chartData - Full chart data object with all buoys
  */
 function generateWaveHeightTable(chartData) {
-  if (!chartData) return;
+  try {
+    if (!chartData) return;
 
-  const table = document.getElementById("wave-height-table");
-  if (!table) return;
+    const table = document.getElementById("wave-height-table");
+    if (!table) return;
 
-  const buoyOrder = ["4600146", "4600304", "CRPILE", "4600303", "4600131", "46087", "46088"];
+    const buoyOrder = ["4600146", "4600304", "CRPILE", "4600303", "4600131", "46087", "46088"];
   const hourMap = new Map();
 
   buoyOrder.forEach((buoyId) => {
@@ -92,4 +93,11 @@ function generateWaveHeightTable(chartData) {
 
   tableHTML += "</tbody>";
   table.innerHTML = tableHTML;
+  } catch (error) {
+    console.error('Error generating wave height table:', error);
+    const table = document.getElementById("wave-height-table");
+    if (table) {
+      table.innerHTML = '<tbody><tr><td colspan="8" style="text-align: center; color: #e53935; padding: 2rem;">Error generating table</td></tr></tbody>';
+    }
+  }
 }
