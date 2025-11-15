@@ -34,32 +34,27 @@ const STATION_DISPLAY_NAMES = {
 async function loadTideData() {
   try {
     // Load all tide JSON files plus stations metadata and combined water level
-    const [currentRes, timeseriesRes, highlowRes, combinedRes, stationsRes] = await Promise.all([
-      fetch(`/data/tide-latest.json?t=${Date.now()}`),
-      fetch(`/data/tide-timeseries.json?t=${Date.now()}`),
-      fetch(`/data/tide-hi-low.json?t=${Date.now()}`),
-      fetch(`/data/combined-water-level.json?t=${Date.now()}`),
-      fetch(`/data/stations.json?t=${Date.now()}`)
+    const [tideCurrentData_temp, tideTimeseriesData_temp, tideHighLowData_temp, combinedWaterLevelData_temp, stationsMetadata_temp] = await Promise.all([
+      fetchWithTimeout(`/data/tide-latest.json?t=${Date.now()}`),
+      fetchWithTimeout(`/data/tide-timeseries.json?t=${Date.now()}`),
+      fetchWithTimeout(`/data/tide-hi-low.json?t=${Date.now()}`),
+      fetchWithTimeout(`/data/combined-water-level.json?t=${Date.now()}`).catch(() => null),
+      fetchWithTimeout(`/data/stations.json?t=${Date.now()}`).catch(() => null)
     ]);
 
-    if (!currentRes.ok || !timeseriesRes.ok || !highlowRes.ok) {
-      throw new Error('Failed to fetch tide data');
-    }
+    tideCurrentData = tideCurrentData_temp;
+    tideTimeseriesData = tideTimeseriesData_temp;
+    tideHighLowData = tideHighLowData_temp;
 
-    tideCurrentData = await currentRes.json();
-    tideTimeseriesData = await timeseriesRes.json();
-    tideHighLowData = await highlowRes.json();
-
-    if (combinedRes.ok) {
-      combinedWaterLevelData = await combinedRes.json();
+    if (combinedWaterLevelData_temp) {
+      combinedWaterLevelData = combinedWaterLevelData_temp;
       console.log('✅ Loaded combined water level data');
     } else {
       console.warn('Combined water level data not available');
     }
 
-    if (stationsRes.ok) {
-      const allStations = await stationsRes.json();
-      stationsMetadata = allStations.tides || {};
+    if (stationsMetadata_temp) {
+      stationsMetadata = stationsMetadata_temp.tides || {};
     }
 
     populateStationDropdown();

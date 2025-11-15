@@ -11,9 +11,7 @@ let waveChart, windChart, tempChart, waveComparisonChart;
  */
 async function loadChartsData() {
   try {
-    const response = await fetch(`/data/buoy_timeseries_24h.json?t=${Date.now()}`);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    chartData = await response.json();
+    chartData = await fetchWithTimeout(`/data/buoy_timeseries_24h.json?t=${Date.now()}`);
 
     if (chartData._meta?.generated_utc) {
       const dataTime = new Date(chartData._meta.generated_utc);

@@ -933,3 +933,36 @@ header h2 {
 .leading-relaxed {
   line-height: 1.6;
 }
+
+/* Display utilities */
+.hidden {
+  display: none;
+}
+
+/* Text decoration */
+.no-underline {
+  text-decoration: none;
+}
+
+/* Vertical alignment */
+.align-middle {
+  vertical-align: middle;
+}
+
+/* Font weight */
+.font-semibold {
+  font-weight: 600;
+}
+
+/* Color utilities (extended) */
+.color-white {
+  color: white;
+}
+
+.color-warning {
+  color: #ff9800;
+}
+
+.color-error {
+  color: #e53935;
+}

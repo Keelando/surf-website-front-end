@@ -159,13 +159,7 @@ async function displayWarningBanners(containerId = 'warning-banner-container') {
   }
 
   try {
-    const response = await fetch(`/data/marine_forecast.json?t=${Date.now()}`);
-    if (!response.ok) {
-      console.warn('Marine forecast data not available');
-      return;
-    }
-
-    const data = await response.json();
+    const data = await fetchWithTimeout(`/data/marine_forecast.json?t=${Date.now()}`);
     const warnings = collectActiveWarnings(data);
 
     // Filter out dismissed warnings

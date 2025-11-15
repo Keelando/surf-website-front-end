@@ -17,9 +17,7 @@ const STATION_ORDER = [
 
 async function loadStormSurgeData() {
   try {
-    const response = await fetch(`/data/storm_surge/combined_forecast.json?t=${Date.now()}`);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    surgeData = await response.json();
+    surgeData = await fetchWithTimeout(`/data/storm_surge/combined_forecast.json?t=${Date.now()}`);
     
     // Initialize the selector if not already done
     initStationSelector();

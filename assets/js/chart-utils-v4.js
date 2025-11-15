@@ -4,6 +4,52 @@
    ----------------------------- */
 
 /**
+ * Fetch with timeout and retry logic
+ * @param {string} url - URL to fetch
+ * @param {Object} options - Fetch options plus timeout/retry config
+ * @param {number} options.timeout - Timeout in milliseconds (default: 10000)
+ * @param {number} options.maxRetries - Maximum retry attempts (default: 3)
+ * @param {number} options.retryDelay - Base delay between retries in ms (default: 1000)
+ * @returns {Promise<any>} Parsed JSON response
+ */
+async function fetchWithTimeout(url, options = {}) {
+  const timeout = options.timeout || 10000;
+  const maxRetries = options.maxRetries || 3;
+  const retryDelay = options.retryDelay || 1000;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+      const fetchOptions = { ...options };
+      delete fetchOptions.timeout;
+      delete fetchOptions.maxRetries;
+      delete fetchOptions.retryDelay;
+      fetchOptions.signal = controller.signal;
+
+      const response = await fetch(url, fetchOptions);
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      if (attempt === maxRetries) {
+        console.error(`Fetch failed after ${maxRetries} attempts:`, error);
+        throw error;
+      }
+
+      const delay = retryDelay * attempt;
+      console.warn(`Fetch attempt ${attempt} failed, retrying in ${delay}ms...`, error.message);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+}
+
+/**
  * Sanitize series data for ECharts
  * Converts invalid values (null, NaN, "MM") to [timestamp, null]
  */

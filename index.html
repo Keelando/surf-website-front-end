@@ -19,10 +19,10 @@
   <meta property="og:image" content="https://halibutbank.ca/assets/img/social_preview.jpg" />
 
   <link rel="canonical" href="https://halibutbank.ca/" />
-  <link rel="stylesheet" href="/assets/css/style-v3.css?v=20251112" />
-  <link rel="stylesheet" href="/assets/css/nav-tide-styles-v3.css" />
-  <link rel="stylesheet" href="/assets/css/stations-map-v3.css" />
-  <link rel="stylesheet" href="/assets/css/warning-banner-v3.css" />
+  <link rel="stylesheet" href="/assets/css/style-v4.css?v=20251112" />
+  <link rel="stylesheet" href="/assets/css/nav-tide-styles-v4.css" />
+  <link rel="stylesheet" href="/assets/css/stations-map-v4.css" />
+  <link rel="stylesheet" href="/assets/css/warning-banner-v4.css" />
 
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -95,8 +95,8 @@
     <div id="wave-comparison-chart" class="w-full h-400"></div>
     <div class="mt-sm p-md bg-surface-light rounded-md text-sm color-muted text-center leading-relaxed">
       <strong>Wave Breaking Thresholds:</strong>
-      <span style="color: #ff9800; font-weight: 600;">0.7m</span> — Small wind-driven waves may begin to break on exposed sandy beaches |
-      <span style="color: #e53935; font-weight: 600;">1.2m</span> — Moderate waves begin breaking on exposed sandy beaches
+      <span class="color-warning font-semibold">0.7m</span> — Small wind-driven waves may begin to break on exposed sandy beaches |
+      <span class="color-error font-semibold">1.2m</span> — Moderate waves begin breaking on exposed sandy beaches
     </div>
     <div id="buoy-selector">
       <label for="chart-buoy-select">Select Buoy:</label>
@@ -114,7 +114,7 @@
 
     <div id="wave-chart" class="w-full h-500"></div>
     <!-- New Dungeness second chart (hidden by default) -->
-    <div id="wave-period-chart" class="w-full h-500" style="display: none; margin-top: 2rem;"></div>
+    <div id="wave-period-chart" class="w-full h-500 hidden mt-lg"></div>
 
     <div id="wind-chart" class="w-full h-400"></div>
     <div id="temp-chart" class="w-full h-400"></div>
@@ -171,7 +171,7 @@
       This site is <strong>actively developed</strong> and open source.
       For feature requests or feedback, email <a href="mailto:windwaves604@outlook.com" class="color-primary">windwaves604@outlook.com</a>
       or visit the <a href="https://github.com/Keelando/surf-website" target="_blank" rel="noopener" class="github-link color-primary inline-flex gap-sm" aria-label="Visit GitHub repository">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: middle;" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" class="align-middle" aria-hidden="true">
           <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
         </svg>
         GitHub repository
@@ -208,8 +208,8 @@
     <p>Please independently verify this data and do not base recreational activities around this information. This website is in no way affiliated with Environment Canada, NOAA, DFO, or City of Surrey.</p>
     <p><small>Data sources: Environment Canada, NOAA NDBC, DFO IWLS, City of Surrey FlowWorks | <span id="timestamp">Loading...</span></small></p>
     <p class="mt-md">
-      <a href="https://github.com/Keelando/surf-website" target="_blank" rel="noopener noreferrer" class="github-link inline-flex gap-md" style="color: white; text-decoration: none;" aria-label="View project on GitHub">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: middle;" aria-hidden="true">
+      <a href="https://github.com/Keelando/surf-website" target="_blank" rel="noopener noreferrer" class="github-link inline-flex gap-md color-white no-underline" aria-label="View project on GitHub">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="align-middle" aria-hidden="true">
           <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
         </svg>
         View on GitHub
@@ -225,15 +225,15 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
   <script src="/assets/js/warning-banner.js"></script>
   <!-- Load chart utilities first to avoid race conditions -->
-  <script src="/assets/js/chart-utils-v2.js"></script>
+  <script src="/assets/js/chart-utils-v4.js"></script>
   <script src="/assets/js/main.js?v=20251112b"></script>
   <script src="/assets/js/stations-map.js"></script>
-  <script src="/assets/js/wave-chart-v2.js"></script>
-  <script src="/assets/js/wind-chart-v2.js"></script>
-  <script src="/assets/js/temperature-chart-v2.js"></script>
-  <script src="/assets/js/comparison-chart-v2.js"></script>
-  <script src="/assets/js/wave-table-v2.js"></script>
-  <script src="/assets/js/charts-v2.js"></script>
-  <script src="/assets/js/storm_surge_chart-v2.js"></script>
+  <script src="/assets/js/wave-chart-v4.js"></script>
+  <script src="/assets/js/wind-chart-v4.js"></script>
+  <script src="/assets/js/temperature-chart-v4.js"></script>
+  <script src="/assets/js/comparison-chart-v4.js"></script>
+  <script src="/assets/js/wave-table-v4.js"></script>
+  <script src="/assets/js/charts-v4.js"></script>
+  <script src="/assets/js/storm_surge_chart-v4.js"></script>
 </body>
 </html>
