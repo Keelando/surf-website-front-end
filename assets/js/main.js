@@ -68,9 +68,7 @@ async function loadBuoyData() {
   };
 
   try {
-    const response = await fetch(`/data/latest_buoy_v2.json?t=${Date.now()}`);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
+    const data = await fetchWithTimeout(`/data/latest_buoy_v2.json?t=${Date.now()}`);
 
     container.innerHTML = "";
 
@@ -515,10 +513,7 @@ async function toggleCardHistory(buoyId) {
     button.disabled = true;
 
     try {
-      const response = await fetch(`/data/buoy_timeseries_24h.json?t=${Date.now()}`);
-      if (!response.ok) throw new Error('Failed to fetch timeseries data');
-
-      const timeseriesData = await response.json();
+      const timeseriesData = await fetchWithTimeout(`/data/buoy_timeseries_24h.json?t=${Date.now()}`);
       const buoyData = timeseriesData[buoyId];
 
       if (buoyData && buoyData.timeseries) {

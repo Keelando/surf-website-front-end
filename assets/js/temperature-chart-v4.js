@@ -9,11 +9,12 @@
  * @param {Object} buoy - Buoy data including name and timeseries
  */
 function renderTemperatureChart(tempChart, buoy) {
-  const ts = buoy.timeseries;
-  const airTempData = ts.air_temp?.data || [];
-  const seaTempData = ts.sea_temp?.data || [];
+  try {
+    const ts = buoy.timeseries;
+    const airTempData = ts.air_temp?.data || [];
+    const seaTempData = ts.sea_temp?.data || [];
 
-  tempChart.setOption({
+    tempChart.setOption({
     title: {
       text: `${buoy.name} - Temperature`,
       left: "center",
@@ -74,4 +75,7 @@ function renderTemperatureChart(tempChart, buoy) {
       },
     ],
   });
+  } catch (error) {
+    showChartError('temp-chart', 'Temperature Chart', error);
+  }
 }

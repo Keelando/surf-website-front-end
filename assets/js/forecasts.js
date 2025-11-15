@@ -12,13 +12,7 @@ async function loadForecasts() {
   const container = document.getElementById('forecast-container');
 
   try {
-    const response = await fetch('/data/marine_forecast.json');
-
-    if (!response.ok) {
-      throw new Error('Failed to load forecast data');
-    }
-
-    forecastData = await response.json();
+    forecastData = await fetchWithTimeout('/data/marine_forecast.json');
     displayForecasts();
     updateTimestamp();
 

@@ -35,8 +35,7 @@ async function loadStationsAndMarkers() {
   try {
     // For now, we'll use the stations data directly
     // In production, you'd fetch from a generated JSON endpoint
-    const response = await fetch('/data/stations.json');
-    const stations = await response.json();
+    const stations = await fetchWithTimeout('/data/stations.json');
 
     // Add buoy markers
     if (stations.buoys) {

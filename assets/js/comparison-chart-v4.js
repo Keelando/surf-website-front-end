@@ -9,12 +9,13 @@
  * @param {Object} chartData - Full chart data object with all buoys
  */
 function renderComparisonChart(waveComparisonChart, chartData) {
-  if (!chartData) {
-    console.warn("No chart data available");
-    return;
-  }
+  try {
+    if (!chartData) {
+      console.warn("No chart data available");
+      return;
+    }
 
-  const buoyOrder = ["4600146", "4600304", "4600303", "4600131"];
+    const buoyOrder = ["4600146", "4600304", "4600303", "4600131"];
   const buoyColors = {
     "4600146": "#1e88e5",
     "4600304": "#43a047",
@@ -115,4 +116,7 @@ function renderComparisonChart(waveComparisonChart, chartData) {
 
     series: series,
   });
+  } catch (error) {
+    showChartError('wave-comparison-chart', 'Wave Comparison Chart', error);
+  }
 }

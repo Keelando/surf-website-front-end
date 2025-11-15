@@ -11,14 +11,18 @@
  * @param {string} buoyId - Buoy identifier
  */
 function renderWaveChart(waveChart, buoy, buoyId) {
-  const ts = buoy.timeseries;
+  try {
+    const ts = buoy.timeseries;
 
-  if (buoyId === "46088") {
-    // NEW DUNGENESS - Special handling with two separate charts
-    renderNewDungenessCharts(waveChart, buoy, ts);
-  } else {
-    // ALL OTHER BUOYS - Standard single wave chart
-    renderStandardWaveChart(waveChart, buoy, buoyId, ts);
+    if (buoyId === "46088") {
+      // NEW DUNGENESS - Special handling with two separate charts
+      renderNewDungenessCharts(waveChart, buoy, ts);
+    } else {
+      // ALL OTHER BUOYS - Standard single wave chart
+      renderStandardWaveChart(waveChart, buoy, buoyId, ts);
+    }
+  } catch (error) {
+    showChartError('wave-chart', 'Wave Chart', error);
   }
 }
 

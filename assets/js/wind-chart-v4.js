@@ -57,7 +57,8 @@ function createWindDirectionArrowData(windDirectionData, windSpeedData, windGust
  * @param {Object} buoy - Buoy data including name and timeseries
  */
 function renderWindChart(windChart, buoy) {
-  const ts = buoy.timeseries;
+  try {
+    const ts = buoy.timeseries;
   const windSpeedData = ts.wind_speed?.data || [];
   const windGustData = ts.wind_gust?.data || [];
   const windDirectionData = ts.wind_direction?.data || [];
@@ -149,6 +150,9 @@ function renderWindChart(windChart, buoy) {
       }
     ]
   });
+  } catch (error) {
+    showChartError('wind-chart', 'Wind Chart', error);
+  }
 }
 
 /**

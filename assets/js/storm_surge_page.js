@@ -35,9 +35,7 @@ const HINDCAST_MIN_DATE = {
 
 async function loadForecastData() {
   try {
-    const response = await fetch(`/data/storm_surge/combined_forecast.json?t=${Date.now()}`);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    forecastData = await response.json();
+    forecastData = await fetchWithTimeout(`/data/storm_surge/combined_forecast.json?t=${Date.now()}`);
 
     initForecastSelector();
     const selectedStation = document.getElementById("forecast-station-select")?.value || "Point_Atkinson";
@@ -330,9 +328,7 @@ function updateForecastMetadata(station, times, values) {
 
 async function loadObservedSurgeData() {
   try {
-    const response = await fetch(`/data/storm_surge/observed_surge.json?t=${Date.now()}`);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    observedSurgeData = await response.json();
+    observedSurgeData = await fetchWithTimeout(`/data/storm_surge/observed_surge.json?t=${Date.now()}`);
     console.log(`✅ Loaded observed surge data for ${Object.keys(observedSurgeData.stations || {}).length} stations`);
   } catch (err) {
     console.warn("Observed surge data not available:", err.message);
@@ -346,9 +342,7 @@ async function loadObservedSurgeData() {
 
 async function loadHindcastData() {
   try {
-    const response = await fetch(`/data/storm_surge/hindcast.json?t=${Date.now()}`);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    hindcastData = await response.json();
+    hindcastData = await fetchWithTimeout(`/data/storm_surge/hindcast.json?t=${Date.now()}`);
 
     initHindcastSelector();
     const selectedStation = document.getElementById("hindcast-station-select")?.value || "Point_Atkinson";

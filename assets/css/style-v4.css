@@ -1,4 +1,44 @@
 /* -----------------------------
+   CSS Variables - Color Palette
+----------------------------- */
+
+:root {
+  /* Primary Colors */
+  --color-primary-dark: #004b7c;
+  --color-primary: #0077be;
+  --color-primary-light: #0066a1;
+  --color-primary-lighter: #005a8f;
+
+  /* Background Colors */
+  --color-background: #eef4f8;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f7fafc;
+  --color-surface-light: #f5f9fc;
+
+  /* Border Colors */
+  --color-border: #ddd;
+  --color-border-light: #e0e7ee;
+
+  /* Text Colors */
+  --color-text: #222;
+  --color-text-muted: #666;
+  --color-text-light: #555;
+
+  /* Accent Colors */
+  --color-accent-blue: #4299e1;
+  --color-accent-green: #43a047;
+  --color-accent-orange: #ff9800;
+  --color-accent-red: #e53935;
+
+  /* Spacing Scale */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+}
+
+/* -----------------------------
    Base Styles -- october
 ----------------------------- */
 
@@ -8,15 +48,15 @@
 
 body {
   font-family: system-ui, sans-serif;
-  background-color: #eef4f8;
-  color: #222;
+  background-color: var(--color-background);
+  color: var(--color-text);
   margin: 0;
   padding: 0;
   line-height: 1.5;
 }
 
 footer {
-  background-color: #004b7c;
+  background-color: var(--color-primary-dark);
   color: white;
   text-align: center;
   padding: 1rem;
@@ -37,12 +77,12 @@ footer {
   max-width: 600px;
   margin: 0 auto 2rem auto;
   padding: 0.75rem 1.5rem;
-  background: white;
+  background: var(--color-surface);
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.08);
   text-align: center;
   font-size: 1.1em;
-  color: #004b7c;
+  color: var(--color-primary-dark);
   font-weight: 600;
 }
 
@@ -55,7 +95,7 @@ footer {
 .region-header {
   margin: 0 0 1.5rem 0;
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(to right, #004b7c, #0077be);
+  background: linear-gradient(to right, var(--color-primary-dark), var(--color-primary));
   color: white;
   font-size: 1.3em;
   font-weight: bold;
@@ -189,7 +229,7 @@ footer {
 .buoy-metric.section-header {
   margin-top: 0.75rem;
   font-size: 1.05em;
-  color: #004b7c;
+  color: var(--color-primary-dark);
   border-bottom: 1px solid #e0e0e0;
   padding-bottom: 0.25rem;
 }
@@ -267,7 +307,7 @@ footer {
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.9em;
-  color: #004b7c;
+  color: var(--color-primary-dark);
   font-weight: 600;
   width: 100%;
   text-align: center;
@@ -294,7 +334,7 @@ footer {
 
 #charts-section h2 {
   text-align: center;
-  color: #004b7c;
+  color: var(--color-primary-dark);
   margin-bottom: 1.5rem;
 }
 
@@ -306,7 +346,7 @@ footer {
 #chart-buoy-select {
   padding: 0.5rem;
   font-size: 1rem;
-  border: 2px solid #004b7c;
+  border: 2px solid var(--color-primary-dark);
   border-radius: 4px;
   margin-left: 0.5rem;
 }
@@ -320,7 +360,7 @@ footer {
 #surge-chart {
   margin-bottom: 2rem;
   padding: 1rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   background: white;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
@@ -331,7 +371,7 @@ footer {
 .active-indicator {
   text-align: center;
   font-size: 0.95rem;
-  color: #004b7c;
+  color: var(--color-primary-dark);
   margin-top: 0.5rem;
   padding: 0.5rem;
   background: #e3f2fd;
@@ -356,7 +396,7 @@ footer {
 
 #wave-height-table-section h2 {
   text-align: center;
-  color: #004b7c;
+  color: var(--color-primary-dark);
   margin-bottom: 1.5rem;
 }
 
@@ -373,7 +413,7 @@ footer {
 }
 
 .data-table th {
-  background: #004b7c;
+  background: var(--color-primary-dark);
   color: white;
   padding: 0.75rem;
   text-align: left;
@@ -384,7 +424,7 @@ footer {
 
 .data-table td {
   padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--color-border);
   text-align: center;
 }
 
@@ -405,7 +445,7 @@ footer {
   max-width: 900px;
   margin: 40px auto;
   padding: 30px 20px;
-  background: #f7fafc;
+  background: var(--color-surface-alt);
   color: #1a1a1a;
   border-radius: 12px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.08);
@@ -415,7 +455,7 @@ footer {
 
 .about-section h3 {
   text-align: center;
-  color: #004b7c;
+  color: var(--color-primary-dark);
   margin-bottom: 1em;
   font-size: 1.4rem;
 }
@@ -437,17 +477,17 @@ footer {
 
 #storm-surge-section h2 {
   text-align: center;
-  color: #004b7c;
+  color: var(--color-primary-dark);
   margin-bottom: 1.5rem;
 }
 
 #surge-metadata {
   margin-top: 1rem;
   padding: 1rem;
-  background: #f5f9fc;
+  background: var(--color-surface-light);
   border-radius: 6px;
   font-size: 0.9rem;
-  color: #555;
+  color: var(--color-text-light);
   line-height: 1.6;
 }
 
@@ -460,7 +500,7 @@ footer {
 .dir-arrow {
   display: inline-block;
   margin-left: 0.25rem;
-  color: #004b7c;
+  color: var(--color-primary-dark);
 }
 
 /* -----------------------------
@@ -486,7 +526,7 @@ footer {
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.85em;
-  color: #004b7c;
+  color: var(--color-primary-dark);
   font-weight: 500;
   text-decoration: none;
   transition: all 0.2s;
@@ -639,7 +679,7 @@ header h2 {
 
 #map-section h2 {
   text-align: center;
-  color: #004b7c;
+  color: var(--color-primary-dark);
   margin-bottom: 1.5rem;
 }
 
@@ -648,7 +688,7 @@ header h2 {
   width: 100%;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   overflow: hidden;
 }
 
@@ -706,9 +746,9 @@ header h2 {
 
 .station-popup h3 {
   margin: 0 0 0.75rem 0;
-  color: #004b7c;
+  color: var(--color-primary-dark);
   font-size: 1.2rem;
-  border-bottom: 2px solid #004b7c;
+  border-bottom: 2px solid var(--color-primary-dark);
   padding-bottom: 0.5rem;
 }
 
@@ -719,14 +759,14 @@ header h2 {
 }
 
 .station-popup strong {
-  color: #555;
+  color: var(--color-text-light);
 }
 
 .data-types-list {
   margin: 0.5rem 0 0 0;
   padding-left: 1.5rem;
   font-size: 0.85rem;
-  color: #666;
+  color: var(--color-text-muted);
 }
 
 .data-types-list li {
@@ -749,4 +789,180 @@ header h2 {
   .station-popup {
     min-width: 200px;
   }
+}
+
+/* -----------------------------
+   Reusable Link & Button Styles
+----------------------------- */
+
+/* GitHub link hover effect (replaces inline onmouseover/onmouseout) */
+.github-link {
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.github-link:hover {
+  opacity: 1;
+}
+
+/* Button primary (replaces inline button styles) */
+.button-primary {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-primary);
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.button-primary:hover {
+  background: var(--color-primary-lighter);
+}
+
+/* -----------------------------
+   Utility Classes
+----------------------------- */
+
+/* Flexbox utilities */
+.flex {
+  display: flex;
+}
+
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Text alignment */
+.text-center {
+  text-align: center;
+}
+
+/* Margin utilities */
+.mt-0 { margin-top: 0; }
+.mt-sm { margin-top: var(--spacing-sm); }
+.mt-md { margin-top: var(--spacing-md); }
+.mt-lg { margin-top: var(--spacing-lg); }
+
+.mb-0 { margin-bottom: 0; }
+.mb-sm { margin-bottom: var(--spacing-sm); }
+.mb-md { margin-bottom: var(--spacing-md); }
+.mb-lg { margin-bottom: var(--spacing-lg); }
+
+/* Padding utilities */
+.p-sm { padding: var(--spacing-sm); }
+.p-md { padding: var(--spacing-md); }
+.p-lg { padding: var(--spacing-lg); }
+
+/* Border utilities */
+.border-top {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--spacing-md);
+}
+
+/* Width utilities */
+.w-full {
+  width: 100%;
+}
+
+/* Height utilities */
+.h-400 {
+  height: 400px;
+}
+
+.h-500 {
+  height: 500px;
+}
+
+/* Color utilities */
+.color-primary {
+  color: var(--color-primary);
+}
+
+.color-muted {
+  color: var(--color-text-muted);
+}
+
+/* Font size utilities */
+.text-sm {
+  font-size: 0.9rem;
+}
+
+.text-xs {
+  font-size: 0.8rem;
+}
+
+/* Inline flex utilities */
+.inline-flex {
+  display: inline-flex;
+  align-items: center;
+}
+
+.gap-sm {
+  gap: 0.3rem;
+}
+
+.gap-md {
+  gap: 0.5rem;
+}
+
+/* Background utilities */
+.bg-surface-light {
+  background: var(--color-surface-light);
+}
+
+/* Border radius utilities */
+.rounded {
+  border-radius: 4px;
+}
+
+.rounded-md {
+  border-radius: 6px;
+}
+
+/* Line height utilities */
+.leading-relaxed {
+  line-height: 1.6;
+}
+
+/* Display utilities */
+.hidden {
+  display: none;
+}
+
+/* Text decoration */
+.no-underline {
+  text-decoration: none;
+}
+
+/* Vertical alignment */
+.align-middle {
+  vertical-align: middle;
+}
+
+/* Font weight */
+.font-semibold {
+  font-weight: 600;
+}
+
+/* Color utilities (extended) */
+.color-white {
+  color: white;
+}
+
+.color-warning {
+  color: #ff9800;
+}
+
+.color-error {
+  color: #e53935;
 }
