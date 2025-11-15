@@ -15,12 +15,13 @@ function renderComparisonChart(waveComparisonChart, chartData) {
       return;
     }
 
-    const buoyOrder = ["4600146", "4600304", "4600303", "4600131"];
+    const buoyOrder = ["4600146", "4600304", "4600303", "4600131", "CRPILE"];
   const buoyColors = {
     "4600146": "#1e88e5",
     "4600304": "#43a047",
     "4600303": "#fb8c00",
     "4600131": "#e53935",
+    "CRPILE": "#9c27b0",
   };
 
   const series = buoyOrder

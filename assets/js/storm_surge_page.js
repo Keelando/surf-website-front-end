@@ -61,7 +61,12 @@ function initForecastSelector() {
     if (station) {
       const option = document.createElement("option");
       option.value = stationId;
-      option.textContent = station.station_name;
+
+      // Check if station has observed surge data available
+      const hasObservedSurge = observedSurgeData?.stations?.[stationId];
+      const indicator = hasObservedSurge ? ' 📡' : '';
+
+      option.textContent = station.station_name + indicator;
       selector.appendChild(option);
     }
   });
@@ -369,7 +374,12 @@ function initHindcastSelector() {
     if (station && station.hindcast && station.hindcast.length > 0) {
       const option = document.createElement("option");
       option.value = stationId;
-      option.textContent = station.station_name;
+
+      // Check if station has observed surge data available
+      const hasObservedSurge = observedSurgeData?.stations?.[stationId];
+      const indicator = hasObservedSurge ? ' 📡' : '';
+
+      option.textContent = station.station_name + indicator;
       selector.appendChild(option);
     }
   });
