@@ -6,7 +6,7 @@
 /**
  * Downsample high-frequency data to hourly intervals
  * Keeps the data point closest to the top of each hour
- * @param {Array} data - Array of [timestamp, value] pairs
+ * @param {Array} data - Array of {time, value} objects
  * @returns {Array} Downsampled array with one point per hour
  */
 function downsampleToHourly(data) {
@@ -16,7 +16,7 @@ function downsampleToHourly(data) {
 
   // Group points by hour
   for (const point of data) {
-    const timestamp = new Date(point[0]);
+    const timestamp = new Date(point.time);
     // Round down to the hour
     const hourKey = new Date(timestamp.getFullYear(), timestamp.getMonth(),
                              timestamp.getDate(), timestamp.getHours(), 0, 0, 0).getTime();
@@ -25,7 +25,7 @@ function downsampleToHourly(data) {
     if (!hourlyBuckets[hourKey]) {
       hourlyBuckets[hourKey] = point;
     } else {
-      const existingTime = new Date(hourlyBuckets[hourKey][0]);
+      const existingTime = new Date(hourlyBuckets[hourKey].time);
       const existingOffset = Math.abs(existingTime.getMinutes() * 60 + existingTime.getSeconds());
       const newOffset = Math.abs(timestamp.getMinutes() * 60 + timestamp.getSeconds());
 
@@ -36,7 +36,7 @@ function downsampleToHourly(data) {
   }
 
   // Convert back to array and sort by time
-  return Object.values(hourlyBuckets).sort((a, b) => new Date(a[0]) - new Date(b[0]));
+  return Object.values(hourlyBuckets).sort((a, b) => new Date(a.time) - new Date(b.time));
 }
 
 /**

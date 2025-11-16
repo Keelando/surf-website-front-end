@@ -169,14 +169,12 @@ function updateForecastChart(stationId) {
   updatePeakToday(stationId);
 
   // Prepare data
-  const times = [];
-  const values = [];
+  const forecastData_series = [];
 
   Object.entries(station.forecast)
     .sort(([a], [b]) => new Date(a) - new Date(b))
     .forEach(([timeStr, value]) => {
-      times.push(timeStr);
-      values.push(value);
+      forecastData_series.push([timeStr, value]);
     });
 
   // Initialize chart if needed
@@ -186,12 +184,48 @@ function updateForecastChart(stationId) {
   }
 
   // Calculate y-axis range
+  const values = forecastData_series.map(d => d[1]);
   const maxVal = Math.max(...values);
   const minVal = Math.min(...values);
   const range = maxVal - minVal;
   const padding = Math.max(range * 0.2, 0.1); // At least 0.1m padding
   const yMin = Math.floor((minVal - padding) * 10) / 10;
   const yMax = Math.ceil((maxVal + padding) * 10) / 10;
+
+  // Prepare series array
+  const series = [];
+
+  // Add forecast series
+  series.push({
+    name: "Storm Surge Forecast",
+    type: "line",
+    data: forecastData_series,
+    smooth: true,
+    symbol: "none",
+    itemStyle: { color: "#0077be" },
+    lineStyle: { width: 2 },
+    areaStyle: {
+      color: {
+        type: "linear",
+        x: 0, y: 0, x2: 0, y2: 1,
+        colorStops: [
+          { offset: 0, color: "rgba(0, 119, 190, 0.3)" },
+          { offset: 1, color: "rgba(0, 119, 190, 0.05)" }
+        ]
+      }
+    },
+    markLine: {
+      silent: true,
+      symbol: "none",
+      lineStyle: { type: "dashed", color: "#999", width: 1 },
+      label: {
+        show: true,
+        position: "end",
+        formatter: "Sea Level"
+      },
+      data: [{ yAxis: 0 }]
+    }
+  });
 
   // Set chart options (notMerge: true to replace all data when switching stations)
   forecastChart.setOption({
@@ -202,9 +236,10 @@ function updateForecastChart(stationId) {
     },
     tooltip: {
       trigger: "axis",
+      axisPointer: { type: "cross" },
       formatter: (params) => {
-        const idx = params[0].dataIndex;
-        const time = new Date(times[idx]).toLocaleString("en-US", {
+        if (!params || params.length === 0) return "";
+        const time = new Date(params[0].data[0]).toLocaleString("en-US", {
           month: "short",
           day: "numeric",
           hour: "2-digit",
@@ -212,9 +247,13 @@ function updateForecastChart(stationId) {
           hour12: false,
           timeZone: "America/Vancouver"
         });
-        const value = params[0].value;
-        const sign = value >= 0 ? "+" : "";
-        return `<b>${time} PT</b><br/>Storm Surge: ${sign}${value.toFixed(3)} m`;
+        let tooltip = `<b>${time} PT</b><br/>`;
+        params.forEach(param => {
+          const value = param.data[1];
+          const sign = value >= 0 ? "+" : "";
+          tooltip += `${param.marker} ${param.seriesName}: ${sign}${value.toFixed(3)} m<br/>`;
+        });
+        return tooltip;
       }
     },
     grid: {
@@ -225,22 +264,21 @@ function updateForecastChart(stationId) {
       containLabel: true
     },
     xAxis: {
-      type: "category",
-      data: times,
+      type: "time",
       axisLabel: {
-        interval: (index) => index % 24 === 0,
-        formatter: (value, index) => {
+        formatter: (value) => {
           const d = new Date(value);
-          const day = d.toLocaleString("en-US", { day: "2-digit", timeZone: "America/Vancouver" });
-          const month = d.toLocaleString("en-US", { month: "short", timeZone: "America/Vancouver" });
-          return index === 0 ? `${month} ${day}` : day;
+          return d.toLocaleString("en-US", {
+            month: "short",
+            day: "numeric",
+            timeZone: "America/Vancouver"
+          });
         },
-        rotate: window.innerWidth < 600 ? 45 : 0,
+        rotate: window.innerWidth < 600 ? 30 : 0,
         fontSize: 10,
-        hideOverlap: true,
-        margin: 10
+        hideOverlap: true
       },
-      axisTick: { show: true, alignWithLabel: true },
+      axisTick: { show: true },
       splitLine: { show: true, lineStyle: { color: "#eee" } }
     },
     yAxis: {
@@ -256,40 +294,11 @@ function updateForecastChart(stationId) {
       },
       splitLine: { show: true, lineStyle: { color: "#eee" } }
     },
-    series: [{
-      name: "Storm Surge",
-      type: "line",
-      data: values,
-      smooth: true,
-      symbol: "none",
-      itemStyle: { color: "#0077be" },
-      lineStyle: { width: 2 },
-      areaStyle: {
-        color: {
-          type: "linear",
-          x: 0, y: 0, x2: 0, y2: 1,
-          colorStops: [
-            { offset: 0, color: "rgba(0, 119, 190, 0.3)" },
-            { offset: 1, color: "rgba(0, 119, 190, 0.05)" }
-          ]
-        }
-      },
-      markLine: {
-        silent: true,
-        symbol: "none",
-        lineStyle: { type: "dashed", color: "#999", width: 1 },
-        label: {
-          show: true,
-          position: "end",
-          formatter: "Sea Level"
-        },
-        data: [{ yAxis: 0 }]
-      }
-    }]
+    series: series
   }, true); // notMerge: true to prevent old data from persisting
 
   // Update metadata
-  updateForecastMetadata(station, times, values);
+  updateForecastMetadata(station, forecastData_series.map(d => d[0]), values);
 
   console.log(`✅ Loaded ${values.length} hours of forecast for ${station.station_name}`);
 }
