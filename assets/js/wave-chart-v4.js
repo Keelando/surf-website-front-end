@@ -5,7 +5,7 @@
 
 /**
  * Render wave chart for the selected buoy
- * Special handling for New Dungeness (46088) with dual charts
+ * Special handling for NOAA buoys (46087 Neah Bay, 46088 New Dungeness) with dual charts
  * @param {Object} waveChart - ECharts instance for main wave chart
  * @param {Object} buoy - Buoy data including name and timeseries
  * @param {string} buoyId - Buoy identifier
@@ -14,9 +14,9 @@ function renderWaveChart(waveChart, buoy, buoyId) {
   try {
     const ts = buoy.timeseries;
 
-    if (buoyId === "46088") {
-      // NEW DUNGENESS - Special handling with two separate charts
-      renderNewDungenessCharts(waveChart, buoy, ts);
+    if (buoyId === "46087" || buoyId === "46088") {
+      // NOAA BUOYS (Neah Bay & New Dungeness) - Dual charts with spectral wave separation
+      renderSpectralCharts(waveChart, buoy, ts);
     } else {
       // ALL OTHER BUOYS - Standard single wave chart
       renderStandardWaveChart(waveChart, buoy, buoyId, ts);
@@ -27,16 +27,17 @@ function renderWaveChart(waveChart, buoy, buoyId) {
 }
 
 /**
- * Render New Dungeness dual-chart display (wave heights + periods)
+ * Render NOAA spectral dual-chart display (wave heights + periods)
+ * Used for Neah Bay (46087) and New Dungeness (46088)
  */
-function renderNewDungenessCharts(waveChart, buoy, ts) {
+function renderSpectralCharts(waveChart, buoy, ts) {
   // Chart 1: Wave Heights (All three components with fallbacks)
   const sigWaveHeight = ts.wave_height_sig?.data || [];
   const windWaveHeight = ts.wind_wave_height?.data || [];
   const swellHeight = ts.swell_height?.data || [];
 
   // Debug: Check what data we actually have
-  console.log("New Dungeness wave data available:", {
+  console.log(`${buoy.name} wave data available:`, {
     sig: sigWaveHeight.length,
     wind: windWaveHeight.length,
     swell: swellHeight.length
@@ -136,7 +137,7 @@ function renderNewDungenessCharts(waveChart, buoy, ts) {
   const swellPeriod = ts.swell_period?.data || [];
 
   // Debug: Check what period data we have
-  console.log("New Dungeness period data available:", {
+  console.log(`${buoy.name} period data available:`, {
     avg: avgPeriod.length,
     wind: windWavePeriod.length,
     swell: swellPeriod.length
