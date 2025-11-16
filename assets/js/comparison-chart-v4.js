@@ -36,7 +36,7 @@ function downsampleToHourly(data) {
   }
 
   // Convert back to array and sort by time
-  return Object.values(hourlyBuckets).sort((a, b) => a[0] - b[0]);
+  return Object.values(hourlyBuckets).sort((a, b) => new Date(a[0]) - new Date(b[0]));
 }
 
 /**
