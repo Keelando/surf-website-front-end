@@ -4,6 +4,42 @@
    ----------------------------- */
 
 /**
+ * Downsample high-frequency data to hourly intervals
+ * Keeps the data point closest to the top of each hour
+ * @param {Array} data - Array of [timestamp, value] pairs
+ * @returns {Array} Downsampled array with one point per hour
+ */
+function downsampleToHourly(data) {
+  if (!data || data.length === 0) return [];
+
+  const hourlyBuckets = {};
+
+  // Group points by hour
+  for (const point of data) {
+    const timestamp = new Date(point[0]);
+    // Round down to the hour
+    const hourKey = new Date(timestamp.getFullYear(), timestamp.getMonth(),
+                             timestamp.getDate(), timestamp.getHours(), 0, 0, 0).getTime();
+
+    // Keep the point closest to the top of the hour
+    if (!hourlyBuckets[hourKey]) {
+      hourlyBuckets[hourKey] = point;
+    } else {
+      const existingTime = new Date(hourlyBuckets[hourKey][0]);
+      const existingOffset = Math.abs(existingTime.getMinutes() * 60 + existingTime.getSeconds());
+      const newOffset = Math.abs(timestamp.getMinutes() * 60 + timestamp.getSeconds());
+
+      if (newOffset < existingOffset) {
+        hourlyBuckets[hourKey] = point;
+      }
+    }
+  }
+
+  // Convert back to array and sort by time
+  return Object.values(hourlyBuckets).sort((a, b) => a[0] - b[0]);
+}
+
+/**
  * Render comparison chart showing all Canadian buoys
  * @param {Object} waveComparisonChart - ECharts instance for comparison chart
  * @param {Object} chartData - Full chart data object with all buoys
@@ -29,7 +65,13 @@ function renderComparisonChart(waveComparisonChart, chartData) {
       const buoy = chartData[buoyId];
       if (!buoy?.timeseries?.wave_height_sig) return null;
 
-      const data = buoy.timeseries.wave_height_sig.data || [];
+      let data = buoy.timeseries.wave_height_sig.data || [];
+
+      // Downsample high-frequency buoys to hourly for better chart performance
+      if (buoyId === "CRPILE") {
+        data = downsampleToHourly(data);
+        console.log(`Downsampled ${buoy.name} from high-frequency to hourly (${data.length} points)`);
+      }
 
       return {
         name: buoy.name,
