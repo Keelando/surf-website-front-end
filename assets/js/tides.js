@@ -888,6 +888,20 @@ function showError() {
   document.getElementById('tide-error').style.display = 'block';
 }
 
+// Show selected tide station on map (navigates to index.html)
+function showSelectedTideOnMap() {
+  const select = document.getElementById('tide-station-select');
+  if (!select || !select.value) return;
+
+  const stationKey = select.value;
+
+  // Navigate to index.html with tide station in hash
+  window.location.href = `/#tide-${stationKey}`;
+}
+
+// Make function globally accessible
+window.showSelectedTideOnMap = showSelectedTideOnMap;
+
 /* =====================================================
    Initialization
    ===================================================== */

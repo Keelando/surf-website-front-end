@@ -688,3 +688,29 @@ setInterval(() => {
     loadHindcastData();
   });
 }, 2 * 60 * 60 * 1000);
+
+/* ======================================
+   Show on Map Navigation Functions
+   ====================================== */
+
+// Show selected surge station on map from forecast selector
+function showSelectedForecastSurgeOnMap() {
+  const select = document.getElementById('forecast-station-select');
+  if (!select || !select.value) return;
+
+  // Navigate to index.html with surge station in hash
+  window.location.href = `/#surge-${select.value}`;
+}
+
+// Show selected surge station on map from hindcast selector
+function showSelectedHindcastSurgeOnMap() {
+  const select = document.getElementById('hindcast-station-select');
+  if (!select || !select.value) return;
+
+  // Navigate to index.html with surge station in hash
+  window.location.href = `/#surge-${select.value}`;
+}
+
+// Make functions globally accessible
+window.showSelectedForecastSurgeOnMap = showSelectedForecastSurgeOnMap;
+window.showSelectedHindcastSurgeOnMap = showSelectedHindcastSurgeOnMap;
