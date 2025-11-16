@@ -178,7 +178,7 @@ async function loadBuoyData() {
       cardContent += `<p style="font-size: 0.9em; color: #666; margin-top: -0.5rem;">Last Update: ${updated}${ageWarning}</p>`;
 
       // === CONDENSED VIEW (Always visible) ===
-      cardContent += `<div class="card-compact-view" style="margin-top: 1rem;">`;
+      cardContent += `<div class="card-compact-view">`;
 
       // Compact Wind Line - Format: "WNW 15 G 20 kn (350°)"
       let windDisplay = "No data";
@@ -312,7 +312,7 @@ async function loadBuoyData() {
       const airTemp = b.air_temp != null ? (isSurrey ? b.air_temp.toFixed(1) : b.air_temp) : "—";
 
       cardContent += `
-        <p class="buoy-metric" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #eee;"><b>🌡️ Sea:</b> ${seaTemp} °C | <b>Air:</b> ${airTemp} °C</p>
+        <p class="buoy-metric" style="margin-top: 0.75rem;"><b>🌡️ Sea:</b> ${seaTemp} °C | <b>Air:</b> ${airTemp} °C</p>
         <p class="buoy-metric"><b>⏱️ Pressure:</b> ${b.pressure ?? "—"} hPa</p>
       `;
 
