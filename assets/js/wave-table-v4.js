@@ -94,7 +94,7 @@ function generateWaveHeightTable(chartData) {
   tableHTML += "</tbody>";
   table.innerHTML = tableHTML;
   } catch (error) {
-    console.error('Error generating wave height table:', error);
+    logger.error('WaveTable', 'Error generating wave height table', error);
     const table = document.getElementById("wave-height-table");
     if (table) {
       table.innerHTML = '<tbody><tr><td colspan="8" style="text-align: center; color: #e53935; padding: 2rem;">Error generating table</td></tr></tbody>';

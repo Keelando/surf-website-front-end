@@ -4,6 +4,55 @@
    ----------------------------- */
 
 /**
+ * Create wave direction arrow data for scatter series
+ * @param {Array} waveDirectionData - Array of {time, value} wave direction points
+ * @param {Array} waveHeightData - Array of {time, value} wave height points for max calculation
+ * @returns {Object} Object with arrowData and maxValue for y-axis scaling
+ */
+function createWaveDirectionArrowData(waveDirectionData, waveHeightData) {
+  if (!waveDirectionData || waveDirectionData.length === 0) return { arrowData: [], maxValue: null };
+
+  // Find maximum wave height to position arrows at top
+  const allHeights = waveHeightData
+    .map(d => d.value)
+    .filter(v => v != null && !isNaN(v));
+
+  const maxHeight = allHeights.length > 0 ? Math.max(...allHeights) : 2;
+  const arrowYPosition = maxHeight * 1.05; // Position arrows 5% above max value
+
+  const arrowData = [];
+
+  // Responsive sampling: fewer arrows on mobile to prevent overlap
+  // Mobile (< 600px): every 6 hours, Desktop: every 3 hours
+  const sampleInterval = window.innerWidth < 600 ? 6 : 3;
+
+  for (let i = 0; i < waveDirectionData.length; i += sampleInterval) {
+    const dirPoint = waveDirectionData[i];
+    if (!dirPoint || dirPoint.value == null) continue;
+
+    // Find corresponding wave height for this time (for validation)
+    const heightPoint = waveHeightData.find(h => h.time === dirPoint.time);
+    if (!heightPoint || heightPoint.value == null) continue;
+
+    const timestamp = new Date(dirPoint.time).getTime();
+    const direction = dirPoint.value; // Wave direction (coming FROM)
+
+    // Position arrows in a straight line at top
+    // Add 180° to convert from "coming FROM" to "going TO" direction
+    arrowData.push({
+      value: [timestamp, arrowYPosition],
+      symbolRotate: (direction + 180) % 360, // Convert "from" direction to "to" direction
+      itemStyle: {
+        color: '#1e88e5',
+        opacity: 0.7
+      }
+    });
+  }
+
+  return { arrowData, maxValue: arrowYPosition };
+}
+
+/**
  * Render wave chart for the selected buoy
  * Special handling for NOAA buoys (46087 Neah Bay, 46088 New Dungeness) with dual charts
  * @param {Object} waveChart - ECharts instance for main wave chart
@@ -37,7 +86,7 @@ function renderSpectralCharts(waveChart, buoy, ts) {
   const swellHeight = ts.swell_height?.data || [];
 
   // Debug: Check what data we actually have
-  console.log(`${buoy.name} wave data available:`, {
+  logger.debug("WaveChart", `${buoy.name} wave data available`, {
     sig: sigWaveHeight.length,
     wind: windWaveHeight.length,
     swell: swellHeight.length
@@ -66,7 +115,7 @@ function renderSpectralCharts(waveChart, buoy, ts) {
     },
     legend: {
       data: ["Wind Waves", "Ocean Swell", "Total (Significant)"],
-      bottom: "2%"
+      bottom: getResponsiveLegendBottom()
     },
     grid: {
       left: window.innerWidth < 600 ? '12%' : '10%',
@@ -137,7 +186,7 @@ function renderSpectralCharts(waveChart, buoy, ts) {
   const swellPeriod = ts.swell_period?.data || [];
 
   // Debug: Check what period data we have
-  console.log(`${buoy.name} period data available:`, {
+  logger.debug("WaveChart", `${buoy.name} period data available`, {
     avg: avgPeriod.length,
     wind: windWavePeriod.length,
     swell: swellPeriod.length
@@ -175,7 +224,7 @@ function renderSpectralCharts(waveChart, buoy, ts) {
       },
       legend: {
         data: ["Wind Wave Period", "Swell Period", "Average Period"],
-        bottom: "2%"
+        bottom: getResponsiveLegendBottom()
       },
       grid: {
         left: window.innerWidth < 600 ? '12%' : '10%',
@@ -274,6 +323,70 @@ function renderStandardWaveChart(waveChart, buoy, buoyId, ts) {
     periodLabel = "Peak Period";
   }
 
+  // Check if this buoy has wave direction data (Halibut Bank and Sentry Shoal)
+  const hasWaveDirection = (buoyId === "4600146" || buoyId === "4600131");
+  const waveDirectionData = hasWaveDirection ? (ts.wave_direction_peak?.data || []) : [];
+
+  // Create direction arrow data if available
+  const { arrowData, maxValue } = hasWaveDirection
+    ? createWaveDirectionArrowData(waveDirectionData, waveHeightData)
+    : { arrowData: [], maxValue: null };
+
+  // Calculate y-axis max to ensure arrows are visible at top (only if arrows exist)
+  const yAxisMax = maxValue ? (value) => Math.max(1, Math.ceil(maxValue * 1.1)) : (value) => Math.max(1, Math.ceil(value.max * 1.1));
+
+  // Build series array dynamically
+  const series = [
+    {
+      name: heightLabel,
+      type: "line",
+      data: sanitizeSeriesData(waveHeightData),
+      smooth: true,
+      connectNulls: false,
+      yAxisIndex: 0,
+      itemStyle: { color: "#1e88e5" },
+      areaStyle: { opacity: 0.1 },
+    },
+    {
+      name: periodLabel,
+      type: "line",
+      data: sanitizeSeriesData(wavePeriodData),
+      smooth: true,
+      connectNulls: false,
+      yAxisIndex: 1,
+      itemStyle: { color: "#43a047" },
+    }
+  ];
+
+  // Build legend data array
+  const legendData = [heightLabel, periodLabel];
+
+  // Add wave direction arrows if available
+  if (hasWaveDirection && arrowData.length > 0) {
+    legendData.push("Wave Direction");
+    series.push({
+      name: "Wave Direction",
+      type: "scatter",
+      data: arrowData,
+      symbol: 'path://M0,12 L-4,-8 L0,-6 L4,-8 Z', // Custom centered arrow pointing DOWN
+      symbolSize: 16,
+      symbolRotate: function(dataIndex) {
+        return arrowData[dataIndex]?.symbolRotate || 0;
+      },
+      yAxisIndex: 0,
+      itemStyle: {
+        color: function(params) {
+          return arrowData[params.dataIndex]?.itemStyle?.color || '#1e88e5';
+        },
+        opacity: function(params) {
+          return arrowData[params.dataIndex]?.itemStyle?.opacity || 0.7;
+        }
+      },
+      silent: true,
+      z: 2
+    });
+  }
+
   waveChart.setOption({
     title: {
       text: chartTitle,
@@ -288,18 +401,31 @@ function renderStandardWaveChart(waveChart, buoy, buoyId, ts) {
         const time = formatTimeAxis(new Date(params[0].value[0]).toISOString());
         let res = `<b>${time}</b><br/>`;
         params.forEach((p) => {
+          if (p.seriesName === "Wave Direction") return; // Skip arrow series in tooltip
           if (p.value[1] != null) {
             res += `${p.marker} ${p.seriesName}: ${p.value[1]} ${
               p.seriesName.includes("Height") ? "m" : "s"
             }<br/>`;
           }
         });
+
+        // Add wave direction to tooltip if available
+        if (hasWaveDirection) {
+          const timestamp = new Date(params[0].value[0]).getTime();
+          const dirPoint = waveDirectionData.find(d => Math.abs(new Date(d.time).getTime() - timestamp) < 1800000); // Within 30 min
+          if (dirPoint && dirPoint.value != null) {
+            const dir = Math.round(dirPoint.value);
+            const compass = degreesToCompass(dir);
+            res += `🌊 Direction: ${dir}° (${compass})<br/>`;
+          }
+        }
+
         return res;
       },
     },
     legend: {
-      data: [heightLabel, periodLabel],
-      bottom: "2%"
+      data: legendData,
+      bottom: getResponsiveLegendBottom()
     },
     grid: getResponsiveGridConfig(false),
     xAxis: {
@@ -315,29 +441,20 @@ function renderStandardWaveChart(waveChart, buoy, buoyId, ts) {
       splitLine: { show: true, lineStyle: { color: "#eee" } },
     },
     yAxis: [
-      { type: "value", name: "Height (m)", position: "left", min: 0, max: (value) => Math.max(1, Math.ceil(value.max * 1.1)), scale: true },
+      { type: "value", name: "Height (m)", position: "left", min: 0, max: yAxisMax, scale: true },
       { type: "value", name: "Period (s)", position: "right" },
     ],
-    series: [
-      {
-        name: heightLabel,
-        type: "line",
-        data: sanitizeSeriesData(waveHeightData),
-        smooth: true,
-        connectNulls: false,
-        yAxisIndex: 0,
-        itemStyle: { color: "#1e88e5" },
-        areaStyle: { opacity: 0.1 },
-      },
-      {
-        name: periodLabel,
-        type: "line",
-        data: sanitizeSeriesData(wavePeriodData),
-        smooth: true,
-        connectNulls: false,
-        yAxisIndex: 1,
-        itemStyle: { color: "#43a047" },
-      },
-    ]
+    series: series
   });
+}
+
+/**
+ * Convert degrees to compass direction
+ * @param {number} degrees - Wave/wind direction in degrees
+ * @returns {string} Compass direction (N, NE, E, etc.)
+ */
+function degreesToCompass(degrees) {
+  const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+  const index = Math.round(degrees / 22.5) % 16;
+  return directions[index];
 }

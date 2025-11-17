@@ -42,7 +42,7 @@ async function loadForecastData() {
     updateForecastChart(selectedStation);
 
   } catch (err) {
-    console.error("Error loading forecast data:", err);
+    logger.error("StormSurge", "Error loading forecast data", err);
     const container = document.getElementById("forecast-chart");
     if (container) {
       container.innerHTML = '<p style="text-align:center;color:#999;">⚠️ Forecast data unavailable</p>';
@@ -97,11 +97,15 @@ function updateStationIndicator(elementId, stationId) {
 }
 
 function updatePeakToday(stationId) {
-  const display = document.getElementById("peak-today-display");
-  const peakValue = document.getElementById("peak-value");
-  const peakTime = document.getElementById("peak-time");
+  const display = document.getElementById("peak-surge-display");
+  const peakTodayValue = document.getElementById("peak-today-value");
+  const peakTodayTime = document.getElementById("peak-today-time");
+  const peak3DayValue = document.getElementById("peak-3day-value");
+  const peak3DayTime = document.getElementById("peak-3day-time");
+  const peak7DayValue = document.getElementById("peak-7day-value");
+  const peak7DayTime = document.getElementById("peak-7day-time");
 
-  if (!display || !peakValue || !peakTime) return;
+  if (!display) return;
 
   const station = forecastData?.stations?.[stationId];
   if (!station?.forecast) {
@@ -109,59 +113,72 @@ function updatePeakToday(stationId) {
     return;
   }
 
-  // Get today's date range in Pacific time
+  // Get current time in Pacific
   const now = new Date();
   const pacificNow = new Date(now.toLocaleString("en-US", { timeZone: "America/Vancouver" }));
   const todayStart = new Date(pacificNow.getFullYear(), pacificNow.getMonth(), pacificNow.getDate());
-  const todayEnd = new Date(todayStart);
-  todayEnd.setDate(todayEnd.getDate() + 1);
 
-  // Filter forecast data for today
-  let peakSurge = null;
-  let peakTimeStr = null;
+  // Define time ranges
+  const ranges = [
+    { days: 1, valueEl: peakTodayValue, timeEl: peakTodayTime, label: "Today" },
+    { days: 3, valueEl: peak3DayValue, timeEl: peak3DayTime, label: "3 Days" },
+    { days: 7, valueEl: peak7DayValue, timeEl: peak7DayTime, label: "7 Days" }
+  ];
 
-  Object.entries(station.forecast).forEach(([timeStr, value]) => {
-    const forecastTime = new Date(timeStr);
-    const pacificForecastTime = new Date(forecastTime.toLocaleString("en-US", { timeZone: "America/Vancouver" }));
+  // Find peak for each range
+  ranges.forEach(range => {
+    const rangeEnd = new Date(todayStart);
+    rangeEnd.setDate(rangeEnd.getDate() + range.days);
 
-    if (pacificForecastTime >= todayStart && pacificForecastTime < todayEnd) {
-      if (peakSurge === null || Math.abs(value) > Math.abs(peakSurge)) {
-        peakSurge = value;
-        peakTimeStr = timeStr;
+    let peakSurge = null;
+    let peakTimeStr = null;
+
+    Object.entries(station.forecast).forEach(([timeStr, value]) => {
+      const forecastTime = new Date(timeStr);
+      const pacificForecastTime = new Date(forecastTime.toLocaleString("en-US", { timeZone: "America/Vancouver" }));
+
+      if (pacificForecastTime >= todayStart && pacificForecastTime < rangeEnd) {
+        if (peakSurge === null || Math.abs(value) > Math.abs(peakSurge)) {
+          peakSurge = value;
+          peakTimeStr = timeStr;
+        }
       }
+    });
+
+    // Display peak if found
+    if (peakSurge !== null && peakTimeStr && range.valueEl && range.timeEl) {
+      const sign = peakSurge >= 0 ? "+" : "";
+      range.valueEl.textContent = `${sign}${peakSurge.toFixed(2)} m`;
+
+      const peakDate = new Date(peakTimeStr);
+      const timeFormatted = peakDate.toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+        timeZone: "America/Vancouver"
+      });
+      range.timeEl.textContent = timeFormatted;
+    } else if (range.valueEl && range.timeEl) {
+      range.valueEl.textContent = "—";
+      range.timeEl.textContent = "No data";
     }
   });
 
-  // Display peak if found
-  if (peakSurge !== null && peakTimeStr) {
-    const sign = peakSurge >= 0 ? "+" : "";
-    peakValue.textContent = `${sign}${peakSurge.toFixed(2)} m`;
-
-    const peakDate = new Date(peakTimeStr);
-    const timeFormatted = peakDate.toLocaleString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-      timeZone: "America/Vancouver"
-    });
-    peakTime.textContent = `at ${timeFormatted}`;
-
-    display.style.display = "block";
-  } else {
-    display.style.display = "none";
-  }
+  display.style.display = "block";
 }
 
 function updateForecastChart(stationId) {
   if (!forecastData?.stations?.[stationId]) {
-    console.warn(`No forecast data found for station: ${stationId}`);
+    logger.warn("StormSurge", `No forecast data found for station: ${stationId}`);
     return;
   }
 
   const station = forecastData.stations[stationId];
 
   if (!station.forecast || Object.keys(station.forecast).length === 0) {
-    console.warn(`No forecast data for ${stationId}`);
+    logger.warn("StormSurge", `No forecast data for ${stationId}`);
     return;
   }
 
@@ -230,7 +247,7 @@ function updateForecastChart(stationId) {
   // Set chart options (notMerge: true to replace all data when switching stations)
   forecastChart.setOption({
     title: {
-      text: `${station.station_name} - 10-Day Storm Surge Forecast`,
+      text: `${station.station_name} - Surge Forecast`,
       left: "center",
       textStyle: { fontSize: window.innerWidth < 600 ? 12 : 14, fontWeight: 'bold' }
     },
@@ -300,7 +317,7 @@ function updateForecastChart(stationId) {
   // Update metadata
   updateForecastMetadata(station, forecastData_series.map(d => d[0]), values);
 
-  console.log(`✅ Loaded ${values.length} hours of forecast for ${station.station_name}`);
+  logger.info("StormSurge", `Loaded ${values.length} hours of forecast for ${station.station_name}`);
 }
 
 function updateForecastMetadata(station, times, values) {
@@ -343,9 +360,9 @@ function updateForecastMetadata(station, times, values) {
 async function loadObservedSurgeData() {
   try {
     observedSurgeData = await fetchWithTimeout(`/data/storm_surge/observed_surge.json?t=${Date.now()}`);
-    console.log(`✅ Loaded observed surge data for ${Object.keys(observedSurgeData.stations || {}).length} stations`);
+    logger.info("StormSurge", `Loaded observed surge data for ${Object.keys(observedSurgeData.stations || {}).length} stations`);
   } catch (err) {
-    console.warn("Observed surge data not available:", err.message);
+    logger.warn("StormSurge", "Observed surge data not available", err.message);
     observedSurgeData = null;
   }
 }
@@ -363,7 +380,7 @@ async function loadHindcastData() {
     updateHindcastChart(selectedStation);
 
   } catch (err) {
-    console.error("Error loading hindcast data:", err);
+    logger.error("StormSurge", "Error loading hindcast data", err);
     const container = document.getElementById("hindcast-chart");
     if (container) {
       container.innerHTML = '<p style="text-align:center;color:#999;">⚠️ Hindcast data unavailable</p>';
@@ -404,7 +421,7 @@ function initHindcastSelector() {
 
 function updateHindcastChart(stationId) {
   if (!hindcastData?.stations?.[stationId]) {
-    console.warn(`No hindcast data found for station: ${stationId}`);
+    logger.warn("StormSurge", `No hindcast data found for station: ${stationId}`);
     return;
   }
 
@@ -505,7 +522,7 @@ function updateHindcastChart(stationId) {
       z: 10 // Render on top
     });
 
-    console.log(`  ✅ Added ${obsData.length} observed surge points`);
+    logger.debug("StormSurge", `Added ${obsData.length} observed surge points`);
   }
 
   // Get all unique times for x-axis (only from filtered data)
@@ -608,7 +625,7 @@ function updateHindcastChart(stationId) {
   // Update metadata
   updateHindcastMetadata(station);
 
-  console.log(`✅ Loaded hindcast data for ${station.station_name} (${sortedDates.length} forecast dates)`);
+  logger.info("StormSurge", `Loaded hindcast data for ${station.station_name} (${sortedDates.length} forecast dates)`);
 }
 
 function getColorForIndex(index, total) {

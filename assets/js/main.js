@@ -405,7 +405,7 @@ async function loadBuoyData() {
     // Handle hash navigation after cards are loaded
     handleHashNavigation();
   } catch (err) {
-    console.error("Error loading buoy data:", err);
+    logger.error("BuoyData", "Error loading buoy data", err);
     container.innerHTML =
       `<p class="error">⚠️ Error loading buoy data. Please try again later.</p>`;
   }
@@ -528,7 +528,7 @@ async function toggleCardHistory(buoyId) {
         button.disabled = false;
       }
     } catch (error) {
-      console.error('Error loading history:', error);
+      logger.error("BuoyData", "Error loading history", error);
       historyDiv.innerHTML = '<p style="color: #e53935; text-align: center; padding: 1rem;">Error loading historical data</p>';
       historyDiv.style.display = 'block';
       button.textContent = '▲ Hide History';
@@ -560,7 +560,7 @@ function renderHistoryTable(buoyId, timeseries) {
   const airTemp = timeseries.air_temp?.data || [];
   const seaTemp = timeseries.sea_temp?.data || [];
 
-  console.log(`[History] ${buoyId}: windSpeed=${windSpeed.length}, waveHeight=${waveHeight.length} points`);
+  logger.debug("History", `${buoyId}: windSpeed=${windSpeed.length}, waveHeight=${waveHeight.length} points`);
 
   // Show all rows where wave data exists (wind may have gaps)
   let allTimes = waveHeight.map(d => d.time);
@@ -579,9 +579,9 @@ function renderHistoryTable(buoyId, timeseries) {
   const twelveHoursAgo = new Date(now - 12 * 60 * 60 * 1000);
   const times = allTimes.filter(time => new Date(time) >= twelveHoursAgo).sort().reverse();
 
-  console.log(`[History] ${buoyId}: Showing ${times.length} rows (all wave data, wind when available)`);
+  logger.debug("History", `${buoyId}: Showing ${times.length} rows (all wave data, wind when available)`);
 
-  console.log(`[History] ${buoyId}: Generated ${times.length} time entries for table`);
+  logger.debug("History", `${buoyId}: Generated ${times.length} time entries for table`);
 
   // Responsive scroll indicator - only show on mobile, positioned OUTSIDE table
   const scrollIndicator = window.innerWidth < 768
@@ -594,9 +594,9 @@ function renderHistoryTable(buoyId, timeseries) {
       <table style="border-collapse: collapse; font-size: 0.8rem; width: max-content; min-width: 100%; table-layout: auto;">
         <thead>
           <tr style="background: #f5f5f5;">
-            <th style="padding: 0.4rem 0.3rem; border-bottom: 1px solid #ddd; border-right: 1px solid #ddd; text-align: left; white-space: nowrap; min-width: 80px;">Time</th>
+            <th style="padding: 0.4rem 0.3rem; border-bottom: 1px solid #ddd; border-right: 1px solid #ddd; text-align: left; white-space: nowrap; min-width: 55px;">Time</th>
             <th style="padding: 0.4rem 0.3rem; border-bottom: 1px solid #ddd; border-right: 1px solid #ddd; text-align: center; white-space: nowrap; min-width: 95px;">Wind [kn]</th>
-            <th style="padding: 0.4rem 0.3rem; border-bottom: 1px solid #ddd; border-right: 1px solid #ddd; text-align: center; white-space: nowrap; min-width: 65px;">Wave Ht [m]</th>
+            <th style="padding: 0.4rem 0.3rem; border-bottom: 1px solid #ddd; border-right: 1px solid #ddd; text-align: center; white-space: nowrap; min-width: 50px;">Wave Ht [m]</th>
             <th style="padding: 0.4rem 0.3rem; border-bottom: 1px solid #ddd; border-right: 1px solid #ddd; text-align: center; white-space: nowrap; min-width: 60px;">Period [s]</th>
             <th style="padding: 0.4rem 0.3rem; border-bottom: 1px solid #ddd; border-right: 1px solid #ddd; text-align: center; white-space: nowrap; min-width: 55px;">Sea [°C]</th>
             <th style="padding: 0.4rem 0.3rem; border-bottom: 1px solid #ddd; text-align: center; white-space: nowrap; min-width: 55px;">Air [°C]</th>
@@ -678,7 +678,7 @@ function renderHistoryTable(buoyId, timeseries) {
     `;
   }
 
-  console.log(`[History] ${buoyId}: Rendered table with ${times.length} rows`);
+  logger.debug("History", `${buoyId}: Rendered table with ${times.length} rows`);
   return tableHTML;
 }
 

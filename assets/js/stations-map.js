@@ -39,14 +39,14 @@ async function loadStationsAndMarkers() {
     try {
       latestBuoyData = await fetchWithTimeout('/data/latest_buoy_v2.json');
     } catch (err) {
-      console.warn('Could not fetch latest buoy data:', err);
+      logger.warn('StationsMap', 'Could not fetch latest buoy data', err);
     }
 
     // Fetch storm surge forecast data
     try {
       stormSurgeData = await fetchWithTimeout('/data/storm_surge/combined_forecast.json');
     } catch (err) {
-      console.warn('Could not fetch storm surge data:', err);
+      logger.warn('StationsMap', 'Could not fetch storm surge data', err);
     }
 
     // Fetch stations metadata
@@ -62,14 +62,14 @@ async function loadStationsAndMarkers() {
     // Add tide station markers
     if (stations.tides) {
       const tideCount = Object.keys(stations.tides).length;
-      console.log(`Loading ${tideCount} tide stations to map...`);
+      logger.debug('StationsMap', `Loading ${tideCount} tide stations to map...`);
       Object.entries(stations.tides).forEach(([stationKey, tide]) => {
         addTideMarker(tide, stationKey);
-        console.log(`Added tide marker: ${stationKey} (${tide.name})`);
+        logger.debug('StationsMap', `Added tide marker: ${stationKey} (${tide.name})`);
       });
     }
   } catch (error) {
-    console.error('Error loading stations:', error);
+    logger.error('StationsMap', 'Error loading stations', error);
     // Fallback to inline station data if fetch fails
     loadFallbackStations();
   }
@@ -285,11 +285,11 @@ function centerMapOnBuoy(buoyId, retryCount = 0) {
   if (!stationsMap || !buoyMarkers[buoyId]) {
     // Retry up to 5 times with 500ms delay
     if (retryCount < 5) {
-      console.log(`Waiting for buoy marker ${buoyId}... (attempt ${retryCount + 1}/5)`);
+      logger.debug('StationsMap', `Waiting for buoy marker ${buoyId}... (attempt ${retryCount + 1}/5)`);
       setTimeout(() => centerMapOnBuoy(buoyId, retryCount + 1), 500);
       return;
     }
-    console.warn(`Map or marker not ready for buoy ${buoyId}`);
+    logger.warn('StationsMap', `Map or marker not ready for buoy ${buoyId}`);
     return;
   }
 
@@ -313,11 +313,11 @@ function centerMapOnTide(stationKey, retryCount = 0) {
   if (!stationsMap || !tideMarkers[stationKey]) {
     // Retry up to 5 times with 500ms delay
     if (retryCount < 5) {
-      console.log(`Waiting for tide marker ${stationKey}... (attempt ${retryCount + 1}/5)`);
+      logger.debug('StationsMap', `Waiting for tide marker ${stationKey}... (attempt ${retryCount + 1}/5)`);
       setTimeout(() => centerMapOnTide(stationKey, retryCount + 1), 500);
       return;
     }
-    console.warn(`Map or marker not ready for tide station ${stationKey}`);
+    logger.warn('StationsMap', `Map or marker not ready for tide station ${stationKey}`);
     return;
   }
 
@@ -367,7 +367,7 @@ window.showSelectedBuoyOnMap = showSelectedBuoyOnMap;
 function showSurgeStationOnMap(surgeStationName, scrollToMap = true) {
   const marker = SURGE_TO_MARKER_MAP[surgeStationName];
   if (!marker) {
-    console.warn(`No map marker found for surge station: ${surgeStationName}`);
+    logger.warn('StationsMap', `No map marker found for surge station: ${surgeStationName}`);
     return;
   }
 

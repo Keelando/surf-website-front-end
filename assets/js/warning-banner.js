@@ -67,7 +67,7 @@ function isWarningDismissed(warningId) {
 
     return true;
   } catch (error) {
-    console.error('Error checking dismissed warnings:', error);
+    logger.error('WarningBanner', 'Error checking dismissed warnings', error);
     return false;
   }
 }
@@ -106,7 +106,7 @@ function dismissWarning(warningId) {
       }, 300);
     }
   } catch (error) {
-    console.error('Error dismissing warning:', error);
+    logger.error('WarningBanner', 'Error dismissing warning', error);
   }
 }
 
@@ -154,7 +154,7 @@ async function displayWarningBanners(containerId = 'warning-banner-container') {
   const container = document.getElementById(containerId);
 
   if (!container) {
-    console.warn(`Warning banner container '${containerId}' not found`);
+    logger.warn('WarningBanner', `Warning banner container '${containerId}' not found`);
     return;
   }
 
@@ -209,7 +209,7 @@ async function displayWarningBanners(containerId = 'warning-banner-container') {
     };
 
   } catch (error) {
-    console.error('Error loading marine forecast warnings:', error);
+    logger.error('WarningBanner', 'Error loading marine forecast warnings', error);
     container.style.display = 'none';
   }
 }

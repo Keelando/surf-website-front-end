@@ -23,8 +23,9 @@ function createWindDirectionArrowData(windDirectionData, windSpeedData, windGust
 
   const arrowData = [];
 
-  // Sample every 3 hours to avoid overcrowding (assuming hourly data)
-  const sampleInterval = 3;
+  // Responsive sampling: fewer arrows on mobile to prevent overlap
+  // Mobile (< 600px): every 6 hours, Desktop: every 3 hours
+  const sampleInterval = window.innerWidth < 600 ? 6 : 3;
 
   for (let i = 0; i < windDirectionData.length; i += sampleInterval) {
     const dirPoint = windDirectionData[i];
@@ -37,13 +38,14 @@ function createWindDirectionArrowData(windDirectionData, windSpeedData, windGust
     const timestamp = new Date(dirPoint.time).getTime();
     const direction = dirPoint.value; // Meteorological direction (coming FROM)
 
-    // Each data point with its own rotation, positioned at top of chart
+    // Position arrows in a straight line at top
+    // Add 180° to convert from "coming FROM" to "going TO" direction
     arrowData.push({
       value: [timestamp, arrowYPosition],
-      symbolRotate: direction, // Set rotation per data point
+      symbolRotate: (direction + 180) % 360, // Convert "from" direction to "to" direction
       itemStyle: {
-        color: '#1e88e5',
-        opacity: 0.8
+        color: '#004b7c',
+        opacity: 0.7
       }
     });
   }
@@ -63,11 +65,17 @@ function renderWindChart(windChart, buoy) {
   const windGustData = ts.wind_gust?.data || [];
   const windDirectionData = ts.wind_direction?.data || [];
 
-  // Create direction arrow data (now returns object with arrowData and maxValue)
+  // Create direction arrow data (returns object with arrowData and maxValue)
   const { arrowData, maxValue } = createWindDirectionArrowData(windDirectionData, windSpeedData, windGustData);
 
-  // Calculate y-axis max to ensure arrows are visible
+  // Calculate y-axis max to ensure arrows are visible at top
   const yAxisMax = maxValue ? Math.ceil(maxValue * 1.1) : null;
+
+  // Build legend data array
+  const legendData = ["Wind Speed", "Wind Gust"];
+  if (arrowData.length > 0) {
+    legendData.push("Wind Direction");
+  }
 
   windChart.setOption({
     title: {
@@ -101,7 +109,7 @@ function renderWindChart(windChart, buoy) {
         return res;
       },
     },
-    legend: { data: ["Wind Speed", "Wind Gust"], bottom: "8%" },
+    legend: { data: legendData, bottom: getResponsiveLegendBottom() },
     grid: getResponsiveGridConfig(false),
     xAxis: {
       type: "time",
@@ -143,10 +151,24 @@ function renderWindChart(windChart, buoy) {
         name: "Wind Direction",
         type: "scatter",
         data: arrowData,
-        symbol: 'arrow', // Use built-in arrow symbol
-        symbolSize: 15,
+        symbol: 'path://M0,12 L-4,-8 L0,-6 L4,-8 Z', // Custom centered arrow pointing DOWN
+        symbolSize: 16,
+        symbolRotate: function(dataIndex) {
+          // Read rotation from data point
+          return arrowData[dataIndex]?.symbolRotate || 0;
+        },
+        itemStyle: {
+          color: function(params) {
+            // Read color from data point
+            return arrowData[params.dataIndex]?.itemStyle?.color || '#004b7c';
+          },
+          opacity: function(params) {
+            // Read opacity from data point
+            return arrowData[params.dataIndex]?.itemStyle?.opacity || 0.7;
+          }
+        },
         silent: true, // Don't trigger mouse events
-        z: 10 // Render on top of lines
+        z: 2 // Render on top of lines
       }
     ]
   });

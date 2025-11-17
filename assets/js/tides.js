@@ -48,9 +48,9 @@ async function loadTideData() {
 
     if (combinedWaterLevelData_temp) {
       combinedWaterLevelData = combinedWaterLevelData_temp;
-      console.log('✅ Loaded combined water level data');
+      logger.info('Tides', 'Loaded combined water level data');
     } else {
-      console.warn('Combined water level data not available');
+      logger.warn('Tides', 'Combined water level data not available');
     }
 
     if (stationsMetadata_temp) {
@@ -61,7 +61,7 @@ async function loadTideData() {
     updateTimestamp();
 
   } catch (error) {
-    console.error('Error loading tide data:', error);
+    logger.error('Tides', 'Error loading tide data', error);
     showError();
   }
 }
@@ -718,33 +718,46 @@ function displayTideChart(stationKey, dayOffset = 0) {
     },
     legend: {
       data: hasCombinedData
-        ? ['Astronomical Tide', 'Observation', 'Storm Surge', 'Total Water Level']
+        ? ['Astronomical Tide', 'Observation', 'Storm Surge (Forecast)', 'Total Water Level (Forecast)']
         : ['Astronomical Tide', 'Observation'],
-      top: 10,
-      textStyle: { fontSize: 12 }
+      bottom: getResponsiveLegendBottom(),
+      textStyle: { fontSize: 10 }
     },
     grid: {
       left: window.innerWidth < 600 ? '12%' : '10%',
       right: window.innerWidth < 600 ? '12%' : '10%',
-      top: hasCombinedData ? '15%' : '10%',
-      bottom: '20%',
+      top: '10%',
+      bottom: '22%',
       containLabel: true
     },
     xAxis: {
       type: 'time',
       axisLabel: {
-        formatter: function(value) {
+        formatter: function(value, index) {
           const date = new Date(value);
-          return date.toLocaleString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            hour: 'numeric',
-            hour12: true,
+          const hour = date.toLocaleString('en-US', {
+            hour: '2-digit',
+            hour12: false,
             timeZone: 'America/Vancouver'
           });
+
+          // Show full date at midnight (00h) or first label
+          if (hour === '00' || index === 0) {
+            const monthDay = date.toLocaleString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              timeZone: 'America/Vancouver'
+            });
+            return `${monthDay} ${hour}h`;
+          }
+
+          // Otherwise just show hour
+          return `${hour}h`;
         },
         hideOverlap: true,
-        fontSize: window.innerWidth < 600 ? 9 : 10
+        interval: window.innerWidth < 600 ? 'auto' : 'auto',
+        fontSize: window.innerWidth < 600 ? 9 : 10,
+        rotate: window.innerWidth < 600 ? 25 : 0
       },
       splitLine: { show: true, lineStyle: { color: "#eee" } }
     },
@@ -790,7 +803,7 @@ function displayTideChart(stationKey, dayOffset = 0) {
   if (hasCombinedData) {
     // Storm surge series (small but useful to see the component)
     option.series.push({
-      name: 'Storm Surge',
+      name: 'Storm Surge (Forecast)',
       type: 'line',
       data: surgeData,
       smooth: true,
@@ -806,7 +819,7 @@ function displayTideChart(stationKey, dayOffset = 0) {
 
     // Total water level series (tide + surge)
     option.series.push({
-      name: 'Total Water Level',
+      name: 'Total Water Level (Forecast)',
       type: 'line',
       data: combinedData,
       smooth: true,

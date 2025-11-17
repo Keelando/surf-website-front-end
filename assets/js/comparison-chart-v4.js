@@ -47,7 +47,7 @@ function downsampleToHourly(data) {
 function renderComparisonChart(waveComparisonChart, chartData) {
   try {
     if (!chartData) {
-      console.warn("No chart data available");
+      logger.warn("ComparisonChart", "No chart data available");
       return;
     }
 
@@ -70,7 +70,7 @@ function renderComparisonChart(waveComparisonChart, chartData) {
       // Downsample high-frequency buoys to hourly for better chart performance
       if (buoyId === "CRPILE") {
         data = downsampleToHourly(data);
-        console.log(`Downsampled ${buoy.name} from high-frequency to hourly (${data.length} points)`);
+        logger.debug("ComparisonChart", `Downsampled ${buoy.name} from high-frequency to hourly (${data.length} points)`);
       }
 
       return {
@@ -125,7 +125,7 @@ function renderComparisonChart(waveComparisonChart, chartData) {
 
     legend: {
       data: buoyOrder.map((id) => chartData[id]?.name).filter(Boolean),
-      bottom: "12%",
+      bottom: "3%",  // Fixed lower position for comparison chart (multi-row legend needs more space)
     },
 
     grid: getResponsiveGridConfig(true),

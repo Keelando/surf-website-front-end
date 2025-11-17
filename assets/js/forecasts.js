@@ -17,7 +17,7 @@ async function loadForecasts() {
     updateTimestamp();
 
   } catch (error) {
-    console.error('Error loading forecasts:', error);
+    logger.error('Forecasts', 'Error loading forecasts', error);
     container.innerHTML = `
       <div class="error-state">
         <h2>Unable to Load Forecasts</h2>
@@ -325,7 +325,7 @@ function updateTimestamp() {
  */
 function startAutoRefresh() {
   setInterval(() => {
-    console.log('Auto-refreshing forecast data...');
+    logger.info('Forecasts', 'Auto-refreshing forecast data...');
     loadForecasts();
   }, 5 * 60 * 1000); // 5 minutes
 }

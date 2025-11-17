@@ -25,9 +25,9 @@ async function loadStormSurgeData() {
     // Load the default station (Point Atkinson)
     const selectedStation = document.getElementById("surge-station-select")?.value || "Point_Atkinson";
     updateSurgeChart(selectedStation);
-    
+
   } catch (err) {
-    console.error("Error loading storm surge data:", err);
+    logger.error("StormSurgeChart", "Error loading storm surge data", err);
     const container = document.getElementById("surge-chart");
     if (container) {
       container.innerHTML = '<p style="text-align:center;color:#999;">⚠️ Storm surge data unavailable</p>';
@@ -76,14 +76,14 @@ function updateActiveStationIndicator(stationId) {
 
 function updateSurgeChart(stationId) {
   if (!surgeData?.stations?.[stationId]) {
-    console.warn(`No data found for station: ${stationId}`);
+    logger.warn("StormSurgeChart", `No data found for station: ${stationId}`);
     return;
   }
-  
+
   const station = surgeData.stations[stationId];
-  
+
   if (!station.forecast || Object.keys(station.forecast).length === 0) {
-    console.warn(`No forecast data for ${stationId}`);
+    logger.warn("StormSurgeChart", `No forecast data for ${stationId}`);
     return;
   }
 
@@ -147,7 +147,12 @@ function updateSurgeChart(stationId) {
       type: "category",
       data: times,
       axisLabel: {
-        interval: (index) => index % 24 === 0,
+        interval: (index) => {
+          // Show labels only at midnight Pacific Time
+          const d = new Date(times[index]);
+          const hour = parseInt(d.toLocaleString("en-US", { hour: "2-digit", hour12: false, timeZone: "America/Vancouver" }));
+          return hour === 0;
+        },
         formatter: (value, index) => {
           const d = new Date(value);
           const day = d.toLocaleString("en-US", { day: "2-digit", timeZone: "America/Vancouver" });
@@ -160,7 +165,16 @@ function updateSurgeChart(stationId) {
         margin: 10
       },
       axisTick: { show: true, alignWithLabel: true },
-      splitLine: { show: true, lineStyle: { color: "#eee" } }
+      splitLine: {
+        show: true,
+        lineStyle: { color: "#eee" },
+        interval: (index) => {
+          // Show gridlines only at midnight Pacific Time
+          const d = new Date(times[index]);
+          const hour = parseInt(d.toLocaleString("en-US", { hour: "2-digit", hour12: false, timeZone: "America/Vancouver" }));
+          return hour === 0;
+        }
+      }
     },
     yAxis: {
       type: "value",
@@ -209,7 +223,7 @@ function updateSurgeChart(stationId) {
   // Update metadata display
   updateMetadata(station, times, values);
 
-  console.log(`✅ Loaded ${values.length} hours of storm surge forecast for ${station.station_name}`);
+  logger.info("StormSurgeChart", `Loaded ${values.length} hours of storm surge forecast for ${station.station_name}`);
 }
 
 function updateMetadata(station, times, values) {

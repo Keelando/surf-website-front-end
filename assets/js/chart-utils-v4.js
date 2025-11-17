@@ -38,12 +38,12 @@ async function fetchWithTimeout(url, options = {}) {
       return await response.json();
     } catch (error) {
       if (attempt === maxRetries) {
-        console.error(`Fetch failed after ${maxRetries} attempts:`, error);
+        logger.error('ChartUtils', `Fetch failed after ${maxRetries} attempts`, error);
         throw error;
       }
 
       const delay = retryDelay * attempt;
-      console.warn(`Fetch attempt ${attempt} failed, retrying in ${delay}ms...`, error.message);
+      logger.warn('ChartUtils', `Fetch attempt ${attempt} failed, retrying in ${delay}ms...`, { message: error.message });
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
@@ -132,6 +132,22 @@ function getResponsiveGridConfig(isComparisonChart = false) {
 }
 
 /**
+ * Get responsive legend bottom position based on screen width
+ * Scales proportionally with grid bottom spacing for consistent visual gap
+ */
+function getResponsiveLegendBottom() {
+  const width = window.innerWidth;
+
+  if (width < 600) {
+    return '10%';  // Mobile: higher up to stay closer to rotated labels
+  } else if (width < 1000) {
+    return '7%';   // Medium: middle ground
+  } else {
+    return '5%';   // Desktop: works well per user feedback
+  }
+}
+
+/**
  * Display error message in chart container
  * @param {HTMLElement|string} container - DOM element or element ID
  * @param {string} chartName - Name of the chart for error message
@@ -143,11 +159,11 @@ function showChartError(container, chartName, error) {
     : container;
 
   if (!element) {
-    console.error(`Chart container not found: ${container}`);
+    logger.error('ChartUtils', `Chart container not found: ${container}`);
     return;
   }
 
-  console.error(`Error rendering ${chartName}:`, error);
+  logger.error('ChartUtils', `Error rendering ${chartName}`, error);
 
   element.innerHTML = `
     <div style="display: flex; align-items: center; justify-content: center; height: 100%; min-height: 200px; padding: 2rem; text-align: center;">

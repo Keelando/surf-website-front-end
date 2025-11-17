@@ -31,7 +31,7 @@ async function loadChartsData() {
     updateCharts(selectedBuoy);
     generateWaveHeightTable(chartData);
   } catch (err) {
-    console.error("Error loading chart data:", err);
+    logger.error("Charts", "Error loading chart data", err);
     document.getElementById("timestamp").textContent = "⚠️ Error loading chart data";
   }
 }
@@ -78,7 +78,7 @@ function updateActiveBuoyIndicator(buoyId) {
  */
 function updateCharts(buoyId) {
   if (!chartData || !chartData[buoyId]) {
-    console.warn(`No data for buoy ${buoyId}`);
+    logger.warn("Charts", `No data for buoy ${buoyId}`);
     return;
   }
 

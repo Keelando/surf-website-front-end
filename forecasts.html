@@ -195,8 +195,11 @@
 
   <header>
     <h1>Marine Weather Forecasts</h1>
-    <p style="margin-top: 0.5rem; color: #4a5568; font-size: 1rem;">Strait of Georgia - Environment Canada</p>
   </header>
+
+  <div class="site-tagline">
+    Strait of Georgia - Environment Canada
+  </div>
 
   <main class="forecast-main-content">
     <div id="forecast-container">
@@ -227,8 +230,10 @@
     </p>
   </footer>
 
-  <script src="/assets/js/warning-banner.js"></script>
-  <script src="/assets/js/chart-utils-v4.js"></script>
-  <script src="/assets/js/forecasts.js"></script>
+  <!-- Load logger first for global availability -->
+  <script src="/assets/js/logger.js?v=20251117"></script>
+  <script src="/assets/js/warning-banner.js?v=20251117"></script>
+  <script src="/assets/js/chart-utils-v4.js?v=20251117"></script>
+  <script src="/assets/js/forecasts.js?v=20251117"></script>
 </body>
 </html>

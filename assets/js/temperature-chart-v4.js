@@ -35,7 +35,7 @@ function renderTemperatureChart(tempChart, buoy) {
         return res;
       },
     },
-    legend: { data: ["Air Temperature", "Sea Temperature"], bottom: "8%" },
+    legend: { data: ["Air Temperature", "Sea Temperature"], bottom: getResponsiveLegendBottom() },
     grid: getResponsiveGridConfig(false),
     xAxis: {
       type: "time",
