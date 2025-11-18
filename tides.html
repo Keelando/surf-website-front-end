@@ -16,6 +16,31 @@
   <link rel="stylesheet" href="/assets/css/nav-tide-styles-v4.css" />
   <link rel="stylesheet" href="/assets/css/warning-banner-v4.css" />
   <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+
+  <style>
+    header {
+      margin-bottom: 0;
+    }
+
+    .site-tagline {
+      background: linear-gradient(to bottom, rgba(224, 242, 255, 0.5), rgba(224, 242, 255, 0.8));
+      text-align: center;
+      font-size: 1rem;
+      font-style: italic;
+      color: #2c5282;
+      padding: 1rem 1.5rem;
+      margin: 0;
+      border-bottom: 1px solid rgba(66, 153, 225, 0.2);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    @media (max-width: 768px) {
+      .site-tagline {
+        font-size: 0.9rem;
+        padding: 0.85rem 1rem;
+      }
+    }
+  </style>
 </head>
 
 <body>
@@ -33,6 +58,10 @@
   <header>
     <h1>Salish Sea Tide Conditions</h1>
   </header>
+
+  <div class="site-tagline">
+    Real-time water level observations, tide predictions, and storm surge forecasts.
+  </div>
 
   <main class="tide-main-content">
     
