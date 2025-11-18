@@ -490,11 +490,7 @@ function updateHindcastChart(stationId) {
     const color = getColorForIndex(index, sortedDates.length);
 
     return {
-      name: `Forecast from ${new Date(date).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        timeZone: "UTC"
-      })}`,
+      name: '', // Don't show individual forecast dates in legend
       type: "line",
       data: data.times.map((time, i) => [time, data.values[i]]),
       smooth: true,
@@ -542,8 +538,10 @@ function updateHindcastChart(stationId) {
   hindcastChart.setOption({
     title: {
       text: `${station.station_name} - Hindcast Comparison (48h Predictions)`,
+      subtext: 'Black line = Tide offset observations | Colored lines = Historical forecast runs',
       left: "center",
-      textStyle: { fontSize: window.innerWidth < 600 ? 12 : 14, fontWeight: 'bold' }
+      textStyle: { fontSize: window.innerWidth < 600 ? 12 : 14, fontWeight: 'bold' },
+      subtextStyle: { fontSize: 11, color: '#666' }
     },
     tooltip: {
       trigger: "axis",
@@ -570,11 +568,11 @@ function updateHindcastChart(stationId) {
       }
     },
     legend: {
+      show: true,
       bottom: 0,
       left: "center",
-      type: "scroll",
-      pageButtonItemGap: 5,
-      pageIconSize: 12
+      data: ['Observed Surge (Actual)'], // Only show observed surge in legend
+      type: "plain"
     },
     grid: {
       left: window.innerWidth < 600 ? "10%" : "8%",
