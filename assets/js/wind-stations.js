@@ -310,8 +310,8 @@ async function loadWindTimeseries() {
 /**
  * Create wind direction arrow data for scatter series
  */
-function createWindDirectionArrows(windDirectionData, windSpeedData, windGustData) {
-  if (!windDirectionData || windDirectionData.length === 0) return { arrowData: [], maxValue: null };
+function createWindDirectionArrows(windDirectionTimes, windSpeedData, windGustData) {
+  if (!windDirectionTimes || windDirectionTimes.length === 0) return { arrowData: [], maxValue: null };
 
   // Find maximum wind speed/gust to position arrows at top
   const allSpeeds = [...windSpeedData, ...windGustData]
@@ -323,12 +323,12 @@ function createWindDirectionArrows(windDirectionData, windSpeedData, windGustDat
   const arrowData = [];
 
   // Sample every 3 data points to avoid clutter
-  for (let i = 0; i < windDirectionData.length; i += 3) {
-    const dirPoint = windDirectionData[i];
-    if (dirPoint == null) continue;
+  for (let i = 0; i < windDirectionTimes.length; i += 3) {
+    const dirPoint = windDirectionTimes[i];
+    if (!dirPoint || dirPoint.value == null) continue;
 
-    const timestamp = new Date(windDirectionData[i].time).getTime();
-    const direction = dirPoint; // Meteorological direction (coming FROM)
+    const timestamp = new Date(dirPoint.time).getTime();
+    const direction = dirPoint.value; // Meteorological direction (coming FROM)
 
     // Add 180° to convert from "coming FROM" to "going TO" direction
     arrowData.push({
@@ -366,12 +366,11 @@ function renderWindChart(stationId) {
 
   const windSpeedData = (timeseries.wind_speed || []).map(p => ({ time: p.time, value: p.value }));
   const windGustData = (timeseries.wind_gust || []).map(p => ({ time: p.time, value: p.value }));
-  const windDirValues = (timeseries.wind_direction || []).map(p => p.value);
   const windDirTimes = (timeseries.wind_direction || []);
 
   // Create direction arrow data
   const { arrowData, maxValue } = createWindDirectionArrows(
-    windDirValues,
+    windDirTimes,
     windSpeedData.map(d => d.value),
     windGustData.map(d => d.value)
   );

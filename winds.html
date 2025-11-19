@@ -22,6 +22,7 @@
   <link rel="stylesheet" href="/assets/css/style-v4.css?v=20251112" />
   <link rel="stylesheet" href="/assets/css/nav-tide-styles-v4.css" />
   <link rel="stylesheet" href="/assets/css/warning-banner-v4.css" />
+  <link rel="stylesheet" href="/assets/css/stations-map-v4.css" />
 
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -151,6 +152,16 @@
     Real-time wind observations from coastal weather stations across the Salish Sea and Strait of Georgia.
   </div>
 
+  <!-- Under Development Notice -->
+  <div style="max-width: 1200px; margin: 1.5rem auto; padding: 1rem; background: linear-gradient(to right, #fff3cd, #fff8e1); border-left: 4px solid #ffc107; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <p style="margin: 0; color: #856404; font-weight: 600;">
+      ⚠️ Under Development
+    </p>
+    <p style="margin: 0.5rem 0 0 0; color: #856404; font-size: 0.9rem;">
+      This page is currently in development. Wind data collection and display are being optimized.
+    </p>
+  </div>
+
   <!-- Current Conditions Table -->
   <section id="wind-table-section" style="max-width: 1200px; margin: 2rem auto; padding: 0 1rem;">
     <h2>Current Wind Conditions</h2>
@@ -179,7 +190,20 @@
     </div>
   </section>
 
-  <!-- Wind Chart Section -->
+  <!-- Stations Map Section (Coming Soon) -->
+  <!--
+  <section id="map-section" style="max-width: 1200px; margin: 2rem auto; padding: 0 1rem;">
+    <h2>Station Locations</h2>
+    <div id="stations-map" style="width: 100%; height: 400px; border-radius: 8px; border: 1px solid #e0e7ee;"></div>
+    <div class="map-legend" style="margin-top: 1rem; text-align: center; font-size: 0.9rem;">
+      <span style="margin-right: 1.5rem;">💨 Land Station</span>
+      <span>🌊 Buoy</span>
+    </div>
+  </section>
+  -->
+
+  <!-- Wind Chart Section (Coming Soon) -->
+  <!--
   <section id="wind-chart-section" style="max-width: 1200px; margin: 2rem auto; padding: 0 1rem;">
     <h2>24-Hour Wind Trends</h2>
     <div id="station-selector" style="margin-bottom: 1rem; text-align: center;">
@@ -190,6 +214,7 @@
     </div>
     <div id="wind-trend-chart" class="w-full h-500" style="width: 100%; height: 500px;"></div>
   </section>
+  -->
 
   <!-- About Section -->
   <section class="about-section">
@@ -197,7 +222,7 @@
     <p>
       <strong>Salish Sea Wind Conditions</strong> provides real-time wind data from coastal weather stations
       across the <strong>Strait of Georgia</strong> and surrounding areas. Data is automatically collected
-      from Environment Canada weather stations and buoys, updated hourly.
+      from Environment Canada and NOAA weather stations and buoys, updated hourly.
     </p>
 
     <p>
@@ -232,8 +257,8 @@
   </nav>
 
   <footer>
-    <p>Please independently verify this data and do not base recreational activities around this information. This website is in no way affiliated with Environment Canada.</p>
-    <p><small>Data source: Environment Canada | <span id="timestamp">Loading...</span></small></p>
+    <p>Please independently verify this data and do not base recreational activities around this information. This website is in no way affiliated with Environment Canada or NOAA.</p>
+    <p><small>Data sources: Environment Canada, NOAA NDBC | <span id="timestamp">Loading...</span></small></p>
     <p class="mt-md">
       <a href="https://github.com/Keelando/surf-website" target="_blank" rel="noopener noreferrer" class="github-link inline-flex gap-md color-white no-underline" aria-label="View project on GitHub">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="align-middle" aria-hidden="true">
@@ -244,10 +269,15 @@
     </p>
   </footer>
 
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""></script>
+
   <!-- Load logger first for global availability -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
   <script src="/assets/js/logger.js?v=20251117"></script>
   <script src="/assets/js/warning-banner.js?v=20251117"></script>
-  <script src="/assets/js/wind-stations.js?v=20251119g"></script>
+  <script src="/assets/js/wind-stations.js?v=20251119h"></script>
 </body>
 </html>
