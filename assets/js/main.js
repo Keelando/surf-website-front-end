@@ -58,9 +58,9 @@ async function loadBuoyData() {
   // Source links for each buoy
   const sourceLinks = {
     "4600146": "https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46146",
-    "4600304": "https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46304",
+    "4600304": "https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06400&stationID=46304",
     "4600303": "https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46303",
-    "4600131": "https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46131",
+    "4600131": "https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06400&stationID=46131",
     "46087": "https://www.ndbc.noaa.gov/station_page.php?station=46087",
     "46088": "https://www.ndbc.noaa.gov/station_page.php?station=46088",
     "46267": "https://www.ndbc.noaa.gov/station_page.php?station=46267",
