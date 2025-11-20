@@ -51,8 +51,7 @@ function formatTimestamp(isoString) {
 // Global chart instance
 let windChart = null;
 let windTimeseriesData = null;
-let allStationsList = []; // Store all stations for filtering
-let stationNameToId = {}; // Map station names to IDs for datalist lookup
+let allStationsList = []; // Store all stations
 let currentSort = { column: null, ascending: true };
 
 /**
@@ -272,23 +271,20 @@ async function loadWindTable() {
 }
 
 /**
- * Populate station datalist
+ * Populate station dropdown (always shows all stations)
  */
-function populateStationDatalist() {
-  const datalist = document.getElementById("station-options");
-  if (!datalist || !allStationsList) return;
+function populateStationDropdown() {
+  const select = document.getElementById("wind-station-select");
+  if (!select || !allStationsList) return;
 
-  datalist.innerHTML = '';
-  stationNameToId = {};
+  select.innerHTML = '';
 
-  // Populate datalist with all stations
+  // Populate dropdown with all stations
   allStationsList.forEach(([id, station]) => {
     const option = document.createElement('option');
-    option.value = station.name;
-    datalist.appendChild(option);
-
-    // Store name-to-id mapping
-    stationNameToId[station.name] = id;
+    option.value = id;
+    option.textContent = station.name;
+    select.appendChild(option);
   });
 }
 
@@ -321,51 +317,55 @@ async function loadWindTimeseries() {
         }
       });
 
+    const select = document.getElementById("wind-station-select");
     const searchInput = document.getElementById("wind-station-search");
-    if (!searchInput) return;
+    if (!select) return;
 
     // Get all stations (exclude _meta)
     allStationsList = Object.entries(windTimeseriesData)
       .filter(([key]) => key !== '_meta')
       .sort((a, b) => a[1].name.localeCompare(b[1].name));
 
-    // Populate datalist with all stations
-    populateStationDatalist();
+    // Populate dropdown with all stations
+    populateStationDropdown();
 
     // Set default selection (first station)
     if (allStationsList.length > 0) {
-      const firstName = allStationsList[0][1].name;
-      searchInput.value = firstName;
+      select.value = allStationsList[0][0];
       renderWindChart(allStationsList[0][0]);
     }
 
-    // Add input listener to handle selection
-    searchInput.addEventListener('input', (e) => {
-      const stationName = e.target.value;
-      const stationId = stationNameToId[stationName];
-      if (stationId) {
-        renderWindChart(stationId);
-      }
+    // Add change listener to dropdown
+    select.addEventListener('change', (e) => {
+      renderWindChart(e.target.value);
     });
 
-    // Handle blur to render chart if partial match exists
-    searchInput.addEventListener('blur', (e) => {
-      const inputValue = e.target.value.toLowerCase();
-      // Find best match
-      const match = allStationsList.find(([id, station]) =>
-        station.name.toLowerCase().includes(inputValue)
-      );
-      if (match) {
-        searchInput.value = match[1].name;
-        renderWindChart(match[0]);
-      }
-    });
+    // Add "jump to" search listener
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        const searchText = e.target.value.toLowerCase();
+        if (!searchText) return;
+
+        // Find first matching station (by name or ID)
+        const match = allStationsList.find(([id, station]) =>
+          station.name.toLowerCase().includes(searchText) ||
+          id.toLowerCase().includes(searchText)
+        );
+
+        if (match) {
+          // Select the matching station in dropdown
+          select.value = match[0];
+          // Trigger chart update
+          renderWindChart(match[0]);
+        }
+      });
+    }
 
   } catch (error) {
     console.error('Error loading wind timeseries:', error);
-    const datalist = document.getElementById("station-options");
-    if (datalist) {
-      datalist.innerHTML = '<option value="">Error loading stations</option>';
+    const select = document.getElementById("wind-station-select");
+    if (select) {
+      select.innerHTML = '<option value="">Error loading stations</option>';
     }
   }
 }

@@ -214,12 +214,17 @@
   <section id="wind-chart-section" style="max-width: 1200px; margin: 2rem auto; padding: 0 1rem;">
     <h2>24-Hour Wind Trends</h2>
     <div id="station-selector" style="margin-bottom: 1rem; text-align: center;">
-      <label for="wind-station-search" style="font-weight: 600; margin-right: 0.5rem;">Select Station:</label>
-      <input type="text" id="wind-station-search" list="station-options" placeholder="Type to search or select..."
-             style="padding: 0.5rem; font-size: 1rem; border-radius: 4px; border: 1px solid #ccc; min-width: 300px;">
-      <datalist id="station-options">
-        <option value="">Loading stations...</option>
-      </datalist>
+      <div style="margin-bottom: 0.5rem;">
+        <label for="wind-station-search" style="font-weight: 600; margin-right: 0.5rem;">Search:</label>
+        <input type="text" id="wind-station-search" placeholder="Type to jump to station..."
+               style="padding: 0.5rem; font-size: 1rem; border-radius: 4px; border: 1px solid #ccc; width: 250px;">
+      </div>
+      <div>
+        <label for="wind-station-select" style="font-weight: 600; margin-right: 0.5rem;">Station:</label>
+        <select id="wind-station-select" size="1" style="padding: 0.5rem; font-size: 1rem; border-radius: 4px; border: 1px solid #ccc; min-width: 300px;">
+          <option value="">Loading stations...</option>
+        </select>
+      </div>
     </div>
     <div id="wind-trend-chart" class="w-full h-500" style="width: 100%; height: 500px;"></div>
   </section>
