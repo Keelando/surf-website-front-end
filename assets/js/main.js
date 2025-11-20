@@ -289,9 +289,16 @@ async function loadBuoyData() {
         // NOAA Spectral Wave Breakdown
         cardContent += `<p class="buoy-metric" style="font-weight: 600; color: #004b7c; margin-bottom: 0.5rem;">Detailed Wave Metrics</p>`;
 
+        // Significant/Combined Wave Metrics
+        cardContent += `
+          <p class="buoy-metric" style="font-weight: 600; color: #004b7c; margin-bottom: 0.5rem;">📊 Significant Wave (Combined)</p>
+          <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Sig Height:</b> ${b.wave_height_sig ?? "—"} m</p>
+          <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Avg Period:</b> ${b.wave_period_avg ?? "—"} s</p>
+        `;
+
         // Spectral wave breakdown
         cardContent += `
-          <p class="buoy-metric" style="font-weight: 600; color: #004b7c; margin-bottom: 0.5rem;">💨 Wind Waves (Local Chop)</p>
+          <p class="buoy-metric" style="margin-top: 0.75rem; font-weight: 600; color: #004b7c; margin-bottom: 0.5rem;">💨 Wind Waves (Local Chop)</p>
           <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Height:</b> ${b.wind_wave_height ?? "—"} m</p>
           <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Period:</b> ${b.wind_wave_period ?? "—"} s</p>
           <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Direction:</b> ${b.wind_wave_direction_cardinal ?? "—"} (${b.wind_wave_direction ?? "—"}°) ${getDirectionalArrow(b.wind_wave_direction, 'wave')}</p>
@@ -301,7 +308,7 @@ async function loadBuoyData() {
           <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Period:</b> ${b.swell_period ?? "—"} s</p>
           <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Direction:</b> ${b.swell_direction_cardinal ?? "—"} (${b.swell_direction ?? "—"}°) ${getDirectionalArrow(b.swell_direction, 'wave')}</p>
 
-          <p class="buoy-metric" style="margin-top: 0.75rem; font-weight: 600; color: #004b7c; margin-bottom: 0.5rem;">📊 Additional Metrics</p>
+          <p class="buoy-metric" style="margin-top: 0.75rem; font-weight: 600; color: #004b7c; margin-bottom: 0.5rem;">📈 Peak Metrics</p>
           <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Peak Period:</b> ${b.wave_period_peak ?? "—"} s</p>
           <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Peak Direction:</b> ${b.wave_direction_peak_cardinal ?? "—"} (${b.wave_direction_peak ?? "—"}°) ${getDirectionalArrow(b.wave_direction_peak, 'wave')}</p>
         `;
