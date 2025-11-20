@@ -345,6 +345,29 @@ The website is served using Caddy on port 8090. Cache headers are configured to:
 sudo caddy reload --config /etc/caddy/Caddyfile
 ```
 
+### Website Analytics
+
+**Analytics dashboard:** `/home/keelando/site/analytics.html`
+
+GoAccess-based analytics report generated hourly from Caddy access logs.
+
+**Script:** `~/site/scripts/generate_analytics.sh`
+
+**Authentication:**
+- Analytics page is protected by **Cloudflare Access** authentication at the edge
+- No local authentication required - Cloudflare handles access control before requests reach the server
+- Only authorized users can view analytics.html through the public URL
+
+**Generation process:**
+1. Converts Caddy JSON logs to Combined Log Format using `caddy_to_clf.py`
+2. Generates HTML report with GoAccess
+3. Runs hourly via cron
+
+**Features:**
+- IP anonymization (--anonymize-ip)
+- Crawler filtering (--ignore-crawlers)
+- Real-time updates via WebSocket
+
 ## Adding a New Buoy
 
 1. Add to `BUOYS` dictionary in all scripts that reference it:
