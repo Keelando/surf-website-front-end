@@ -168,7 +168,7 @@ async function loadBuoyData() {
       let cardContent = `<h2>${b.name || id}`;
 
       // Add source badge
-      if (id === "46087" || id === "46088") {
+      if (id === "46087" || id === "46088" || id === "46267") {
         cardContent += ` <span style="font-size: 0.7em; color: #003087; font-weight: normal;">🇺🇸 NOAA</span>`;
       } else if (id === "CRPILE" || id === "CRCHAN" || id === "COLEB") {
         cardContent += ` <span style="font-size: 0.7em; color: #006837; font-weight: normal;">🏛️ Surrey (FlowWorks)</span>`;
