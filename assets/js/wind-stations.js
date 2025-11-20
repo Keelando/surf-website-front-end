@@ -43,6 +43,7 @@ function formatTimestamp(isoString) {
 // Global chart instance
 let windChart = null;
 let windTimeseriesData = null;
+let allStationsList = []; // Store all stations for filtering
 let currentSort = { column: null, ascending: true };
 
 /**
@@ -262,6 +263,41 @@ async function loadWindTable() {
 }
 
 /**
+ * Populate station dropdown (with optional filter)
+ */
+function populateStationDropdown(filterText = '') {
+  const select = document.getElementById("wind-station-select");
+  if (!select || !allStationsList) return;
+
+  const currentValue = select.value;
+  select.innerHTML = '';
+
+  // Filter stations by search text
+  const filter = filterText.toLowerCase();
+  const filteredStations = allStationsList.filter(([id, station]) => {
+    return station.name.toLowerCase().includes(filter) || id.toLowerCase().includes(filter);
+  });
+
+  // Populate dropdown with filtered stations
+  filteredStations.forEach(([id, station]) => {
+    const option = document.createElement('option');
+    option.value = id;
+    option.textContent = station.name;
+    select.appendChild(option);
+  });
+
+  // Restore previous selection if it's still in the filtered list
+  const stillExists = filteredStations.some(([id]) => id === currentValue);
+  if (stillExists) {
+    select.value = currentValue;
+  } else if (filteredStations.length > 0) {
+    // Select first filtered station
+    select.value = filteredStations[0][0];
+    renderWindChart(filteredStations[0][0]);
+  }
+}
+
+/**
  * Load wind timeseries data and populate station selector
  */
 async function loadWindTimeseries() {
@@ -269,34 +305,34 @@ async function loadWindTimeseries() {
     windTimeseriesData = await fetchWithTimeout(`/data/wind_timeseries_24hr.json?t=${Date.now()}`);
 
     const select = document.getElementById("wind-station-select");
+    const searchInput = document.getElementById("wind-station-search");
     if (!select) return;
 
-    // Clear loading option
-    select.innerHTML = '';
-
     // Get stations (exclude _meta)
-    const stations = Object.entries(windTimeseriesData)
+    allStationsList = Object.entries(windTimeseriesData)
       .filter(([key]) => key !== '_meta')
       .sort((a, b) => a[1].name.localeCompare(b[1].name));
 
-    // Populate dropdown
-    stations.forEach(([id, station]) => {
-      const option = document.createElement('option');
-      option.value = id;
-      option.textContent = station.name;
-      select.appendChild(option);
-    });
+    // Populate dropdown with all stations
+    populateStationDropdown();
 
     // Set default selection (first station)
-    if (stations.length > 0) {
-      select.value = stations[0][0];
-      renderWindChart(stations[0][0]);
+    if (allStationsList.length > 0) {
+      select.value = allStationsList[0][0];
+      renderWindChart(allStationsList[0][0]);
     }
 
-    // Add change listener
+    // Add change listener to dropdown
     select.addEventListener('change', (e) => {
       renderWindChart(e.target.value);
     });
+
+    // Add search input listener
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        populateStationDropdown(e.target.value);
+      });
+    }
 
   } catch (error) {
     console.error('Error loading wind timeseries:', error);
