@@ -218,6 +218,7 @@ async function loadWindTable() {
           <th class="sortable" data-column="air_temp_c" data-type="number">Temp <span class="sort-indicator"></span></th>
           <th class="sortable" data-column="pressure_hpa" data-type="number">Pressure <span class="sort-indicator"></span></th>
           <th class="sortable" data-column="observation_time" data-type="date">Updated <span class="sort-indicator"></span></th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -236,6 +237,22 @@ async function loadWindTable() {
       const pressure = station.pressure_hpa != null ? `${station.pressure_hpa.toFixed(1)} hPa` : '—';
       const updated = formatTimestamp(station.observation_time);
 
+      // Determine source badge and link
+      let sourceBadge = '';
+      if (id.startsWith('46')) {
+        // NOAA buoy
+        sourceBadge = `<br><a href="https://www.ndbc.noaa.gov/station_page.php?station=${id}" target="_blank" rel="noopener" style="font-size: 0.75em; color: #003087; text-decoration: none;">🇺🇸 NOAA ↗</a>`;
+      } else if (id === 'CRPILE' || id === 'CRCHAN' || id === 'COLEB') {
+        // Surrey FlowWorks
+        sourceBadge = '<br><span style="font-size: 0.75em; color: #006837;">🏛️ Surrey</span>';
+      } else if (id === 'whiterock_pier') {
+        // White Rock City
+        sourceBadge = '<br><a href="https://maps.whiterockcity.ca/weather/" target="_blank" rel="noopener" style="font-size: 0.75em; color: #0066cc; text-decoration: none;">🏛️ White Rock ↗</a>';
+      } else if (id.startsWith('C')) {
+        // Environment Canada
+        sourceBadge = `<br><a href="https://weather.gc.ca/marine/weatherConditions-maritimes_e.html?mapID=02&siteID=${id}" target="_blank" rel="noopener" style="font-size: 0.75em; color: #006400; text-decoration: none;">🇨🇦 Env Canada ↗</a>`;
+      }
+
       tableHTML += `
         <tr ${rowClass}
             data-name="${station.name}"
@@ -245,13 +262,27 @@ async function loadWindTable() {
             data-air_temp_c="${station.air_temp_c || ''}"
             data-pressure_hpa="${station.pressure_hpa || ''}"
             data-observation_time="${station.observation_time}">
-          <td><strong>${station.name}</strong></td>
+          <td><strong>${station.name}</strong>${sourceBadge}</td>
           <td>${direction}</td>
           <td>${windSpeed}</td>
           <td>${windGust}</td>
           <td>${temp}</td>
           <td>${pressure}</td>
           <td>${updated}</td>
+          <td>
+            <button onclick="viewStationChart('${id}')" style="
+              padding: 0.4rem 0.8rem;
+              background: #0077be;
+              color: white;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+              font-size: 0.85em;
+              white-space: nowrap;
+            " onmouseover="this.style.background='#005a8f'" onmouseout="this.style.background='#0077be'">
+              📊 View Chart
+            </button>
+          </td>
         </tr>
       `;
     });
@@ -416,6 +447,30 @@ function createWindDirectionArrows(windDirectionTimes, windSpeedData, windGustDa
 
   return { arrowData, maxValue: arrowYPosition };
 }
+
+/**
+ * View chart for a specific station (from table link)
+ */
+function viewStationChart(stationId) {
+  const select = document.getElementById('wind-station-select');
+  if (!select) return;
+
+  // Select the station in dropdown
+  select.value = stationId;
+
+  // Render the chart and table
+  renderWindChart(stationId);
+  renderWind24HourTable(stationId);
+
+  // Scroll to chart section
+  const chartSection = document.getElementById('wind-chart-section');
+  if (chartSection) {
+    chartSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+// Make function globally accessible
+window.viewStationChart = viewStationChart;
 
 /**
  * Render 24-hour wind data table for selected station
