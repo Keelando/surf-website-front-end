@@ -437,6 +437,8 @@ function renderWind24HourTable(stationId) {
   const windSpeedArray = isBuoy && timeseries.wind_speed?.data ? timeseries.wind_speed.data : (timeseries.wind_speed || []);
   const windGustArray = isBuoy && timeseries.wind_gust?.data ? timeseries.wind_gust.data : (timeseries.wind_gust || []);
   const windDirArray = isBuoy && timeseries.wind_direction?.data ? timeseries.wind_direction.data : (timeseries.wind_direction || []);
+  const airTempArray = isBuoy && timeseries.air_temp?.data ? timeseries.air_temp.data : (timeseries.air_temp || []);
+  const pressureArray = isBuoy && timeseries.pressure?.data ? timeseries.pressure.data : (timeseries.pressure || []);
 
   // Create a merged dataset by time
   const dataByTime = new Map();
@@ -465,6 +467,22 @@ function renderWind24HourTable(stationId) {
     dataByTime.get(point.time).direction = point.value;
   });
 
+  // Add air temperature
+  airTempArray.forEach(point => {
+    if (!dataByTime.has(point.time)) {
+      dataByTime.set(point.time, {});
+    }
+    dataByTime.get(point.time).temp = point.value;
+  });
+
+  // Add pressure
+  pressureArray.forEach(point => {
+    if (!dataByTime.has(point.time)) {
+      dataByTime.set(point.time, {});
+    }
+    dataByTime.get(point.time).pressure = point.value;
+  });
+
   // Sort by time (newest first)
   const sortedTimes = Array.from(dataByTime.keys()).sort((a, b) => new Date(b) - new Date(a));
 
@@ -473,22 +491,26 @@ function renderWind24HourTable(stationId) {
     <thead>
       <tr>
         <th>Time</th>
-        <th>Wind Speed</th>
-        <th>Gust</th>
         <th>Direction</th>
+        <th>Wind Speed (kt)</th>
+        <th>Gust (kt)</th>
+        <th class="hide-mobile">Temp (°C)</th>
+        <th class="hide-mobile">Pressure (hPa)</th>
       </tr>
     </thead>
     <tbody>
   `;
 
   if (sortedTimes.length === 0) {
-    tableHTML += '<tr><td colspan="4" style="text-align: center; padding: 2rem;">No data available</td></tr>';
+    tableHTML += '<tr><td colspan="6" style="text-align: center; padding: 2rem;">No data available</td></tr>';
   } else {
     sortedTimes.forEach(time => {
       const data = dataByTime.get(time);
       const formattedTime = formatTimestamp(time);
-      const speed = data.speed != null ? `${Math.round(data.speed)} kt` : '—';
-      const gust = data.gust != null ? `${Math.round(data.gust)} kt` : '—';
+      const speed = data.speed != null ? Math.round(data.speed) : '—';
+      const gust = data.gust != null ? Math.round(data.gust) : '—';
+      const temp = data.temp != null ? data.temp.toFixed(1) : '—';
+      const pressure = data.pressure != null ? data.pressure.toFixed(1) : '—';
 
       let direction = '—';
       if (data.direction != null) {
@@ -500,9 +522,11 @@ function renderWind24HourTable(stationId) {
       tableHTML += `
         <tr>
           <td>${formattedTime}</td>
+          <td>${direction}</td>
           <td>${speed}</td>
           <td>${gust}</td>
-          <td>${direction}</td>
+          <td class="hide-mobile">${temp}</td>
+          <td class="hide-mobile">${pressure}</td>
         </tr>
       `;
     });
@@ -560,6 +584,7 @@ function renderWindChart(stationId) {
 
   // Chart configuration
   const option = {
+    backgroundColor: '#ffffff',
     title: {
       text: `${station.name.replace(' 💨', '').replace(' 🌊', '')} - Wind Conditions`,
       left: 'center',
