@@ -112,7 +112,7 @@
 
       <!-- High/Low Events -->
       <div class="tide-data-group">
-        <h3>Today's High & Low Tides</h3>
+        <h3>Today's High & Low Tides for <span id="highlow-station-name">Station Name</span></h3>
         <div class="data-table">
           <table id="highlow-table">
             <thead>
@@ -133,7 +133,7 @@
 
       <!-- Tide Prediction Chart -->
       <div class="tide-data-group">
-        <h3>Tide & Water Level Forecast</h3>
+        <h3>Tide & Water Level Forecast for <span id="chart-station-name">Station Name</span></h3>
         <div class="chart-date-controls">
           <div class="chart-date-label-container">
             <span id="chart-date-label">Today</span>
@@ -155,6 +155,17 @@
     <div id="tide-error" style="display: none; text-align: center; padding: 2rem; color: #e53935;">
       <p>Error loading tide data. Please try again later.</p>
     </div>
+
+    <!-- Bottom Station Selector -->
+    <section class="tide-selector-section" style="margin-top: 2rem;">
+      <label for="tide-station-select-bottom" style="font-size: 1.2rem; font-weight: bold; margin-right: 1rem;">
+        Select Tide Station:
+      </label>
+      <select id="tide-station-select-bottom" style="padding: 0.75rem; font-size: 1rem; min-width: 250px;">
+        <option value="">Loading stations...</option>
+      </select>
+      <a href="javascript:void(0)" onclick="showSelectedTideOnMap()" style="margin-left: 1rem; padding: 0.5rem 1rem; background: #0077be; color: white; text-decoration: none; border-radius: 4px; font-size: 0.9rem; display: inline-block;">Show on Map</a>
+    </section>
 
   </main>
 
@@ -210,6 +221,6 @@
   <script src="/assets/js/logger.js?v=20251117"></script>
   <script src="/assets/js/warning-banner.js?v=20251117"></script>
   <script src="/assets/js/chart-utils-v4.js?v=20251117"></script>
-  <script src="/assets/js/tides.js?v=20251120"></script>
+  <script src="/assets/js/tides.js?v=20251120a"></script>
 </body>
 </html>

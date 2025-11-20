@@ -72,12 +72,14 @@ async function loadTideData() {
 
 function populateStationDropdown() {
   const select = document.getElementById('tide-station-select');
-  
+  const selectBottom = document.getElementById('tide-station-select-bottom');
+
   // Get unique stations from current data (observations only)
   const stations = Object.keys(tideCurrentData.stations || {});
-  
+
   if (stations.length === 0) {
     select.innerHTML = '<option value="">No stations available</option>';
+    if (selectBottom) selectBottom.innerHTML = '<option value="">No stations available</option>';
     return;
   }
 
@@ -88,29 +90,47 @@ function populateStationDropdown() {
     return nameA.localeCompare(nameB);
   });
 
-  // Populate dropdown
-  select.innerHTML = '<option value="">-- Select a Station --</option>';
+  // Build options HTML
+  let optionsHTML = '<option value="">-- Select a Station --</option>';
   stations.forEach(stationKey => {
-    const option = document.createElement('option');
-    option.value = stationKey;
-
     // Check if station has observations
     const metadata = stationsMetadata?.[stationKey];
     const hasObservations = metadata?.series && metadata.series.includes('wlo');
     const indicator = hasObservations ? ' 📡' : '';
+    const displayName = (STATION_DISPLAY_NAMES[stationKey] || stationKey) + indicator;
 
-    option.textContent = (STATION_DISPLAY_NAMES[stationKey] || stationKey) + indicator;
-    select.appendChild(option);
+    optionsHTML += `<option value="${stationKey}">${displayName}</option>`;
   });
 
-  // Add change listener
+  // Populate both dropdowns
+  select.innerHTML = optionsHTML;
+  if (selectBottom) selectBottom.innerHTML = optionsHTML;
+
+  // Add change listener to top dropdown
   select.addEventListener('change', (e) => {
     if (e.target.value) {
       displayStation(e.target.value);
+      // Sync bottom dropdown
+      if (selectBottom) selectBottom.value = e.target.value;
     } else {
       hideStation();
+      if (selectBottom) selectBottom.value = '';
     }
   });
+
+  // Add change listener to bottom dropdown
+  if (selectBottom) {
+    selectBottom.addEventListener('change', (e) => {
+      if (e.target.value) {
+        displayStation(e.target.value);
+        // Sync top dropdown
+        select.value = e.target.value;
+      } else {
+        hideStation();
+        select.value = '';
+      }
+    });
+  }
 
   // Check for URL parameter first
   const urlParams = new URLSearchParams(window.location.search);
@@ -119,9 +139,11 @@ function populateStationDropdown() {
   // If station parameter exists and is valid, use it; otherwise default to Point Atkinson
   if (stationParam && stations.includes(stationParam)) {
     select.value = stationParam;
+    if (selectBottom) selectBottom.value = stationParam;
     displayStation(stationParam);
   } else if (stations.includes('point_atkinson')) {
     select.value = 'point_atkinson';
+    if (selectBottom) selectBottom.value = 'point_atkinson';
     displayStation('point_atkinson');
   }
 }
@@ -147,9 +169,11 @@ function displayStation(stationKey) {
   const currentStation = tideCurrentData.stations[stationKey];
   const highlowStation = tideHighLowData.stations[stationKey];
 
-  // Update station name
+  // Update station name in all locations
   const stationName = STATION_DISPLAY_NAMES[stationKey] || stationKey;
   document.getElementById('station-name').textContent = stationName;
+  document.getElementById('highlow-station-name').textContent = stationName;
+  document.getElementById('chart-station-name').textContent = stationName;
 
   // Display station metadata
   displayStationMetadata(stationKey);
