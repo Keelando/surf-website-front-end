@@ -250,7 +250,6 @@ async function loadWindTable() {
         'CWQK': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06800&stationID=WQK',
         // Environment Canada Airports
         'CYVR': 'https://spaces.navcanada.ca/workspace/aeroview/CYVR',
-        'CZBB': 'https://weather.gc.ca/city/pages/bc-85_metric_e.html',
         // NOAA Buoys and Stations
         '46087': 'https://www.ndbc.noaa.gov/station_page.php?station=46087',
         '46088': 'https://www.ndbc.noaa.gov/station_page.php?station=46088',
