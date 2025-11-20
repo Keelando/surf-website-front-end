@@ -237,20 +237,45 @@ async function loadWindTable() {
       const pressure = station.pressure_hpa != null ? `${station.pressure_hpa.toFixed(1)} hPa` : '—';
       const updated = formatTimestamp(station.observation_time);
 
+      // Station-specific source links
+      const sourceLinks = {
+        // Environment Canada Marine Stations
+        'CWGT': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06100&stationID=WGT',
+        'CWGB': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06400&stationID=WGB',
+        'CWEL': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06200&stationID=WEL',
+        'CWSB': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06300&stationID=WSB',
+        'CVTF': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06500&stationID=VTF',
+        'CWVF': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06600&stationID=WVF',
+        'CWEZ': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06700&stationID=WEZ',
+        'CWQK': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06800&stationID=WQK',
+        // Environment Canada Airports
+        'CYVR': 'https://weather.gc.ca/city/pages/bc-74_metric_e.html',
+        'CZBB': 'https://weather.gc.ca/city/pages/bc-85_metric_e.html',
+        // NOAA Buoys and Stations
+        '46087': 'https://www.ndbc.noaa.gov/station_page.php?station=46087',
+        '46088': 'https://www.ndbc.noaa.gov/station_page.php?station=46088',
+        '46267': 'https://www.ndbc.noaa.gov/station_page.php?station=46267',
+        'CPMW1': 'https://www.ndbc.noaa.gov/station_page.php?station=cpmw1',
+        // Municipal/Other
+        'whiterock_pier': 'https://www.whiterockcity.ca/1000/Weather-Station'
+      };
+
       // Determine source badge and link
       let sourceBadge = '';
-      if (id.startsWith('46')) {
-        // NOAA buoy
-        sourceBadge = `<br><a href="https://www.ndbc.noaa.gov/station_page.php?station=${id}" target="_blank" rel="noopener" style="font-size: 0.75em; color: #003087; text-decoration: none;">🇺🇸 NOAA ↗</a>`;
-      } else if (id === 'CRPILE' || id === 'CRCHAN' || id === 'COLEB') {
-        // Surrey FlowWorks
-        sourceBadge = '<br><span style="font-size: 0.75em; color: #006837;">🏛️ Surrey</span>';
-      } else if (id === 'whiterock_pier') {
-        // White Rock City
-        sourceBadge = '<br><a href="https://maps.whiterockcity.ca/weather/" target="_blank" rel="noopener" style="font-size: 0.75em; color: #0066cc; text-decoration: none;">🏛️ White Rock ↗</a>';
-      } else if (id.startsWith('C')) {
-        // Environment Canada
-        sourceBadge = `<br><a href="https://weather.gc.ca/marine/weatherConditions-maritimes_e.html?mapID=02&siteID=${id}" target="_blank" rel="noopener" style="font-size: 0.75em; color: #006400; text-decoration: none;">🇨🇦 Env Canada ↗</a>`;
+      if (sourceLinks[id]) {
+        if (id.startsWith('46') || id === 'CPMW1') {
+          // NOAA buoy/station
+          sourceBadge = `<br><a href="${sourceLinks[id]}" target="_blank" rel="noopener" style="font-size: 0.75em; color: #003087; text-decoration: none;">🇺🇸 NOAA ↗</a>`;
+        } else if (id === 'CRPILE' || id === 'CRCHAN' || id === 'COLEB') {
+          // Surrey FlowWorks (no public link)
+          sourceBadge = '<br><span style="font-size: 0.75em; color: #006837;">🏛️ Surrey</span>';
+        } else if (id === 'whiterock_pier') {
+          // White Rock City
+          sourceBadge = `<br><a href="${sourceLinks[id]}" target="_blank" rel="noopener" style="font-size: 0.75em; color: #0066cc; text-decoration: none;">🏛️ White Rock ↗</a>`;
+        } else if (id.startsWith('C')) {
+          // Environment Canada
+          sourceBadge = `<br><a href="${sourceLinks[id]}" target="_blank" rel="noopener" style="font-size: 0.75em; color: #006400; text-decoration: none;">🇨🇦 Env Canada ↗</a>`;
+        }
       }
 
       tableHTML += `
