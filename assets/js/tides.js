@@ -650,10 +650,17 @@ function displayTideChart(stationKey, dayOffset = 0) {
         time: item.time,
         value: item.astronomical_tide_m
       }));
+
+      logger.info('Tides', `Future day ${dayOffset}: Found ${predictions.length} prediction points`);
+    } else {
+      logger.warn('Tides', `No combined water level data available for station ${stationKey}`);
     }
   }
 
   if (predictions.length === 0) {
+    if (tideChart) {
+      tideChart.clear();
+    }
     chartContainer.innerHTML = '<p style="text-align: center; color: #999; padding: 2rem;">No prediction data available for this day</p>';
     return;
   }
@@ -835,8 +842,9 @@ function displayTideChart(stationKey, dayOffset = 0) {
     });
   }
 
-  // Render chart (notMerge=true to completely replace previous data)
-  tideChart.setOption(option, true);
+  // Clear existing chart data and render fresh (fixes day navigation issues)
+  tideChart.clear();
+  tideChart.setOption(option);
 
   // Force resize to ensure proper dimensions
   setTimeout(() => {
