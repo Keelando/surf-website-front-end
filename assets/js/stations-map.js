@@ -68,6 +68,16 @@ async function loadStationsAndMarkers() {
         logger.debug('StationsMap', `Added tide marker: ${stationKey} (${tide.name})`);
       });
     }
+
+    // Add wind station markers (as buoys since they use same marker type)
+    if (stations.wind) {
+      const windCount = Object.keys(stations.wind).length;
+      logger.debug('StationsMap', `Loading ${windCount} wind stations to map...`);
+      Object.values(stations.wind).forEach(windStation => {
+        // Wind stations use the same marker function as buoys
+        addBuoyMarker({ ...windStation, type: 'weather_station' });
+      });
+    }
   } catch (error) {
     logger.error('StationsMap', 'Error loading stations', error);
     // Fallback to inline station data if fetch fails
@@ -88,6 +98,15 @@ function addBuoyMarker(buoy) {
   } else if (buoy.type === 'wind_monitoring_station') {
     markerEmoji = '💨';
     typeLabel = 'Wind Monitoring Station';
+  } else if (buoy.type === 'weather_station') {
+    markerEmoji = '💨';
+    typeLabel = 'Weather Station';
+  } else if (buoy.type === 'c_man_station') {
+    markerEmoji = '💨';
+    typeLabel = 'C-MAN Station';
+  } else if (buoy.type === 'land_station') {
+    markerEmoji = '💨';
+    typeLabel = 'Land Station';
   }
 
   const icon = L.divIcon({
@@ -137,8 +156,15 @@ function addBuoyMarker(buoy) {
       <div><strong>Location:</strong> ${buoy.location}</div>
       <div><strong>Source:</strong> ${buoy.source}</div>
       <div><strong>Type:</strong> ${typeLabel}</div>
-    </div>
-    <a href="/#buoy-${buoy.id}" class="view-data-btn" style="display: inline-block; margin-top: 8px; padding: 6px 12px; background: #0077be; color: white; text-decoration: none; border-radius: 4px; font-size: 0.9em;">View Data →</a>
+    </div>`;
+
+  // Determine link based on station type
+  const isWindStation = buoy.type === 'weather_station' || buoy.type === 'wind_monitoring_station' || buoy.type === 'c_man_station' || buoy.type === 'land_station';
+  const linkHref = isWindStation ? '/winds.html' : `/#buoy-${buoy.id}`;
+  const linkText = isWindStation ? 'View on Winds Page →' : 'View Data →';
+
+  popupContent += `
+    <a href="${linkHref}" class="view-data-btn" style="display: inline-block; margin-top: 8px; padding: 6px 12px; background: #0077be; color: white; text-decoration: none; border-radius: 4px; font-size: 0.9em;">${linkText}</a>
   </div>`;
 
   marker.bindPopup(popupContent);

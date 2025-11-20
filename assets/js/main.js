@@ -49,6 +49,7 @@ async function loadBuoyData() {
       stations: [
         "46087",   // Neah Bay
         "46088",   // New Dungeness
+        "46267",   // Angeles Point
       ]
     }
   ];
@@ -62,6 +63,7 @@ async function loadBuoyData() {
     "4600131": "https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46131",
     "46087": "https://www.ndbc.noaa.gov/station_page.php?station=46087",
     "46088": "https://www.ndbc.noaa.gov/station_page.php?station=46088",
+    "46267": "https://www.ndbc.noaa.gov/station_page.php?station=46267",
     "CRPILE": "https://developers.flowworks.com/",
     "CRCHAN": "https://developers.flowworks.com/",
     "COLEB": "https://developers.flowworks.com/"
@@ -128,7 +130,7 @@ async function loadBuoyData() {
         card.id = `buoy-${id}`; // Add ID for anchor linking from map
 
         // Special styling for NOAA buoys
-        if (id === "46087" || id === "46088") {
+        if (id === "46087" || id === "46088" || id === "46267") {
           card.style.borderLeft = "4px solid #003087";
         }
 
@@ -281,7 +283,7 @@ async function loadBuoyData() {
       cardContent += `<div id="card-details-${id}" style="display: none; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e0e0e0;">`;
 
       // Check if NOAA buoy with spectral data
-      const isNOAA = (id === "46087" || id === "46088");
+      const isNOAA = (id === "46087" || id === "46088" || id === "46267");
 
       if (isNOAA) {
         // NOAA Spectral Wave Breakdown
@@ -299,11 +301,24 @@ async function loadBuoyData() {
           <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Period:</b> ${b.swell_period ?? "—"} s</p>
           <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Direction:</b> ${b.swell_direction_cardinal ?? "—"} (${b.swell_direction ?? "—"}°) ${getDirectionalArrow(b.swell_direction, 'wave')}</p>
 
-          <p class="buoy-metric" style="margin-top: 0.75rem; font-weight: 600; color: #004b7c; margin-bottom: 0.5rem;">📊 Combined Metrics</p>
-          <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Sig. Wave Height:</b> ${b.wave_height_sig ?? "—"} m</p>
-          <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Average Period:</b> ${b.wave_period_avg ?? "—"} s</p>
+          <p class="buoy-metric" style="margin-top: 0.75rem; font-weight: 600; color: #004b7c; margin-bottom: 0.5rem;">📊 Additional Metrics</p>
+          <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Peak Period:</b> ${b.wave_period_peak ?? "—"} s</p>
           <p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Peak Direction:</b> ${b.wave_direction_peak_cardinal ?? "—"} (${b.wave_direction_peak ?? "—"}°) ${getDirectionalArrow(b.wave_direction_peak, 'wave')}</p>
         `;
+      } else {
+        // EC Buoys and other stations - show only additional peak values not already displayed
+        const hasPeakData = b.wave_period_peak != null || b.wave_height_peak != null;
+
+        if (hasPeakData) {
+          cardContent += `<p class="buoy-metric" style="font-weight: 600; color: #004b7c; margin-bottom: 0.5rem;">📊 Additional Metrics</p>`;
+
+          if (b.wave_height_peak != null) {
+            cardContent += `<p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Peak Wave Height:</b> ${b.wave_height_peak} m</p>`;
+          }
+          if (b.wave_period_peak != null) {
+            cardContent += `<p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Peak Period:</b> ${b.wave_period_peak} s</p>`;
+          }
+        }
       }
 
       // Temperatures and pressure (all stations)
@@ -612,7 +627,7 @@ function renderHistoryTable(buoyId, timeseries) {
   // Track previous date for conditional date display
   let previousDate = null;
 
-  times.forEach(time => {
+  times.forEach((time, index) => {
     const windSpeedVal = windSpeed.find(d => d.time === time)?.value;
     const windDirVal = windDir.find(d => d.time === time)?.value;
     const windGustVal = windGust.find(d => d.time === time)?.value;
@@ -651,8 +666,11 @@ function renderHistoryTable(buoyId, timeseries) {
       windDisplay = `${cardinalStr}${Math.round(windSpeedVal)}${gustStr}`;
     }
 
+    // Alternating row background color
+    const rowBg = index % 2 === 0 ? 'background: rgba(0, 75, 124, 0.03);' : '';
+
     tableHTML += `
-      <tr>
+      <tr style="${rowBg}">
         <td style="padding: 0.4rem 0.3rem; border-bottom: 1px solid #eee; border-right: 1px solid #eee; white-space: nowrap;">${timeStr}</td>
         <td style="padding: 0.4rem 0.3rem; border-bottom: 1px solid #eee; border-right: 1px solid #eee; text-align: center; white-space: nowrap;">${windDisplay}</td>
         <td style="padding: 0.4rem 0.3rem; border-bottom: 1px solid #eee; border-right: 1px solid #eee; text-align: center;">${waveHeightVal != null ? waveHeightVal.toFixed(waveHeightDecimals) : '—'}</td>
@@ -666,6 +684,15 @@ function renderHistoryTable(buoyId, timeseries) {
   tableHTML += `
         </tbody>
       </table>
+    </div>
+  `;
+
+  // Add duplicate Hide button at bottom of history table
+  tableHTML += `
+    <div style="text-align: center; margin-top: 0.75rem;">
+      <button onclick="toggleCardHistory('${buoyId}')" style="padding: 0.5rem 1rem; background: #004b7c; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; transition: background 0.2s;">
+        ▲ Hide History
+      </button>
     </div>
   `;
 

@@ -14,7 +14,7 @@ function generateWaveHeightTable(chartData) {
     const table = document.getElementById("wave-height-table");
     if (!table) return;
 
-    const buoyOrder = ["4600146", "4600304", "CRPILE", "4600303", "4600131", "46087", "46088"];
+    const buoyOrder = ["4600146", "4600304", "CRPILE", "4600303", "4600131", "46087", "46088", "46267"];
   const hourMap = new Map();
 
   buoyOrder.forEach((buoyId) => {
@@ -54,6 +54,7 @@ function generateWaveHeightTable(chartData) {
         <th>Sentry Shoal</th>
         <th>Neah Bay<br><span style="font-size: 0.8em; font-weight: normal; color: #666;">(Swell)</span></th>
         <th>New Dungeness</th>
+        <th>Angeles Point</th>
       </tr>
     </thead>
     <tbody>
@@ -87,6 +88,7 @@ function generateWaveHeightTable(chartData) {
         <td>${values["4600131"] != null ? values["4600131"] + " m" : "—"}</td>
         <td>${values["46087"] != null ? values["46087"] + " m" : "—"}</td>
         <td>${values["46088"] != null ? values["46088"] + " m" : "—"}</td>
+        <td>${values["46267"] != null ? values["46267"] + " m" : "—"}</td>
       </tr>
     `;
   });
@@ -97,7 +99,7 @@ function generateWaveHeightTable(chartData) {
     logger.error('WaveTable', 'Error generating wave height table', error);
     const table = document.getElementById("wave-height-table");
     if (table) {
-      table.innerHTML = '<tbody><tr><td colspan="8" style="text-align: center; color: #e53935; padding: 2rem;">Error generating table</td></tr></tbody>';
+      table.innerHTML = '<tbody><tr><td colspan="9" style="text-align: center; color: #e53935; padding: 2rem;">Error generating table</td></tr></tbody>';
     }
   }
 }

@@ -433,6 +433,10 @@ footer {
   font-weight: 500;
 }
 
+.data-table tbody tr:nth-child(even) {
+  background: rgba(0, 75, 124, 0.03);
+}
+
 .data-table tr:hover {
   background: #f5f5f5;
 }
