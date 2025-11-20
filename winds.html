@@ -77,9 +77,9 @@
     }
 
     .data-table th .sort-indicator {
-      font-size: 0.8em;
+      font-size: 1.1em;
       margin-left: 0.25rem;
-      opacity: 0.8;
+      opacity: 0.9;
     }
 
     .data-table th.sortable .sort-indicator::before {
@@ -107,6 +107,10 @@
       .data-table td {
         padding: 0.75rem 0.5rem;
       }
+    }
+
+    .data-table tbody tr:nth-child(even) {
+      background: rgba(0, 75, 124, 0.03);
     }
 
     .data-table tbody tr:hover {
@@ -160,16 +164,6 @@
     Real-time wind observations from coastal weather stations across the Salish Sea and Strait of Georgia.
   </div>
 
-  <!-- Under Development Notice -->
-  <div style="max-width: 1200px; margin: 1.5rem auto; padding: 1rem; background: linear-gradient(to right, #fff3cd, #fff8e1); border-left: 4px solid #ffc107; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-    <p style="margin: 0; color: #856404; font-weight: 600;">
-      ⚠️ Under Development
-    </p>
-    <p style="margin: 0.5rem 0 0 0; color: #856404; font-size: 0.9rem;">
-      This page is currently in development. Wind data collection and display are being optimized.
-    </p>
-  </div>
-
   <!-- Current Conditions Table -->
   <section id="wind-table-section" style="max-width: 1200px; margin: 2rem auto; padding: 0 1rem;">
     <h2>Current Wind Conditions</h2>
@@ -196,19 +190,21 @@
         </tbody>
       </table>
     </div>
+
+    <p style="margin-top: 1rem; padding: 0.75rem; background: #f0f7ff; border-left: 3px solid #4299e1; border-radius: 4px; max-width: 1200px; margin-left: auto; margin-right: auto;">
+      <strong>Missing your favorite station?</strong> <a href="mailto:windwaves604@outlook.com?subject=Wind%20Station%20Suggestion" class="color-primary">Let me know so I can add it!</a>
+    </p>
   </section>
 
-  <!-- Stations Map Section (Coming Soon) -->
-  <!--
+  <!-- Stations Map Section -->
   <section id="map-section" style="max-width: 1200px; margin: 2rem auto; padding: 0 1rem;">
     <h2>Station Locations</h2>
-    <div id="stations-map" style="width: 100%; height: 400px; border-radius: 8px; border: 1px solid #e0e7ee;"></div>
+    <div id="winds-map" style="width: 100%; height: 400px; border-radius: 8px; border: 1px solid #e0e7ee;"></div>
     <div class="map-legend" style="margin-top: 1rem; text-align: center; font-size: 0.9rem;">
-      <span style="margin-right: 1.5rem;">💨 Land Station</span>
-      <span>🌊 Buoy</span>
+      <span style="margin-right: 1.5rem;">💨 Weather Station</span>
+      <span>🌊 Buoy (with wind data)</span>
     </div>
   </section>
-  -->
 
   <!-- Wind Chart Section -->
   <section id="wind-chart-section" style="max-width: 1200px; margin: 2rem auto; padding: 0 1rem;">
@@ -229,6 +225,28 @@
     <div id="wind-trend-chart" class="w-full h-500" style="width: 100%; height: 500px;"></div>
   </section>
 
+  <!-- 24-Hour Data Table -->
+  <section id="wind-data-table-section" style="max-width: 1200px; margin: 2rem auto; padding: 0 1rem;">
+    <h2>24-Hour Wind Data</h2>
+    <div class="data-table">
+      <table id="wind-24hr-table">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Wind Speed</th>
+            <th>Gust</th>
+            <th>Direction</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td colspan="4" style="text-align: center; padding: 2rem;">Select a station to view 24-hour data</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
   <!-- About Section -->
   <section class="about-section">
     <h3>About Wind Observations</h3>
@@ -246,10 +264,6 @@
 
     <p style="font-size: 0.9rem; color: #666;">
       <strong>Station types:</strong> 💨 Land-based weather station &nbsp;|&nbsp; 🌊 Ocean buoy
-    </p>
-
-    <p style="margin-top: 1rem; padding: 0.75rem; background: #f0f7ff; border-left: 3px solid #4299e1; border-radius: 4px;">
-      <strong>Missing a station?</strong> <a href="mailto:windwaves604@outlook.com?subject=Wind%20Station%20Suggestion" class="color-primary">Suggest a station to add</a> - we're always expanding coverage!
     </p>
 
     <p class="border-top" style="margin-top: 1.5rem;">
@@ -295,6 +309,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
   <script src="/assets/js/logger.js?v=20251117"></script>
   <script src="/assets/js/warning-banner.js?v=20251117"></script>
-  <script src="/assets/js/wind-stations.js?v=20251119h"></script>
+  <script src="/assets/js/wind-stations.js?v=20251120e"></script>
+  <script src="/assets/js/winds-map.js?v=20251120d"></script>
 </body>
 </html>

@@ -27,12 +27,19 @@ function degreesToCardinal(degrees) {
   return directions[index];
 }
 
-// Helper: Convert degrees to arrow symbol
-function degreesToArrow(degrees) {
-  if (degrees == null) return '';
-  const arrows = ['↓', '↙', '←', '↖', '↑', '↗', '→', '↘'];
-  const index = Math.round(degrees / 45) % 8;
-  return arrows[index];
+// Helper: Get directional arrow (SVG, rotated to exact degrees)
+// Based on buoy page implementation - provides infinite precision
+function getDirectionalArrow(degrees, arrowType = 'wind') {
+  if (degrees == null || degrees === '—') return '';
+
+  // Meteorological convention: direction indicates WHERE wind is COMING FROM
+  // Arrow rotation: wind arrow points down by default, rotates to show direction wind is blowing TO
+  const rotation = degrees; // Wind arrow points down, so rotate by degrees directly
+
+  // SVG wind arrow pointing down
+  const svg = `<svg width="16" height="16" viewBox="0 0 16 16"><path d="M8 2v12m0 0l-3-3m3 3l3-3" stroke="#004b7c" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;
+
+  return `<span style="display:inline-block;transform:rotate(${rotation}deg);margin-left:0.3rem;vertical-align:middle;">${svg}</span>`;
 }
 
 // Helper: Format timestamp to local time
@@ -223,7 +230,7 @@ async function loadWindTable() {
       const windGust = station.wind_gust_kt != null ? `${Math.round(station.wind_gust_kt)} kt` : '—';
       // Show arrow, cardinal direction, and degrees
       const direction = station.wind_direction_deg != null
-        ? `${degreesToArrow(station.wind_direction_deg)} ${station.wind_direction_cardinal || degreesToCardinal(station.wind_direction_deg)} (${station.wind_direction_deg}°)`
+        ? `${station.wind_direction_cardinal || degreesToCardinal(station.wind_direction_deg)} (${station.wind_direction_deg}°) ${getDirectionalArrow(station.wind_direction_deg)}`
         : '—';
       const temp = station.air_temp_c != null ? `${station.air_temp_c.toFixed(1)}°C` : '—';
       const pressure = station.pressure_hpa != null ? `${station.pressure_hpa.toFixed(1)} hPa` : '—';
@@ -333,11 +340,13 @@ async function loadWindTimeseries() {
     if (allStationsList.length > 0) {
       select.value = allStationsList[0][0];
       renderWindChart(allStationsList[0][0]);
+      renderWind24HourTable(allStationsList[0][0]);
     }
 
     // Add change listener to dropdown
     select.addEventListener('change', (e) => {
       renderWindChart(e.target.value);
+      renderWind24HourTable(e.target.value);
     });
 
     // Add "jump to" search listener
@@ -355,8 +364,9 @@ async function loadWindTimeseries() {
         if (match) {
           // Select the matching station in dropdown
           select.value = match[0];
-          // Trigger chart update
+          // Trigger chart and table update
           renderWindChart(match[0]);
+          renderWind24HourTable(match[0]);
         }
       });
     }
@@ -405,6 +415,101 @@ function createWindDirectionArrows(windDirectionTimes, windSpeedData, windGustDa
   }
 
   return { arrowData, maxValue: arrowYPosition };
+}
+
+/**
+ * Render 24-hour wind data table for selected station
+ */
+function renderWind24HourTable(stationId) {
+  if (!windTimeseriesData || !stationId) return;
+
+  const station = windTimeseriesData[stationId];
+  if (!station) return;
+
+  const table = document.getElementById('wind-24hr-table');
+  if (!table) return;
+
+  // Extract timeseries data
+  const timeseries = station.timeseries;
+  const isBuoy = station.isBuoy;
+
+  // Get data arrays
+  const windSpeedArray = isBuoy && timeseries.wind_speed?.data ? timeseries.wind_speed.data : (timeseries.wind_speed || []);
+  const windGustArray = isBuoy && timeseries.wind_gust?.data ? timeseries.wind_gust.data : (timeseries.wind_gust || []);
+  const windDirArray = isBuoy && timeseries.wind_direction?.data ? timeseries.wind_direction.data : (timeseries.wind_direction || []);
+
+  // Create a merged dataset by time
+  const dataByTime = new Map();
+
+  // Add wind speeds
+  windSpeedArray.forEach(point => {
+    if (!dataByTime.has(point.time)) {
+      dataByTime.set(point.time, {});
+    }
+    dataByTime.get(point.time).speed = point.value;
+  });
+
+  // Add wind gusts
+  windGustArray.forEach(point => {
+    if (!dataByTime.has(point.time)) {
+      dataByTime.set(point.time, {});
+    }
+    dataByTime.get(point.time).gust = point.value;
+  });
+
+  // Add wind directions
+  windDirArray.forEach(point => {
+    if (!dataByTime.has(point.time)) {
+      dataByTime.set(point.time, {});
+    }
+    dataByTime.get(point.time).direction = point.value;
+  });
+
+  // Sort by time (newest first)
+  const sortedTimes = Array.from(dataByTime.keys()).sort((a, b) => new Date(b) - new Date(a));
+
+  // Build table HTML
+  let tableHTML = `
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Wind Speed</th>
+        <th>Gust</th>
+        <th>Direction</th>
+      </tr>
+    </thead>
+    <tbody>
+  `;
+
+  if (sortedTimes.length === 0) {
+    tableHTML += '<tr><td colspan="4" style="text-align: center; padding: 2rem;">No data available</td></tr>';
+  } else {
+    sortedTimes.forEach(time => {
+      const data = dataByTime.get(time);
+      const formattedTime = formatTimestamp(time);
+      const speed = data.speed != null ? `${Math.round(data.speed)} kt` : '—';
+      const gust = data.gust != null ? `${Math.round(data.gust)} kt` : '—';
+
+      let direction = '—';
+      if (data.direction != null) {
+        const cardinal = degreesToCardinal(data.direction);
+        const arrow = getDirectionalArrow(data.direction);
+        direction = `${cardinal} (${Math.round(data.direction)}°) ${arrow}`;
+      }
+
+      tableHTML += `
+        <tr>
+          <td>${formattedTime}</td>
+          <td>${speed}</td>
+          <td>${gust}</td>
+          <td>${direction}</td>
+        </tr>
+      `;
+    });
+  }
+
+  tableHTML += '</tbody>';
+  table.innerHTML = tableHTML;
 }
 
 /**
@@ -568,7 +673,7 @@ function renderWindChart(stationId) {
         name: 'Wind Direction',
         type: 'scatter',
         data: arrowData,
-        symbol: 'path://M0,12 L-4,-8 L0,-6 L4,-8 Z', // Custom centered arrow pointing DOWN
+        symbol: 'path://M0,10 L-4,-10 L0,-8 L4,-10 Z', // Centered arrow pointing DOWN
         symbolSize: 16,
         symbolRotate: function(params) {
           return arrowData[params.dataIndex]?.symbolRotate || 0;
@@ -589,6 +694,55 @@ function renderWindChart(stationId) {
 
   windChart.setOption(option);
 }
+
+/**
+ * Select a station in the dropdown and display its chart
+ * Called from map popups and URL hash navigation
+ */
+function selectStationAndShowChart(stationId) {
+  const select = document.getElementById('wind-station-select');
+  const chartSection = document.getElementById('wind-chart-section');
+
+  if (!select || !chartSection) {
+    console.warn('Station selector or chart section not found');
+    return;
+  }
+
+  // Wait for timeseries data to load if needed
+  const attemptSelection = (retryCount = 0) => {
+    if (!windTimeseriesData || Object.keys(windTimeseriesData).length === 0) {
+      if (retryCount < 10) {
+        setTimeout(() => attemptSelection(retryCount + 1), 300);
+        return;
+      }
+      console.warn('Wind timeseries data not loaded');
+      return;
+    }
+
+    // Check if station exists
+    if (!windTimeseriesData[stationId]) {
+      console.warn(`Station ${stationId} not found in timeseries data`);
+      return;
+    }
+
+    // Select the station
+    select.value = stationId;
+
+    // Render the chart and table
+    renderWindChart(stationId);
+    renderWind24HourTable(stationId);
+
+    // Scroll to chart section
+    setTimeout(() => {
+      chartSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
+
+  attemptSelection();
+}
+
+// Make function globally accessible
+window.selectStationAndShowChart = selectStationAndShowChart;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
