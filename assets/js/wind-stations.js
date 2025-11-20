@@ -256,6 +256,7 @@ async function loadWindTable() {
         '46088': 'https://www.ndbc.noaa.gov/station_page.php?station=46088',
         '46267': 'https://www.ndbc.noaa.gov/station_page.php?station=46267',
         'CPMW1': 'https://www.ndbc.noaa.gov/station_page.php?station=cpmw1',
+        'SISW1': 'https://www.ndbc.noaa.gov/station_page.php?station=sisw1',
         // Municipal/Other
         'whiterock_pier': 'https://www.whiterockcity.ca/1000/Weather-Station'
       };
@@ -263,7 +264,7 @@ async function loadWindTable() {
       // Determine source badge and link
       let sourceBadge = '';
       if (sourceLinks[id]) {
-        if (id.startsWith('46') || id === 'CPMW1') {
+        if (id.startsWith('46') || id === 'CPMW1' || id === 'SISW1') {
           // NOAA buoy/station
           sourceBadge = `<br><a href="${sourceLinks[id]}" target="_blank" rel="noopener" style="font-size: 0.75em; color: #003087; text-decoration: none;">🇺🇸 NOAA ↗</a>`;
         } else if (id === 'CRPILE' || id === 'CRCHAN' || id === 'COLEB') {
