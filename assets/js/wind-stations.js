@@ -146,8 +146,9 @@ function updateSortIndicators(activeHeader) {
  */
 async function loadWindTable() {
   try {
-    // Load both wind stations and buoy data
-    const [windData, buoyData] = await Promise.all([
+    // Load stations metadata, wind stations, and buoy data
+    const [stationsMetadata, windData, buoyData] = await Promise.all([
+      fetchWithTimeout(`/data/stations.json?t=${Date.now()}`),
       fetchWithTimeout(`/data/latest_wind.json?t=${Date.now()}`),
       fetchWithTimeout(`/data/latest_buoy_v2.json?t=${Date.now()}`)
     ]);
@@ -162,6 +163,11 @@ async function loadWindTable() {
     Object.entries(windData)
       .filter(([key]) => key !== '_meta')
       .forEach(([id, station]) => {
+        // Exclude data older than 4 hours
+        const obsTime = station.observation_time ? new Date(station.observation_time) : null;
+        const ageHours = obsTime ? (Date.now() - obsTime.getTime()) / (1000 * 60 * 60) : Infinity;
+        if (ageHours >= 4) return; // Skip stations with data 4+ hours old
+
         allStations.push([id, {
           name: station.name + ' 💨',
           wind_speed_kt: station.wind_speed_kt != null ? Math.round(station.wind_speed_kt) : null,
@@ -189,8 +195,21 @@ async function loadWindTable() {
             windObsTime = buoy.field_times.wind_speed || buoy.field_times.wind_direction;
           }
 
+          // Exclude data older than 4 hours
+          const obsTime = windObsTime ? new Date(windObsTime) : null;
+          const ageHours = obsTime ? (Date.now() - obsTime.getTime()) / (1000 * 60 * 60) : Infinity;
+          if (ageHours >= 4) return; // Skip stations with data 4+ hours old
+
+          // Determine icon based on station type from metadata
+          const stationMeta = stationsMetadata.buoys?.[id];
+          const isWindStation = stationMeta?.type === 'wind_monitoring_station' ||
+                                stationMeta?.type === 'weather_station' ||
+                                stationMeta?.type === 'c_man_station' ||
+                                stationMeta?.type === 'land_station';
+          const icon = isWindStation ? ' 💨' : ' 🌊';
+
           allStations.push([id, {
-            name: buoy.name + ' 🌊',
+            name: buoy.name + icon,
             wind_speed_kt: buoy.wind_speed != null ? Math.round(buoy.wind_speed) : null,
             wind_gust_kt: buoy.wind_gust != null ? Math.round(buoy.wind_gust) : null,
             wind_direction_deg: buoy.wind_direction,
@@ -199,7 +218,7 @@ async function loadWindTable() {
             pressure_hpa: buoy.pressure,
             observation_time: windObsTime,
             stale: buoy.stale,
-            type: 'buoy'
+            type: isWindStation ? 'land' : 'buoy'
           }]);
         }
       });
@@ -213,10 +232,10 @@ async function loadWindTable() {
         <tr>
           <th class="sortable" data-column="name" data-type="string">Station <span class="sort-indicator"></span></th>
           <th class="sortable" data-column="wind_direction_deg" data-type="number">Direction <span class="sort-indicator"></span></th>
-          <th class="sortable" data-column="wind_speed_kt" data-type="number">Wind Speed <span class="sort-indicator"></span></th>
-          <th class="sortable" data-column="wind_gust_kt" data-type="number">Gust <span class="sort-indicator"></span></th>
-          <th class="sortable" data-column="air_temp_c" data-type="number">Temp <span class="sort-indicator"></span></th>
-          <th class="sortable" data-column="pressure_hpa" data-type="number">Pressure <span class="sort-indicator"></span></th>
+          <th class="sortable" data-column="wind_speed_kt" data-type="number">Speed (kt) <span class="sort-indicator"></span></th>
+          <th class="sortable" data-column="wind_gust_kt" data-type="number">Gust (kt) <span class="sort-indicator"></span></th>
+          <th class="sortable" data-column="air_temp_c" data-type="number">Temp (°C) <span class="sort-indicator"></span></th>
+          <th class="sortable" data-column="pressure_hpa" data-type="number">Pressure (hPa) <span class="sort-indicator"></span></th>
           <th class="sortable" data-column="observation_time" data-type="date">Updated <span class="sort-indicator"></span></th>
           <th>Actions</th>
         </tr>
@@ -227,14 +246,14 @@ async function loadWindTable() {
     stations.forEach(([id, station]) => {
       const rowClass = station.stale ? 'class="stale"' : '';
       // Round wind speeds to integers
-      const windSpeed = station.wind_speed_kt != null ? `${Math.round(station.wind_speed_kt)} kt` : '—';
-      const windGust = station.wind_gust_kt != null ? `${Math.round(station.wind_gust_kt)} kt` : '—';
+      const windSpeed = station.wind_speed_kt != null ? Math.round(station.wind_speed_kt) : '—';
+      const windGust = station.wind_gust_kt != null ? Math.round(station.wind_gust_kt) : '—';
       // Show arrow, cardinal direction, and degrees
       const direction = station.wind_direction_deg != null
         ? `${station.wind_direction_cardinal || degreesToCardinal(station.wind_direction_deg)} (${station.wind_direction_deg}°) ${getDirectionalArrow(station.wind_direction_deg)}`
         : '—';
-      const temp = station.air_temp_c != null ? `${station.air_temp_c.toFixed(1)}°C` : '—';
-      const pressure = station.pressure_hpa != null ? `${station.pressure_hpa.toFixed(1)} hPa` : '—';
+      const temp = station.air_temp_c != null ? station.air_temp_c.toFixed(1) : '—';
+      const pressure = station.pressure_hpa != null ? station.pressure_hpa.toFixed(1) : '—';
       const updated = formatTimestamp(station.observation_time);
 
       // Station-specific source links
@@ -857,10 +876,29 @@ function selectStationAndShowChart(stationId) {
 // Make function globally accessible
 window.selectStationAndShowChart = selectStationAndShowChart;
 
+/**
+ * Check URL hash for station to display
+ * Called on page load to handle deep links from map popups
+ */
+function checkHashForWindStation() {
+  const hash = window.location.hash;
+
+  if (hash.startsWith('#wind-')) {
+    const stationId = hash.substring(6); // Remove '#wind-'
+    // Short delay to ensure data starts loading, then retry logic in selectStationAndShowChart kicks in
+    setTimeout(() => {
+      selectStationAndShowChart(stationId);
+    }, 500);
+  }
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
   loadWindTable();
   loadWindTimeseries();
+
+  // Check for wind station in URL hash
+  checkHashForWindStation();
 
   // Handle window resize
   window.addEventListener('resize', () => {

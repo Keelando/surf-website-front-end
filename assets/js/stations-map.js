@@ -160,7 +160,7 @@ function addBuoyMarker(buoy) {
 
   // Determine link based on station type
   const isWindStation = buoy.type === 'weather_station' || buoy.type === 'wind_monitoring_station' || buoy.type === 'c_man_station' || buoy.type === 'land_station';
-  const linkHref = isWindStation ? '/winds.html' : `/#buoy-${buoy.id}`;
+  const linkHref = isWindStation ? `/winds.html#wind-${buoy.id}` : `/#buoy-${buoy.id}`;
   const linkText = isWindStation ? 'View on Winds Page →' : 'View Data →';
 
   popupContent += `

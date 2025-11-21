@@ -125,7 +125,7 @@ function getResponsiveGridConfig(isComparisonChart = false) {
       left: '8%',
       right: '8%',
       top: '10%',
-      bottom: isComparisonChart ? '18%' : '14%',
+      bottom: isComparisonChart ? '16%' : '10%',
       containLabel: true
     };
   }

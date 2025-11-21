@@ -61,9 +61,10 @@
     .data-table th {
       background: linear-gradient(to bottom, #004b7c, #003d66);
       color: white;
-      padding: 1rem;
+      padding: 0.65rem 0.75rem;
       text-align: left;
       font-weight: 600;
+      font-size: 0.95rem;
     }
 
     .data-table th.sortable {
@@ -97,15 +98,17 @@
     }
 
     .data-table td {
-      padding: 0.75rem 1rem;
+      padding: 0.5rem 0.75rem;
       border-bottom: 1px solid #e0e7ee;
+      font-size: 0.95rem;
     }
 
     /* Reduce horizontal padding on mobile */
     @media (max-width: 768px) {
       .data-table th,
       .data-table td {
-        padding: 0.75rem 0.5rem;
+        padding: 0.5rem 0.5rem;
+        font-size: 0.9rem;
       }
     }
 
@@ -144,6 +147,17 @@
       .data-table th.hide-mobile,
       .data-table td.hide-mobile {
         display: none;
+      }
+
+      /* Fix dropdown overflow on mobile */
+      #wind-station-select {
+        min-width: 200px !important;
+        max-width: 100% !important;
+      }
+
+      #wind-station-search {
+        width: 200px !important;
+        max-width: 100% !important;
       }
     }
   </style>
