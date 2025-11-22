@@ -243,25 +243,49 @@ function updateForecastChart(stationId) {
     const firstTime = new Date(forecastData_series[0][0]);
     const lastTime = new Date(forecastData_series[forecastData_series.length - 1][0]);
 
-    // Find first midnight after start time (in Pacific)
-    let currentMidnight = new Date(firstTime.toLocaleString("en-US", { timeZone: "America/Vancouver" }));
-    currentMidnight.setHours(0, 0, 0, 0);
+    // Helper: Get midnight Pacific as UTC for a given UTC date
+    function getMidnightPacificAsUTC(utcDate) {
+      const year = parseInt(utcDate.toLocaleString("en-US", { timeZone: "America/Vancouver", year: 'numeric' }));
+      const month = parseInt(utcDate.toLocaleString("en-US", { timeZone: "America/Vancouver", month: 'numeric' }));
+      const day = parseInt(utcDate.toLocaleString("en-US", { timeZone: "America/Vancouver", day: 'numeric' }));
 
-    // If the first midnight is before our start time, move to next day
+      // Midnight Pacific is either 07:00 or 08:00 UTC depending on DST
+      // Try 08:00 UTC first (PST)
+      let testDate = new Date(Date.UTC(year, month - 1, day, 8, 0, 0, 0));
+      let testHour = parseInt(testDate.toLocaleString("en-US", {
+        timeZone: "America/Vancouver",
+        hour: 'numeric',
+        hour12: false
+      }));
+
+      if (testHour === 0) return testDate;
+
+      // Try 07:00 UTC (PDT)
+      testDate = new Date(Date.UTC(year, month - 1, day, 7, 0, 0, 0));
+      return testDate;
+    }
+
+    // Get first midnight Pacific after start time
+    let currentDate = new Date(firstTime);
+    let currentMidnight = getMidnightPacificAsUTC(currentDate);
+
+    // If this midnight is before our start, move to next day
     if (currentMidnight <= firstTime) {
-      currentMidnight.setDate(currentMidnight.getDate() + 1);
+      currentDate.setUTCDate(currentDate.getUTCDate() + 1);
+      currentMidnight = getMidnightPacificAsUTC(currentDate);
     }
 
     // Add vertical lines for each midnight up to the last time
     while (currentMidnight <= lastTime) {
-      // Convert Pacific midnight back to UTC for the chart
-      const utcMidnight = new Date(currentMidnight.toLocaleString("en-US", { timeZone: "UTC" }));
       midnightLines.push({
-        xAxis: utcMidnight.toISOString(),
+        xAxis: currentMidnight.toISOString(),
         lineStyle: { color: '#ddd', type: 'solid', width: 1 },
         label: { show: false }
       });
-      currentMidnight.setDate(currentMidnight.getDate() + 1);
+
+      // Move to next day
+      currentDate.setUTCDate(currentDate.getUTCDate() + 1);
+      currentMidnight = getMidnightPacificAsUTC(currentDate);
     }
   }
 
@@ -644,25 +668,49 @@ function updateHindcastChart(stationId) {
     const firstTime = new Date(allTimes[0]);
     const lastTime = new Date(allTimes[allTimes.length - 1]);
 
-    // Find first midnight after start time (in Pacific)
-    let currentMidnight = new Date(firstTime.toLocaleString("en-US", { timeZone: "America/Vancouver" }));
-    currentMidnight.setHours(0, 0, 0, 0);
+    // Helper: Get midnight Pacific as UTC for a given UTC date
+    function getMidnightPacificAsUTC(utcDate) {
+      const year = parseInt(utcDate.toLocaleString("en-US", { timeZone: "America/Vancouver", year: 'numeric' }));
+      const month = parseInt(utcDate.toLocaleString("en-US", { timeZone: "America/Vancouver", month: 'numeric' }));
+      const day = parseInt(utcDate.toLocaleString("en-US", { timeZone: "America/Vancouver", day: 'numeric' }));
 
-    // If the first midnight is before our start time, move to next day
+      // Midnight Pacific is either 07:00 or 08:00 UTC depending on DST
+      // Try 08:00 UTC first (PST)
+      let testDate = new Date(Date.UTC(year, month - 1, day, 8, 0, 0, 0));
+      let testHour = parseInt(testDate.toLocaleString("en-US", {
+        timeZone: "America/Vancouver",
+        hour: 'numeric',
+        hour12: false
+      }));
+
+      if (testHour === 0) return testDate;
+
+      // Try 07:00 UTC (PDT)
+      testDate = new Date(Date.UTC(year, month - 1, day, 7, 0, 0, 0));
+      return testDate;
+    }
+
+    // Get first midnight Pacific after start time
+    let currentDate = new Date(firstTime);
+    let currentMidnight = getMidnightPacificAsUTC(currentDate);
+
+    // If this midnight is before our start, move to next day
     if (currentMidnight <= firstTime) {
-      currentMidnight.setDate(currentMidnight.getDate() + 1);
+      currentDate.setUTCDate(currentDate.getUTCDate() + 1);
+      currentMidnight = getMidnightPacificAsUTC(currentDate);
     }
 
     // Add vertical lines for each midnight up to the last time
     while (currentMidnight <= lastTime) {
-      // Convert Pacific midnight back to UTC for the chart
-      const utcMidnight = new Date(currentMidnight.toLocaleString("en-US", { timeZone: "UTC" }));
       midnightLines.push({
-        xAxis: utcMidnight.toISOString(),
+        xAxis: currentMidnight.toISOString(),
         lineStyle: { color: '#ddd', type: 'solid', width: 1 },
         label: { show: false }
       });
-      currentMidnight.setDate(currentMidnight.getDate() + 1);
+
+      // Move to next day
+      currentDate.setUTCDate(currentDate.getUTCDate() + 1);
+      currentMidnight = getMidnightPacificAsUTC(currentDate);
     }
   }
 
