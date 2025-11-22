@@ -268,6 +268,7 @@ function updateForecastChart(stationId) {
     data: forecastData_series,
     smooth: true,
     symbol: "none",
+    legendHoverLink: false,
     itemStyle: { color: "#0077be" },
     lineStyle: { width: 2 },
     areaStyle: {
@@ -294,7 +295,7 @@ function updateForecastChart(stationId) {
     markPoint: markPointData.length > 0 ? {
       data: markPointData,
       symbol: 'circle',
-      symbolSize: 16
+      symbolSize: 10
     } : undefined
   });
 
@@ -368,7 +369,10 @@ function updateForecastChart(stationId) {
     legend: {
       show: peakLabels.length > 0,
       data: peakLabels.length > 0 ? [
-        'Storm Surge Forecast',
+        {
+          name: 'Storm Surge Forecast',
+          icon: 'path://M0,0 L100,0'  // Just a line, no marker
+        },
         {
           name: `🔴 Peaks: ${peakLabels.join(' | ')}`,
           icon: 'circle',
