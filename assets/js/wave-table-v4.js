@@ -60,21 +60,25 @@ function generateWaveHeightTable(chartData) {
     <tbody>
   `;
 
+  let previousDate = null;
+
   sortedHours.forEach((hourStr) => {
     const date = new Date(hourStr);
 
-    const timeLabel =
-      date.toLocaleString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-        timeZone: "America/Vancouver",
-      }) +
-      " " +
-      date.toLocaleString("en-US", {
-        weekday: "short",
-        timeZone: "America/Vancouver",
-      });
+    // Format: "Sa-22 05h" (2-letter weekday, day, hour)
+    const dayOfWeek = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'][date.getDay()];
+    const dayOfMonth = date.toLocaleString('en-US', { day: 'numeric', timeZone: 'America/Vancouver' });
+    const hour = date.toLocaleString('en-US', { hour: '2-digit', hour12: false, timeZone: 'America/Vancouver' });
+
+    // Only show date prefix if it changed from previous row
+    const currentDate = `${dayOfWeek}-${dayOfMonth}`;
+    let timeLabel;
+    if (currentDate !== previousDate) {
+      timeLabel = `${currentDate} ${hour}h`;
+      previousDate = currentDate;
+    } else {
+      timeLabel = `${hour}h`;
+    }
 
     const values = hourMap.get(hourStr);
 

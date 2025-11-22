@@ -345,6 +345,15 @@ async function loadWindTable() {
     // Add sort functionality
     initializeSortableTable();
 
+    // Default sort by wind speed (descending) to show strongest winds first
+    const speedHeader = document.querySelector('#wind-conditions-table th[data-column="wind_speed_kt"]');
+    if (speedHeader) {
+      currentSort.column = 'wind_speed_kt';
+      currentSort.ascending = false; // Descending to show highest first
+      sortTable('wind_speed_kt', 'number', false);
+      updateSortIndicators(speedHeader);
+    }
+
     // Update footer timestamp (use wind data timestamp)
     const timestamp = document.getElementById("timestamp");
     if (timestamp && windData._meta) {
@@ -486,7 +495,8 @@ function createWindDirectionArrows(windDirectionTimes, windSpeedData, windGustDa
     const timestamp = new Date(dirPoint.time).getTime();
     const direction = dirPoint.value; // Meteorological direction (coming FROM)
 
-    // Add 180° to convert from "coming FROM" to "going TO" direction
+    // ECharts arrow points UP (not down like inline SVG - different coordinate system)
+    // Add 180° to convert from "coming FROM" to "blowing TO" direction
     arrowData.push({
       value: [timestamp, arrowYPosition],
       symbolRotate: (direction + 180) % 360,
@@ -593,6 +603,12 @@ function renderWind24HourTable(stationId) {
   // Sort by time (newest first)
   const sortedTimes = Array.from(dataByTime.keys()).sort((a, b) => new Date(b) - new Date(a));
 
+  // Downsample to hourly data (only show :00 minutes to keep table manageable)
+  const hourlyTimes = sortedTimes.filter(time => {
+    const date = new Date(time);
+    return date.getMinutes() === 0;
+  });
+
   // Build table HTML
   let tableHTML = `
     <thead>
@@ -608,10 +624,10 @@ function renderWind24HourTable(stationId) {
     <tbody>
   `;
 
-  if (sortedTimes.length === 0) {
+  if (hourlyTimes.length === 0) {
     tableHTML += '<tr><td colspan="6" style="text-align: center; padding: 2rem;">No data available</td></tr>';
   } else {
-    sortedTimes.forEach(time => {
+    hourlyTimes.forEach(time => {
       const data = dataByTime.get(time);
       const formattedTime = formatTimestamp(time);
       const speed = data.speed != null ? Math.round(data.speed) : '—';
@@ -683,10 +699,27 @@ function renderWindChart(stationId) {
   // Calculate y-axis max to ensure arrows are visible at top
   const yAxisMax = maxValue ? Math.ceil(maxValue * 1.1) : null;
 
+  // Add test arrow at 0° (North) for calibration
+  const testArrowData = [];
+  if (windSpeedData.length > 0 && yAxisMax) {
+    const middleTime = new Date(windSpeedData[Math.floor(windSpeedData.length / 2)].time).getTime();
+    testArrowData.push({
+      value: [middleTime, yAxisMax * 0.95],
+      symbolRotate: 0 + 180,  // 0° North + 180° conversion = should point south (down)
+      itemStyle: {
+        color: '#ff0000',
+        opacity: 1
+      }
+    });
+  }
+
   // Build legend data
   const legendData = ["Wind Speed", "Wind Gust"];
   if (arrowData.length > 0) {
     legendData.push("Wind Direction");
+  }
+  if (testArrowData.length > 0) {
+    legendData.push("TEST: 0° North");
   }
 
   // Chart configuration
@@ -820,6 +853,32 @@ function renderWindChart(stationId) {
         },
         silent: true,
         z: 2
+      },
+      {
+        name: 'TEST: 0° North',
+        type: 'scatter',
+        data: testArrowData,
+        symbol: 'path://M0,10 L-4,-10 L0,-8 L4,-10 Z', // Same arrow
+        symbolSize: 24,  // Larger for visibility
+        symbolRotate: function(params) {
+          return testArrowData[params.dataIndex]?.symbolRotate || 0;
+        },
+        itemStyle: {
+          color: function(params) {
+            return testArrowData[params.dataIndex]?.itemStyle?.color || '#ff0000';
+          },
+          opacity: function(params) {
+            return testArrowData[params.dataIndex]?.itemStyle?.opacity || 1;
+          }
+        },
+        z: 3,  // On top
+        label: {
+          show: true,
+          position: 'top',
+          formatter: '0° North Test',
+          color: '#ff0000',
+          fontWeight: 'bold'
+        }
       }
     ]
   };
