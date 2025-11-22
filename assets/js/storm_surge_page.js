@@ -162,6 +162,10 @@ function updatePeakToday(stationId) {
       }
     });
 
+    // Store peak data in range object for return
+    range.peakSurge = peakSurge;
+    range.peakTimeStr = peakTimeStr;
+
     // Display peak if found
     if (peakSurge !== null && peakTimeStr && range.valueEl && range.timeEl) {
       const sign = peakSurge >= 0 ? "+" : "";
@@ -184,6 +188,13 @@ function updatePeakToday(stationId) {
   });
 
   display.style.display = "block";
+
+  // Return peak data for chart markers
+  return ranges.map(range => ({
+    time: range.peakTimeStr,
+    value: range.peakSurge,
+    label: range.label
+  })).filter(p => p.time && p.value !== null);
 }
 
 function updateForecastChart(stationId) {
@@ -199,8 +210,8 @@ function updateForecastChart(stationId) {
     return;
   }
 
-  // Update peak display
-  updatePeakToday(stationId);
+  // Update peak display and get peak data for markers
+  const peakData = updatePeakToday(stationId);
 
   // Prepare data
   const forecastData_series = [];
@@ -228,6 +239,33 @@ function updateForecastChart(stationId) {
 
   // Prepare series array
   const series = [];
+
+  // Prepare markPoint data for peak surge values
+  const markPointData = [];
+  if (peakData && peakData.length > 0) {
+    peakData.forEach((peak, index) => {
+      if (peak.time && peak.value !== null) {
+        const colors = ['#ff4444', '#ff8800', '#ffcc00']; // Red, orange, yellow
+        markPointData.push({
+          coord: [peak.time, peak.value],
+          value: peak.label,
+          itemStyle: {
+            color: colors[index] || '#ff4444',
+            borderColor: '#fff',
+            borderWidth: 2
+          },
+          label: {
+            show: true,
+            formatter: '{c}',
+            fontSize: 10,
+            fontWeight: 'bold',
+            color: '#fff',
+            position: 'inside'
+          }
+        });
+      }
+    });
+  }
 
   // Add forecast series
   series.push({
@@ -258,7 +296,12 @@ function updateForecastChart(stationId) {
         formatter: "Sea Level"
       },
       data: [{ yAxis: 0 }]
-    }
+    },
+    markPoint: markPointData.length > 0 ? {
+      data: markPointData,
+      symbol: 'circle',
+      symbolSize: 16
+    } : undefined
   });
 
   // Set chart options (notMerge: true to replace all data when switching stations)
