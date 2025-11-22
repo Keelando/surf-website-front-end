@@ -351,7 +351,19 @@ function updateForecastChart(stationId) {
         hideOverlap: true
       },
       axisTick: { show: true },
-      splitLine: { show: true, lineStyle: { color: "#eee" } }
+      splitLine: { show: true, lineStyle: { color: "#eee" } },
+      minorSplitLine: {
+        show: true,
+        lineStyle: {
+          color: '#ddd',
+          type: 'solid',
+          width: 1
+        }
+      },
+      minorTick: {
+        show: true,
+        splitNumber: 24  // Creates gridlines at midnight (every 24 hours)
+      }
     },
     yAxis: {
       type: "value",
