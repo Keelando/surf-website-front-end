@@ -14,6 +14,20 @@ function renderTemperatureChart(tempChart, buoy) {
     const airTempData = ts.air_temp?.data || [];
     const seaTempData = ts.sea_temp?.data || [];
 
+    // Calculate y-axis range with 1°C padding
+    const allTemps = [...airTempData, ...seaTempData]
+      .map(d => d?.value)
+      .filter(v => v != null && !isNaN(v));
+
+    let yMin = "dataMin";
+    let yMax = "dataMax";
+    if (allTemps.length > 0) {
+      const minTemp = Math.min(...allTemps);
+      const maxTemp = Math.max(...allTemps);
+      yMin = Math.floor(minTemp - 1);
+      yMax = Math.ceil(maxTemp + 1);
+    }
+
     tempChart.setOption({
     title: {
       text: `${buoy.name} - Temperature`,
@@ -52,8 +66,8 @@ function renderTemperatureChart(tempChart, buoy) {
     yAxis: {
       type: "value",
       name: "Temperature (°C)",
-      min: "dataMin",
-      max: "dataMax",
+      min: yMin,
+      max: yMax,
       axisLabel: { formatter: "{value} °C" },
     },
     series: [
