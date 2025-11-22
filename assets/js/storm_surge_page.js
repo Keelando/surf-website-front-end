@@ -237,6 +237,34 @@ function updateForecastChart(stationId) {
   const yMin = Math.floor((minVal - padding) * 10) / 10;
   const yMax = Math.ceil((maxVal + padding) * 10) / 10;
 
+  // Calculate midnight boundaries in Pacific timezone for gridlines
+  const midnightLines = [];
+  if (forecastData_series.length > 0) {
+    const firstTime = new Date(forecastData_series[0][0]);
+    const lastTime = new Date(forecastData_series[forecastData_series.length - 1][0]);
+
+    // Find first midnight after start time (in Pacific)
+    let currentMidnight = new Date(firstTime.toLocaleString("en-US", { timeZone: "America/Vancouver" }));
+    currentMidnight.setHours(0, 0, 0, 0);
+
+    // If the first midnight is before our start time, move to next day
+    if (currentMidnight <= firstTime) {
+      currentMidnight.setDate(currentMidnight.getDate() + 1);
+    }
+
+    // Add vertical lines for each midnight up to the last time
+    while (currentMidnight <= lastTime) {
+      // Convert Pacific midnight back to UTC for the chart
+      const utcMidnight = new Date(currentMidnight.toLocaleString("en-US", { timeZone: "UTC" }));
+      midnightLines.push({
+        xAxis: utcMidnight.toISOString(),
+        lineStyle: { color: '#ddd', type: 'solid', width: 1 },
+        label: { show: false }
+      });
+      currentMidnight.setDate(currentMidnight.getDate() + 1);
+    }
+  }
+
   // Prepare series array
   const series = [];
 
@@ -284,13 +312,20 @@ function updateForecastChart(stationId) {
     markLine: {
       silent: true,
       symbol: "none",
-      lineStyle: { type: "dashed", color: "#999", width: 1 },
-      label: {
-        show: true,
-        position: "end",
-        formatter: "Sea Level"
-      },
-      data: [{ yAxis: 0 }]
+      data: [
+        // Sea level line (horizontal)
+        {
+          yAxis: 0,
+          lineStyle: { type: "dashed", color: "#999", width: 1 },
+          label: {
+            show: true,
+            position: "end",
+            formatter: "Sea Level"
+          }
+        },
+        // Midnight gridlines (vertical)
+        ...midnightLines
+      ]
     },
     markPoint: markPointData.length > 0 ? {
       data: markPointData,
@@ -331,7 +366,7 @@ function updateForecastChart(stationId) {
     grid: {
       left: window.innerWidth < 600 ? "10%" : "8%",
       right: window.innerWidth < 600 ? "8%" : "6%",
-      bottom: "20%",
+      bottom: peakLabels.length > 0 ? "25%" : "15%", // More space when showing peak labels
       top: "15%",
       containLabel: true
     },
@@ -351,19 +386,7 @@ function updateForecastChart(stationId) {
         hideOverlap: true
       },
       axisTick: { show: true },
-      splitLine: { show: true, lineStyle: { color: "#eee" } },
-      minorSplitLine: {
-        show: true,
-        lineStyle: {
-          color: '#ddd',
-          type: 'solid',
-          width: 1
-        }
-      },
-      minorTick: {
-        show: true,
-        splitNumber: 24  // Creates gridlines at midnight (every 24 hours)
-      }
+      splitLine: { show: true, lineStyle: { color: "#eee" } }
     },
     yAxis: {
       type: "value",
@@ -391,10 +414,12 @@ function updateForecastChart(stationId) {
           itemStyle: { color: '#ff4444', borderColor: '#fff', borderWidth: 2 }
         }
       ] : ['Storm Surge Forecast'],
-      bottom: 10,
+      bottom: 5,
       left: 'center',
-      textStyle: { fontSize: window.innerWidth < 600 ? 9 : 11 },
-      itemGap: window.innerWidth < 600 ? 10 : 20
+      right: 20,
+      textStyle: { fontSize: window.innerWidth < 600 ? 8 : 10 },
+      itemGap: window.innerWidth < 600 ? 8 : 15,
+      padding: [5, 10]
     },
     series: series
   }, true); // notMerge: true to prevent old data from persisting
@@ -613,6 +638,34 @@ function updateHindcastChart(stationId) {
       .map(p => p.time)
   )].sort();
 
+  // Calculate midnight boundaries in Pacific timezone for gridlines
+  const midnightLines = [];
+  if (allTimes.length > 0) {
+    const firstTime = new Date(allTimes[0]);
+    const lastTime = new Date(allTimes[allTimes.length - 1]);
+
+    // Find first midnight after start time (in Pacific)
+    let currentMidnight = new Date(firstTime.toLocaleString("en-US", { timeZone: "America/Vancouver" }));
+    currentMidnight.setHours(0, 0, 0, 0);
+
+    // If the first midnight is before our start time, move to next day
+    if (currentMidnight <= firstTime) {
+      currentMidnight.setDate(currentMidnight.getDate() + 1);
+    }
+
+    // Add vertical lines for each midnight up to the last time
+    while (currentMidnight <= lastTime) {
+      // Convert Pacific midnight back to UTC for the chart
+      const utcMidnight = new Date(currentMidnight.toLocaleString("en-US", { timeZone: "UTC" }));
+      midnightLines.push({
+        xAxis: utcMidnight.toISOString(),
+        lineStyle: { color: '#ddd', type: 'solid', width: 1 },
+        label: { show: false }
+      });
+      currentMidnight.setDate(currentMidnight.getDate() + 1);
+    }
+  }
+
   // Initialize chart if needed
   if (!hindcastChart) {
     hindcastChart = echarts.init(document.getElementById("hindcast-chart"));
@@ -694,14 +747,19 @@ function updateHindcastChart(stationId) {
       splitLine: { show: true, lineStyle: { color: "#eee" } }
     },
     series: series.concat([{
-      // Zero reference line
+      // Zero reference line with midnight gridlines
       name: "Sea Level",
       type: "line",
       data: allTimes.map(t => [t, 0]),
       lineStyle: { type: "dashed", color: "#999", width: 1 },
       symbol: "none",
       showSymbol: false,
-      silent: true
+      silent: true,
+      markLine: midnightLines.length > 0 ? {
+        silent: true,
+        symbol: "none",
+        data: midnightLines
+      } : undefined
     }])
   }, true); // notMerge: true to prevent old data from persisting
 
