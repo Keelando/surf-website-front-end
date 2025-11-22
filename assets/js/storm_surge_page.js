@@ -242,27 +242,21 @@ function updateForecastChart(stationId) {
 
   // Prepare markPoint data for peak surge values
   const markPointData = [];
+  const peakLabels = []; // For legend
   if (peakData && peakData.length > 0) {
-    peakData.forEach((peak, index) => {
+    peakData.forEach((peak) => {
       if (peak.time && peak.value !== null) {
-        const colors = ['#ff4444', '#ff8800', '#ffcc00']; // Red, orange, yellow
         markPointData.push({
           coord: [peak.time, peak.value],
-          value: peak.label,
           itemStyle: {
-            color: colors[index] || '#ff4444',
+            color: '#ff4444',
             borderColor: '#fff',
             borderWidth: 2
-          },
-          label: {
-            show: true,
-            formatter: '{c}',
-            fontSize: 10,
-            fontWeight: 'bold',
-            color: '#fff',
-            position: 'inside'
           }
         });
+        // Collect labels for legend
+        const sign = peak.value >= 0 ? '+' : '';
+        peakLabels.push(`${peak.label}: ${sign}${peak.value.toFixed(2)}m`);
       }
     });
   }
@@ -370,6 +364,21 @@ function updateForecastChart(stationId) {
         }
       },
       splitLine: { show: true, lineStyle: { color: "#eee" } }
+    },
+    legend: {
+      show: peakLabels.length > 0,
+      data: peakLabels.length > 0 ? [
+        'Storm Surge Forecast',
+        {
+          name: `🔴 Peaks: ${peakLabels.join(' | ')}`,
+          icon: 'circle',
+          itemStyle: { color: '#ff4444', borderColor: '#fff', borderWidth: 2 }
+        }
+      ] : ['Storm Surge Forecast'],
+      bottom: 10,
+      left: 'center',
+      textStyle: { fontSize: window.innerWidth < 600 ? 9 : 11 },
+      itemGap: window.innerWidth < 600 ? 10 : 20
     },
     series: series
   }, true); // notMerge: true to prevent old data from persisting
