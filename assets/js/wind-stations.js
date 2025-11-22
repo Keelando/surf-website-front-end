@@ -289,19 +289,19 @@ async function loadWindTable() {
       if (sourceLinks[id]) {
         if (id.startsWith('4600')) {
           // Environment Canada buoys (4600xxx)
-          sourceBadge = `<br><a href="${sourceLinks[id]}" target="_blank" rel="noopener" style="font-size: 0.75em; color: #006400; text-decoration: none;">🇨🇦 Env Canada ↗</a>`;
+          sourceBadge = `<br><a href="${sourceLinks[id]}" target="_blank" rel="noopener" style="font-size: 0.75em; color: #006400; text-decoration: none;">🇨🇦 Env Canada 🔗</a>`;
         } else if (id.startsWith('46') || id === 'CPMW1' || id === 'SISW1') {
           // NOAA buoys/stations (46xxx but not 4600xxx)
-          sourceBadge = `<br><a href="${sourceLinks[id]}" target="_blank" rel="noopener" style="font-size: 0.75em; color: #003087; text-decoration: none;">🇺🇸 NOAA ↗</a>`;
+          sourceBadge = `<br><a href="${sourceLinks[id]}" target="_blank" rel="noopener" style="font-size: 0.75em; color: #003087; text-decoration: none;">🇺🇸 NOAA 🔗</a>`;
         } else if (id === 'CRPILE' || id === 'CRCHAN' || id === 'COLEB') {
           // Surrey FlowWorks (no public link)
           sourceBadge = '<br><span style="font-size: 0.75em; color: #006837;">🏛️ Surrey</span>';
         } else if (id === 'whiterock_pier') {
           // White Rock City
-          sourceBadge = `<br><a href="${sourceLinks[id]}" target="_blank" rel="noopener" style="font-size: 0.75em; color: #0066cc; text-decoration: none;">🏛️ White Rock ↗</a>`;
+          sourceBadge = `<br><a href="${sourceLinks[id]}" target="_blank" rel="noopener" style="font-size: 0.75em; color: #0066cc; text-decoration: none;">🏛️ White Rock 🔗</a>`;
         } else if (id.startsWith('C')) {
           // Environment Canada weather stations
-          sourceBadge = `<br><a href="${sourceLinks[id]}" target="_blank" rel="noopener" style="font-size: 0.75em; color: #006400; text-decoration: none;">🇨🇦 Env Canada ↗</a>`;
+          sourceBadge = `<br><a href="${sourceLinks[id]}" target="_blank" rel="noopener" style="font-size: 0.75em; color: #006400; text-decoration: none;">🇨🇦 Env Canada 🔗</a>`;
         }
       }
 

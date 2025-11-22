@@ -19,7 +19,7 @@ TEMP_LOG="/tmp/caddy-clf-$$.log"
 # Convert Caddy JSON logs to Combined Log Format
 sudo cat "$CADDY_LOG" | python3 "$CONVERTER" > "$TEMP_LOG"
 
-# Generate GoAccess HTML report
+# Generate GoAccess HTML report (static, updates hourly via cron)
 goaccess "$TEMP_LOG" \
     --log-format=COMBINED \
     --output="$REPORT_OUTPUT" \
@@ -28,8 +28,6 @@ goaccess "$TEMP_LOG" \
     --no-term-resolver \
     --anonymize-ip \
     --ignore-crawlers \
-    --real-time-html \
-    --ws-url=wss://halibutbank.ca:8090 \
     2>/dev/null
 
 # Clean up

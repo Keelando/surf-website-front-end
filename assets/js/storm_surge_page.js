@@ -116,28 +116,45 @@ function updatePeakToday(stationId) {
   // Get current time in Pacific
   const now = new Date();
   const pacificNow = new Date(now.toLocaleString("en-US", { timeZone: "America/Vancouver" }));
-  const todayStart = new Date(pacificNow.getFullYear(), pacificNow.getMonth(), pacificNow.getDate());
 
-  // Define time ranges
+  // Define time ranges (in hours from now)
+  // 0-24hr, 24-72hrs, 72-156hrs
   const ranges = [
-    { days: 1, valueEl: peakTodayValue, timeEl: peakTodayTime, label: "Today" },
-    { days: 3, valueEl: peak3DayValue, timeEl: peak3DayTime, label: "3 Days" },
-    { days: 7, valueEl: peak7DayValue, timeEl: peak7DayTime, label: "7 Days" }
+    {
+      startHours: 0,
+      endHours: 24,
+      valueEl: peakTodayValue,
+      timeEl: peakTodayTime,
+      label: "Next 24 Hours"
+    },
+    {
+      startHours: 24,
+      endHours: 72,
+      valueEl: peak3DayValue,
+      timeEl: peak3DayTime,
+      label: "24-72 Hours"
+    },
+    {
+      startHours: 72,
+      endHours: 156,
+      valueEl: peak7DayValue,
+      timeEl: peak7DayTime,
+      label: "72-156 Hours"
+    }
   ];
 
   // Find peak for each range
   ranges.forEach(range => {
-    const rangeEnd = new Date(todayStart);
-    rangeEnd.setDate(rangeEnd.getDate() + range.days);
+    const rangeStart = new Date(now.getTime() + range.startHours * 60 * 60 * 1000);
+    const rangeEnd = new Date(now.getTime() + range.endHours * 60 * 60 * 1000);
 
     let peakSurge = null;
     let peakTimeStr = null;
 
     Object.entries(station.forecast).forEach(([timeStr, value]) => {
       const forecastTime = new Date(timeStr);
-      const pacificForecastTime = new Date(forecastTime.toLocaleString("en-US", { timeZone: "America/Vancouver" }));
 
-      if (pacificForecastTime >= todayStart && pacificForecastTime < rangeEnd) {
+      if (forecastTime >= rangeStart && forecastTime < rangeEnd) {
         if (peakSurge === null || Math.abs(value) > Math.abs(peakSurge)) {
           peakSurge = value;
           peakTimeStr = timeStr;
