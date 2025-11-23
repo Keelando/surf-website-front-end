@@ -39,11 +39,12 @@ function createWindDirectionArrowData(windDirectionData, windSpeedData, windGust
     const direction = dirPoint.value; // Meteorological direction (coming FROM)
 
     // Position arrows in a straight line at top
-    // ECharts arrow points UP (not down like inline SVG - different coordinate system)
-    // Add 180° to convert from "coming FROM" to "blowing TO" direction
+    // Arrow SVG points DOWN by default (same as inline table arrows)
+    // Wind direction indicates where wind comes FROM, arrow shows where it's blowing TO
+    // Rotation = direction directly (0° North wind → arrow points down/south)
     arrowData.push({
       value: [timestamp, arrowYPosition],
-      symbolRotate: (direction + 180) % 360,
+      symbolRotate: direction,
       itemStyle: {
         color: '#004b7c',
         opacity: 0.7
