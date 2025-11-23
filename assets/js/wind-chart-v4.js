@@ -39,12 +39,13 @@ function createWindDirectionArrowData(windDirectionData, windSpeedData, windGust
     const direction = dirPoint.value; // Meteorological direction (coming FROM)
 
     // Position arrows in a straight line at top
-    // Arrow SVG points DOWN by default (same as inline table arrows)
+    // Arrow SVG points DOWN by default
     // Wind direction indicates where wind comes FROM, arrow shows where it's blowing TO
-    // Rotation = direction directly (0° North wind → arrow points down/south)
+    // ECharts rotates counter-clockwise, so negate to get clockwise rotation
+    // 0° North wind → -0° = arrow points down, 90° East → -90° = arrow points left
     arrowData.push({
       value: [timestamp, arrowYPosition],
-      symbolRotate: direction,
+      symbolRotate: -direction,
       itemStyle: {
         color: '#004b7c',
         opacity: 0.7

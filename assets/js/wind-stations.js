@@ -495,12 +495,13 @@ function createWindDirectionArrows(windDirectionTimes, windSpeedData, windGustDa
     const timestamp = new Date(dirPoint.time).getTime();
     const direction = dirPoint.value; // Meteorological direction (coming FROM)
 
-    // Arrow SVG points DOWN by default (same as inline table arrows)
+    // Arrow SVG points DOWN by default
     // Wind direction indicates where wind comes FROM, arrow shows where it's blowing TO
-    // Rotation = direction directly (0° North wind → arrow points down/south)
+    // ECharts rotates counter-clockwise, so negate to get clockwise rotation
+    // 0° North wind → -0° = arrow points down, 90° East → -90° = arrow points left
     arrowData.push({
       value: [timestamp, arrowYPosition],
-      symbolRotate: direction,
+      symbolRotate: -direction,
       itemStyle: {
         color: '#004b7c',
         opacity: 0.7
@@ -700,40 +701,10 @@ function renderWindChart(stationId) {
   // Calculate y-axis max to ensure arrows are visible at top
   const yAxisMax = maxValue ? Math.ceil(maxValue * 1.1) : null;
 
-  // Add test arrows at all cardinal directions for calibration
-  const testArrowData = [];
-  if (windSpeedData.length > 0 && yAxisMax) {
-    const timeSpan = new Date(windSpeedData[windSpeedData.length - 1].time).getTime() - new Date(windSpeedData[0].time).getTime();
-    const startTime = new Date(windSpeedData[0].time).getTime();
-
-    // Test arrows: 0°=North(↓), 90°=East(←), 180°=South(↑), 270°=West(→)
-    const tests = [
-      { deg: 0, color: '#ff0000', label: 'N(↓)', offset: 0.2 },   // Red - should point DOWN
-      { deg: 90, color: '#00ff00', label: 'E(←)', offset: 0.4 },  // Green - should point LEFT
-      { deg: 180, color: '#0000ff', label: 'S(↑)', offset: 0.6 }, // Blue - should point UP
-      { deg: 270, color: '#ff00ff', label: 'W(→)', offset: 0.8 }  // Magenta - should point RIGHT
-    ];
-
-    tests.forEach(test => {
-      testArrowData.push({
-        value: [startTime + timeSpan * test.offset, yAxisMax * 0.90],
-        symbolRotate: test.deg,
-        label: test.label,
-        itemStyle: {
-          color: test.color,
-          opacity: 1
-        }
-      });
-    });
-  }
-
   // Build legend data
   const legendData = ["Wind Speed", "Wind Gust"];
   if (arrowData.length > 0) {
     legendData.push("Wind Direction");
-  }
-  if (testArrowData.length > 0) {
-    legendData.push("TEST: Cardinal Directions");
   }
 
   // Chart configuration
@@ -867,37 +838,6 @@ function renderWindChart(stationId) {
         },
         silent: true,
         z: 2
-      },
-      {
-        name: 'TEST: Cardinal Directions',
-        type: 'scatter',
-        data: testArrowData,
-        symbol: 'path://M0,10 L-4,-10 L0,-8 L4,-10 Z', // Same arrow
-        symbolSize: 28,  // Larger for visibility
-        symbolRotate: function(params) {
-          return testArrowData[params.dataIndex]?.symbolRotate || 0;
-        },
-        itemStyle: {
-          color: function(params) {
-            return testArrowData[params.dataIndex]?.itemStyle?.color || '#ff0000';
-          },
-          opacity: function(params) {
-            return testArrowData[params.dataIndex]?.itemStyle?.opacity || 1;
-          }
-        },
-        z: 3,  // On top
-        label: {
-          show: true,
-          position: 'top',
-          formatter: function(params) {
-            return testArrowData[params.dataIndex]?.label || '';
-          },
-          color: function(params) {
-            return testArrowData[params.dataIndex]?.itemStyle?.color || '#000';
-          },
-          fontWeight: 'bold',
-          fontSize: 12
-        }
       }
     ]
   };
