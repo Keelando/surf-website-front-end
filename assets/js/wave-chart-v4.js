@@ -38,11 +38,13 @@ function createWaveDirectionArrowData(waveDirectionData, waveHeightData) {
     const direction = dirPoint.value; // Wave direction (coming FROM)
 
     // Position arrows in a straight line at top
-    // ECharts arrow points UP (not down like inline SVG - different coordinate system)
-    // Add 180° to convert from "coming FROM" to "going TO" direction
+    // Arrow SVG points DOWN by default
+    // Wave direction indicates where waves come FROM, arrow shows where they're going TO
+    // ECharts rotates counter-clockwise, so negate to get clockwise rotation
+    // 0° North swell → -0° = arrow points down, 90° East → -90° = arrow points left
     arrowData.push({
       value: [timestamp, arrowYPosition],
-      symbolRotate: (direction + 180) % 360,
+      symbolRotate: -direction,
       itemStyle: {
         color: '#1e88e5',
         opacity: 0.7

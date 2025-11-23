@@ -83,82 +83,154 @@ find /home/keelando/site -maxdepth 1 -type f -name "*.html" -exec chmod 644 {} \
 - Use `window.innerWidth < 600` as mobile breakpoint
 - Always test on mobile before deploying
 
-### Wind Arrow Rotation (CRITICAL - Easy to Mess Up!)
+### Wind/Wave Direction Arrow Rotation (CRITICAL - Very Easy to Mess Up!)
 
-**Important**: Wind arrow rotation is tricky and easy to get wrong. Document carefully!
+**⚠️ WARNING**: Direction arrow rotation is **extremely confusing** and has caused multiple bugs. Read this entire section before touching arrow code!
+
+#### The Struggle (Historical Note)
+This took multiple debugging sessions to get right. The confusion stems from:
+1. Different coordinate systems between inline SVG and ECharts
+2. ECharts rotating **counter-clockwise** despite documentation suggesting clockwise
+3. Meteorological convention (wind FROM direction vs arrow showing TO direction)
+
+**The Short Answer (if you're in a hurry):**
+```javascript
+symbolRotate: -direction  // NEGATIVE! ECharts rotates counter-clockwise!
+```
 
 #### Arrow Symbol
-Custom centered arrow: `'path://M0,12 L-4,-8 L0,-6 L4,-8 Z'`
+Custom centered arrow: `'path://M0,12 L-4,-8 L0,-6 L4,-8 Z'` (also `'path://M0,10 L-4,-10 L0,-8 L4,-10 Z'`)
 - Default orientation: Arrow points **DOWN** (South) at 0° rotation
 - Centered at origin (0,0) to prevent offset during rotation
-- Arrow point at (0,12), base at top
+- Arrow point at (0,12) or (0,10), wings at top
 
 #### Meteorological Convention
-Wind direction indicates where wind is **COMING FROM**:
-- 0° = North (wind coming from North, blowing toward South)
-- 90° = East (wind coming from East, blowing toward West)
-- 180° = South (wind coming from South, blowing toward North)
-- 270° = West (wind coming from West, blowing toward East)
+Wind/wave direction indicates where wind/waves are **COMING FROM**:
+- 0° = North (coming from North, blowing/moving toward South)
+- 90° = East (coming from East, blowing/moving toward West)
+- 180° = South (coming from South, blowing/moving toward North)
+- 270° = West (coming from West, blowing/moving toward East)
 
-#### Display Convention
-Use meteorological direction **directly** (arrow points down by default):
+**Arrows point in the direction wind/waves are GOING TO** (opposite of where they come from).
+
+#### The Critical Discovery: ECharts Rotates COUNTER-CLOCKWISE
+
+After empirical testing with colored test arrows, we discovered:
+- **ECharts rotation is COUNTER-CLOCKWISE**, not clockwise as expected
+- When `symbolRotate: 90`, the arrow rotates 90° counter-clockwise from DOWN → points RIGHT
+- But we NEED it to rotate clockwise: 90° clockwise from DOWN → points LEFT
+
+**Solution**: Negate the angle to reverse rotation direction!
 
 ```javascript
-symbolRotate: direction  // Use direction value directly
+symbolRotate: -direction  // Negate to convert counter-clockwise to clockwise
 ```
 
-**Note**: NO +180° needed because our arrow points DOWN by default, matching the meteorological convention.
+#### Expected Behavior (VERIFIED with Test Arrows)
 
-#### Expected Behavior
-**Test these cardinal directions to verify rotation is correct:**
+| Direction | Coming From | Arrow Points | symbolRotate Value | ECharts Result |
+|-----------|-------------|--------------|-------------------|----------------|
+| 0° (North) | N → S | **DOWN** (↓) | `-0° = 0°` | DOWN ✓ |
+| 90° (East) | E → W | **LEFT** (←) | `-90° = -90°` | LEFT ✓ |
+| 180° (South) | S → N | **UP** (↑) | `-180° = -180°` | UP ✓ |
+| 270° (West) | W → E | **RIGHT** (→) | `-270° = -270°` | RIGHT ✓ |
 
-| Wind Direction | From → To | Arrow Should Point | Rotation | Result |
-|----------------|-----------|-------------------|----------|---------|
-| 0° (North) | N → S | **DOWN** (↓) | 0° | DOWN |
-| 90° (East) | E → W | **LEFT** (←) | 90° | LEFT |
-| 180° (South) | S → N | **UP** (↑) | 180° | UP |
-| 270° (West) | W → E | **RIGHT** (→) | 270° | RIGHT |
+**CRITICAL RULE**: **0 degrees North = arrow points DOWN** ↓, **90 degrees East = arrow points LEFT** ←
 
-**CRITICAL RULE**: **0 degrees North = arrow points straight DOWN** ↓
+#### Why This Works
+1. Our arrow SVG points DOWN by default
+2. For a North wind (0°), we want arrow to point DOWN → `-0° = 0°` → no rotation ✓
+3. For an East wind (90°), we want arrow to point LEFT (90° clockwise from DOWN)
+4. But ECharts rotates counter-clockwise, so 90° would point RIGHT ✗
+5. By negating: `-90°` rotates 90° counter-clockwise backwards = 270° counter-clockwise = 90° clockwise ✓
 
-#### ECharts Rotation Convention
-In ECharts (SVG/Canvas coordinates):
-- Y-axis increases downward
-- Rotation is clockwise
-- Our arrow points DOWN by default
-- 0° rotation = arrow points DOWN
-- 90° rotation = arrow points LEFT
-- 180° rotation = arrow points UP
-- 270° rotation = arrow points RIGHT
+#### Common Mistakes (These ALL Failed!)
 
-#### Common Mistakes
-❌ **Wrong**: Adding 180° to the direction
+❌ **Wrong #1**: Using direction directly
 ```javascript
-symbolRotate: (direction + 180) % 360  // WRONG - arrow already points down
+symbolRotate: direction  // WRONG - produces backwards horizontal arrows
+// Result: 90° points RIGHT (should be LEFT), 270° points LEFT (should be RIGHT)
 ```
 
-❌ **Wrong**: Using arrow that points UP by default
+❌ **Wrong #2**: Adding 180° offset
 ```javascript
-symbol: 'path://M0,-12 L-4,8 L0,6 L4,8 Z'  // Points UP, needs +180°
+symbolRotate: (direction + 180) % 360  // WRONG - completely reverses everything
+// Result: 0° points UP, 180° points DOWN (totally backwards)
 ```
 
-✅ **Correct**: Use direction directly with DOWN-pointing arrow
+❌ **Wrong #3**: Assuming clockwise rotation
 ```javascript
-symbol: 'path://M0,12 L-4,-8 L0,-6 L4,-8 Z',  // Points DOWN
-symbolRotate: direction  // Use directly, no modification needed
+// The documentation LIES! ECharts rotates counter-clockwise!
 ```
 
-**Key Principle**: Match the buoy card implementation in `main.js:getDirectionalArrow()`
+✅ **CORRECT**: Negate the angle
+```javascript
+const direction = dirPoint.value; // Meteorological direction (coming FROM)
+// ECharts rotates counter-clockwise, so negate to get clockwise rotation
+symbolRotate: -direction  // This is the ONLY way that works!
+```
 
-#### Testing
-Always test with real wind data and verify:
-1. North wind (0°) → Arrow points down
-2. East wind (90°) → Arrow points left
-3. South wind (180°) → Arrow points up
-4. West wind (270°) → Arrow points right
+#### Inline SVG vs ECharts Difference
 
-#### File Location
-Implementation: `/home/keelando/site/assets/js/wind-chart-v4.js` (line 44)
+**Inline SVG (in HTML tables):**
+```javascript
+// From wind-stations.js getDirectionalArrow()
+const rotation = degrees; // Works without negation in CSS transform
+return `<span style="transform:rotate(${rotation}deg)">${svg}</span>`;
+```
+CSS `transform: rotate()` is **clockwise**, so no negation needed.
+
+**ECharts (in charts):**
+```javascript
+// From wind-stations.js, wind-chart-v4.js, wave-chart-v4.js
+symbolRotate: -direction  // Must negate because ECharts is counter-clockwise
+```
+
+**DO NOT** try to make these consistent - they use different coordinate systems!
+
+#### Testing Procedure
+
+**ALWAYS test arrow rotation with this diagnostic code before trusting it:**
+
+```javascript
+// Add 4 test arrows at cardinal directions
+const tests = [
+  { deg: 0, color: '#ff0000', label: 'N(↓)' },   // Red - should point DOWN
+  { deg: 90, color: '#00ff00', label: 'E(←)' },  // Green - should point LEFT
+  { deg: 180, color: '#0000ff', label: 'S(↑)' }, // Blue - should point UP
+  { deg: 270, color: '#ff00ff', label: 'W(→)' }  // Magenta - should point RIGHT
+];
+
+tests.forEach(test => {
+  testArrowData.push({
+    value: [timestamp, yValue],
+    symbolRotate: -test.deg,  // Apply same transform as real arrows
+    itemStyle: { color: test.color }
+  });
+});
+```
+
+View the chart and verify:
+1. **Red** (North, 0°) → Points DOWN ↓
+2. **Green** (East, 90°) → Points LEFT ←
+3. **Blue** (South, 180°) → Points UP ↑
+4. **Magenta** (West, 270°) → Points RIGHT →
+
+If ANY arrow points wrong, DO NOT DEPLOY!
+
+#### Affected Files
+- `/assets/js/wind-stations.js` (line ~504)
+- `/assets/js/wind-chart-v4.js` (line ~47)
+- `/assets/js/wave-chart-v4.js` (line ~47)
+
+**All three files MUST use the same formula: `symbolRotate: -direction`**
+
+#### Final Notes
+- This was debugged empirically with test arrows in November 2025
+- Previous versions incorrectly used `direction + 180` or `direction` directly
+- The negation is NOT a hack - it's the correct solution for ECharts' counter-clockwise rotation
+- DO NOT "fix" this to match inline SVG - they use different coordinate systems
+- When in doubt, add the diagnostic test arrows and verify visually
 
 ## Git Workflow
 
