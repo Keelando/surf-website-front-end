@@ -487,8 +487,21 @@ function createWindDirectionArrows(windDirectionTimes, windSpeedData, windGustDa
 
   const arrowData = [];
 
-  // Sample every 3 data points to avoid clutter
-  for (let i = 0; i < windDirectionTimes.length; i += 3) {
+  // Responsive sampling based on data density and screen size
+  // For 24h of 10-min data (144 points), sample intelligently:
+  // Mobile (< 600px): every 6 hours (~36 points → 4 arrows)
+  // Desktop: every 3 hours (~18 points → 8 arrows)
+  const isMobile = window.innerWidth < 600;
+  const hoursInterval = isMobile ? 6 : 3;
+
+  // Calculate approximate points per hour (assuming roughly uniform spacing)
+  const dataSpanHours = windDirectionTimes.length > 1
+    ? (new Date(windDirectionTimes[windDirectionTimes.length - 1].time) - new Date(windDirectionTimes[0].time)) / (1000 * 60 * 60)
+    : 24;
+  const pointsPerHour = windDirectionTimes.length / dataSpanHours;
+  const sampleInterval = Math.max(1, Math.round(hoursInterval * pointsPerHour));
+
+  for (let i = 0; i < windDirectionTimes.length; i += sampleInterval) {
     const dirPoint = windDirectionTimes[i];
     if (!dirPoint || dirPoint.value == null) continue;
 
@@ -807,14 +820,10 @@ function renderWindChart(stationId) {
       },
       {
         name: 'Wind Gust',
-        type: 'line',
+        type: 'scatter',
         data: windGustData.map(d => [new Date(d.time).getTime(), d.value]),
-        smooth: true,
-        lineStyle: {
-          width: 2,
-          color: '#e53935',
-          type: 'dashed'
-        },
+        symbol: 'circle',
+        symbolSize: 6,
         itemStyle: {
           color: '#e53935'
         }

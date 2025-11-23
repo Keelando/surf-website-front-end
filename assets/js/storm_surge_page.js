@@ -18,16 +18,20 @@ const STATION_ORDER = [
   "Tofino"
 ];
 
-// Minimum date for hindcast data per station (YYYY-MM-DD format)
-// Earlier data may be unreliable due to pipeline setup issues
-const HINDCAST_MIN_DATE = {
-  "Point_Atkinson": "2025-10-30",        // Reliable from start
-  "Crescent_Beach_Channel": "2025-10-30", // Reliable from start
-  "Campbell_River": "2025-11-06",         // Only reliable from Nov 6+
-  "Neah_Bay": "2025-11-06",              // Only reliable from Nov 6+
-  "New_Dungeness": "2025-11-06",         // Only reliable from Nov 6+
-  "Tofino": "2025-11-06"                 // Only reliable from Nov 6+
-};
+// Calculate minimum date for hindcast: 11 days back from today (12 days total including today)
+// Extended to match backend export range
+function getHindcastMinDate() {
+  const now = new Date();
+  const pacificNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Vancouver' }));
+  // Start of today Pacific
+  const todayMidnight = new Date(pacificNow);
+  todayMidnight.setHours(0, 0, 0, 0);
+  // 11 days back from midnight today
+  const minDate = new Date(todayMidnight);
+  minDate.setDate(minDate.getDate() - 11);
+  // Return in YYYY-MM-DD format
+  return minDate.toISOString().split('T')[0];
+}
 
 /* ======================================
    Forecast Section
@@ -503,6 +507,9 @@ async function loadObservedSurgeData() {
 
 /* ======================================
    Hindcast Section
+
+   Displays 12 days of storm surge predictions (48h lead time) vs. 10 days of observations.
+   See /docs/HINDCAST_METHODOLOGY.md for detailed methodology.
    ====================================== */
 
 async function loadHindcastData() {
@@ -570,8 +577,8 @@ function updateHindcastChart(stationId) {
   }
 
   // Prepare data - group by forecast date
-  // Filter out data before the minimum date for this station
-  const minDate = HINDCAST_MIN_DATE[stationId] || "2025-11-06"; // Default to Nov 6
+  // Filter out data before the minimum date (9 days back from today)
+  const minDate = getHindcastMinDate();
 
   // Calculate midnight tonight (Pacific time) - only show up to today
   const now = new Date();

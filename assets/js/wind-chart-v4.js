@@ -143,11 +143,10 @@ function renderWindChart(windChart, buoy) {
       },
       {
         name: "Wind Gust",
-        type: "line",
+        type: "scatter",
         data: sanitizeSeriesData(windGustData),
-        smooth: true,
-        connectNulls: false,
-        lineStyle: { type: "dashed" },
+        symbol: "circle",
+        symbolSize: 6,
         itemStyle: { color: "#e53935" },
       },
       {

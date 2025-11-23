@@ -79,6 +79,48 @@ function renderWaveChart(waveChart, buoy, buoyId) {
 }
 
 /**
+ * Create direction arrow data for spectral wave components (swell + wind waves)
+ * @param {Array} directionData - Direction timeseries data
+ * @param {Array} heightData - Height data for positioning arrows
+ * @param {string} color - Arrow color
+ * @returns {Array} Arrow data for scatter series
+ */
+function createSpectralDirectionArrows(directionData, heightData, color) {
+  if (!directionData || directionData.length === 0 || !heightData || heightData.length === 0) {
+    return [];
+  }
+
+  const arrowData = [];
+
+  // Responsive sampling: fewer arrows on mobile
+  const sampleInterval = window.innerWidth < 600 ? 6 : 3;
+
+  for (let i = 0; i < directionData.length; i += sampleInterval) {
+    const dirPoint = directionData[i];
+    if (!dirPoint || dirPoint.value == null) continue;
+
+    // Find corresponding height for this time to position arrow on the line
+    const heightPoint = heightData.find(h => h.time === dirPoint.time);
+    if (!heightPoint || heightPoint.value == null) continue;
+
+    const timestamp = new Date(dirPoint.time).getTime();
+    const direction = dirPoint.value;
+    const yPosition = heightPoint.value; // Position arrow at actual data point
+
+    arrowData.push({
+      value: [timestamp, yPosition],
+      symbolRotate: -direction, // Negative for clockwise rotation
+      itemStyle: {
+        color: color,
+        opacity: 0.8
+      }
+    });
+  }
+
+  return arrowData;
+}
+
+/**
  * Render NOAA spectral dual-chart display (wave heights + periods)
  * Used for Neah Bay (46087) and New Dungeness (46088)
  */
@@ -88,11 +130,23 @@ function renderSpectralCharts(waveChart, buoy, ts) {
   const windWaveHeight = ts.wind_wave_height?.data || [];
   const swellHeight = ts.swell_height?.data || [];
 
+  // Get direction data for arrows
+  const windWaveDirection = ts.wind_wave_direction?.data || [];
+  const swellDirection = ts.swell_direction?.data || [];
+
+  // Create arrow data once (for efficiency)
+  const windWaveArrows = createSpectralDirectionArrows(windWaveDirection, windWaveHeight, "#1e88e5");
+  const swellArrows = createSpectralDirectionArrows(swellDirection, swellHeight, "#fb8c00");
+
   // Debug: Check what data we actually have
   logger.debug("WaveChart", `${buoy.name} wave data available`, {
     sig: sigWaveHeight.length,
     wind: windWaveHeight.length,
-    swell: swellHeight.length
+    swell: swellHeight.length,
+    windDir: windWaveDirection.length,
+    swellDir: swellDirection.length,
+    windArrows: windWaveArrows.length,
+    swellArrows: swellArrows.length
   });
 
   waveChart.setOption({
@@ -107,17 +161,37 @@ function renderSpectralCharts(waveChart, buoy, ts) {
       formatter: (params) => {
         if (!params || params.length === 0) return "";
         const time = formatTimeAxis(new Date(params[0].value[0]).toISOString());
+        const timestamp = new Date(params[0].value[0]).getTime();
         let res = `<b>${time}</b><br/>`;
+
+        // Show heights (skip direction arrow series in tooltip)
         params.forEach((p) => {
+          if (p.seriesName.includes("Dir")) return; // Skip direction series
           if (p.value[1] != null) {
             res += `${p.marker} ${p.seriesName}: ${p.value[1]} m<br/>`;
           }
         });
+
+        // Add direction info if available
+        const windDirPoint = windWaveDirection.find(d => Math.abs(new Date(d.time).getTime() - timestamp) < 1800000);
+        if (windDirPoint && windDirPoint.value != null) {
+          const dir = Math.round(windDirPoint.value);
+          const compass = degreesToCompass(dir);
+          res += `🌊 Wind Wave Dir: ${dir}° (${compass})<br/>`;
+        }
+
+        const swellDirPoint = swellDirection.find(d => Math.abs(new Date(d.time).getTime() - timestamp) < 1800000);
+        if (swellDirPoint && swellDirPoint.value != null) {
+          const dir = Math.round(swellDirPoint.value);
+          const compass = degreesToCompass(dir);
+          res += `🌊 Swell Dir: ${dir}° (${compass})<br/>`;
+        }
+
         return res;
       },
     },
     legend: {
-      data: ["Wind Waves", "Ocean Swell", "Total (Significant)"],
+      data: ["Wind Waves", "Wind Wave Dir", "Ocean Swell", "Swell Dir", "Total (Significant)"],
       bottom: getResponsiveLegendBottom()
     },
     grid: {
@@ -179,6 +253,48 @@ function renderSpectralCharts(waveChart, buoy, ts) {
         itemStyle: { color: "#999999" },
         showSymbol: false,
         z: 1
+      },
+      // Direction arrows for wind waves (blue arrows on wind wave line)
+      {
+        name: "Wind Wave Dir",
+        type: "scatter",
+        data: windWaveArrows,
+        symbol: 'path://M0,10 L-3,-8 L0,-6 L3,-8 Z',
+        symbolSize: 14,
+        symbolRotate: function(params) {
+          return windWaveArrows[params.dataIndex]?.symbolRotate || 0;
+        },
+        itemStyle: {
+          color: function(params) {
+            return windWaveArrows[params.dataIndex]?.itemStyle?.color || '#1e88e5';
+          },
+          opacity: function(params) {
+            return windWaveArrows[params.dataIndex]?.itemStyle?.opacity || 0.8;
+          }
+        },
+        silent: true,
+        z: 3
+      },
+      // Direction arrows for swell (orange arrows on swell line)
+      {
+        name: "Swell Dir",
+        type: "scatter",
+        data: swellArrows,
+        symbol: 'path://M0,10 L-3,-8 L0,-6 L3,-8 Z',
+        symbolSize: 14,
+        symbolRotate: function(params) {
+          return swellArrows[params.dataIndex]?.symbolRotate || 0;
+        },
+        itemStyle: {
+          color: function(params) {
+            return swellArrows[params.dataIndex]?.itemStyle?.color || '#fb8c00';
+          },
+          opacity: function(params) {
+            return swellArrows[params.dataIndex]?.itemStyle?.opacity || 0.8;
+          }
+        },
+        silent: true,
+        z: 3
       }
     ]
   }, true);
@@ -188,11 +304,17 @@ function renderSpectralCharts(waveChart, buoy, ts) {
   const windWavePeriod = ts.wind_wave_period?.data || [];
   const swellPeriod = ts.swell_period?.data || [];
 
+  // Create arrow data for period chart (positioned on period lines)
+  const windWavePeriodArrows = createSpectralDirectionArrows(windWaveDirection, windWavePeriod, "#1e88e5");
+  const swellPeriodArrows = createSpectralDirectionArrows(swellDirection, swellPeriod, "#fb8c00");
+
   // Debug: Check what period data we have
   logger.debug("WaveChart", `${buoy.name} period data available`, {
     avg: avgPeriod.length,
     wind: windWavePeriod.length,
-    swell: swellPeriod.length
+    swell: swellPeriod.length,
+    windPeriodArrows: windWavePeriodArrows.length,
+    swellPeriodArrows: swellPeriodArrows.length
   });
 
   const periodChartContainer = document.getElementById("wave-period-chart");
@@ -216,17 +338,37 @@ function renderSpectralCharts(waveChart, buoy, ts) {
         formatter: (params) => {
           if (!params || params.length === 0) return "";
           const time = formatTimeAxis(new Date(params[0].value[0]).toISOString());
+          const timestamp = new Date(params[0].value[0]).getTime();
           let res = `<b>${time}</b><br/>`;
+
+          // Show periods (skip direction arrow series in tooltip)
           params.forEach((p) => {
+            if (p.seriesName.includes("Dir")) return; // Skip direction series
             if (p.value[1] != null) {
               res += `${p.marker} ${p.seriesName}: ${p.value[1]} s<br/>`;
             }
           });
+
+          // Add direction info if available
+          const windDirPoint = windWaveDirection.find(d => Math.abs(new Date(d.time).getTime() - timestamp) < 1800000);
+          if (windDirPoint && windDirPoint.value != null) {
+            const dir = Math.round(windDirPoint.value);
+            const compass = degreesToCompass(dir);
+            res += `🌊 Wind Wave Dir: ${dir}° (${compass})<br/>`;
+          }
+
+          const swellDirPoint = swellDirection.find(d => Math.abs(new Date(d.time).getTime() - timestamp) < 1800000);
+          if (swellDirPoint && swellDirPoint.value != null) {
+            const dir = Math.round(swellDirPoint.value);
+            const compass = degreesToCompass(dir);
+            res += `🌊 Swell Dir: ${dir}° (${compass})<br/>`;
+          }
+
           return res;
         },
       },
       legend: {
-        data: ["Wind Wave Period", "Swell Period", "Average Period"],
+        data: ["Wind Wave Period", "Wind Wave Dir", "Swell Period", "Swell Dir", "Average Period"],
         bottom: getResponsiveLegendBottom()
       },
       grid: {
@@ -286,6 +428,48 @@ function renderSpectralCharts(waveChart, buoy, ts) {
           itemStyle: { color: "#999999" },
           showSymbol: false,
           z: 1
+        },
+        // Direction arrows for wind waves (blue arrows on wind wave period line)
+        {
+          name: "Wind Wave Dir",
+          type: "scatter",
+          data: windWavePeriodArrows,
+          symbol: 'path://M0,10 L-3,-8 L0,-6 L3,-8 Z',
+          symbolSize: 14,
+          symbolRotate: function(params) {
+            return windWavePeriodArrows[params.dataIndex]?.symbolRotate || 0;
+          },
+          itemStyle: {
+            color: function(params) {
+              return windWavePeriodArrows[params.dataIndex]?.itemStyle?.color || '#1e88e5';
+            },
+            opacity: function(params) {
+              return windWavePeriodArrows[params.dataIndex]?.itemStyle?.opacity || 0.8;
+            }
+          },
+          silent: true,
+          z: 3
+        },
+        // Direction arrows for swell (orange arrows on swell period line)
+        {
+          name: "Swell Dir",
+          type: "scatter",
+          data: swellPeriodArrows,
+          symbol: 'path://M0,10 L-3,-8 L0,-6 L3,-8 Z',
+          symbolSize: 14,
+          symbolRotate: function(params) {
+            return swellPeriodArrows[params.dataIndex]?.symbolRotate || 0;
+          },
+          itemStyle: {
+            color: function(params) {
+              return swellPeriodArrows[params.dataIndex]?.itemStyle?.color || '#fb8c00';
+            },
+            opacity: function(params) {
+              return swellPeriodArrows[params.dataIndex]?.itemStyle?.opacity || 0.8;
+            }
+          },
+          silent: true,
+          z: 3
         }
       ]
     });
@@ -308,27 +492,37 @@ function renderStandardWaveChart(waveChart, buoy, buoyId, ts) {
     periodChartContainer.style.display = "none";
   }
 
-  let waveHeightData, wavePeriodData, chartTitle, heightLabel, periodLabel;
+  let waveHeightData, wavePeriodData, wavePeriodPeakData, chartTitle, heightLabel, periodLabel;
 
   if (buoyId === "46087") {
     // Neah Bay - use swell data (open ocean)
     waveHeightData = ts.swell_height?.data || [];
     wavePeriodData = ts.swell_period?.data || [];
+    wavePeriodPeakData = null; // NOAA buoys don't need peak period overlay
     chartTitle = `${buoy.name} - Swell Conditions`;
     heightLabel = "Swell Height";
     periodLabel = "Swell Period";
   } else {
-    // Canadian buoys - use significant wave height
+    // Canadian buoys - use significant wave height and average period, with peak period as dots
     waveHeightData = ts.wave_height_sig?.data || [];
-    wavePeriodData = ts.wave_period_peak?.data || [];
+    wavePeriodData = ts.wave_period_avg?.data || [];
+    wavePeriodPeakData = ts.wave_period_peak?.data || [];
     chartTitle = `${buoy.name} - Wave Conditions`;
     heightLabel = "Significant Wave Height";
-    periodLabel = "Peak Period";
+    periodLabel = "Average Period";
   }
 
-  // Check if this buoy has wave direction data (Halibut Bank and Sentry Shoal)
-  const hasWaveDirection = (buoyId === "4600146" || buoyId === "4600131");
-  const waveDirectionData = hasWaveDirection ? (ts.wave_direction_peak?.data || []) : [];
+  // Check if this buoy has wave direction data
+  // Halibut Bank (4600146), Sentry Shoal (4600131), Angeles Point (46267)
+  const hasWaveDirection = (buoyId === "4600146" || buoyId === "4600131" || buoyId === "46267");
+
+  // Select appropriate direction data based on buoy type:
+  // - All buoys: Prefer wave_direction_avg (MWD - Mean Wave Direction for NOAA)
+  // - Fall back to peak direction if avg not available
+  let waveDirectionData = [];
+  if (hasWaveDirection) {
+    waveDirectionData = ts.wave_direction_avg?.data || ts.wave_direction_peak?.data || [];
+  }
 
   // Create direction arrow data if available
   const { arrowData, maxValue } = hasWaveDirection
@@ -363,6 +557,20 @@ function renderStandardWaveChart(waveChart, buoy, buoyId, ts) {
 
   // Build legend data array
   const legendData = [heightLabel, periodLabel];
+
+  // Add peak period as scatter dots for Canadian buoys
+  if (wavePeriodPeakData && wavePeriodPeakData.length > 0) {
+    legendData.push("Peak Period");
+    series.push({
+      name: "Peak Period",
+      type: "scatter",
+      data: sanitizeSeriesData(wavePeriodPeakData),
+      symbol: "circle",
+      symbolSize: 5,
+      yAxisIndex: 1,
+      itemStyle: { color: "#66bb6a", opacity: 0.6 },
+    });
+  }
 
   // Add wave direction arrows if available
   if (hasWaveDirection && arrowData.length > 0) {
