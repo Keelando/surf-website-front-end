@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>BC Lightstation Reports | Real-time Coastal Conditions</title>
+
+  <meta name="description" content="Real-time lightstation observations from BC coastal lightstations. Wind, sea state, and swell conditions reported every 3 hours." />
+  <meta name="keywords" content="BC lightstations, coastal weather, marine conditions, sea state, swell, Environment Canada, BC coast" />
+
+  <link rel="canonical" href="https://halibutbank.ca/lightstations.html" />
+  <link rel="stylesheet" href="/assets/css/style-v4.css?v=20251112" />
+  <link rel="stylesheet" href="/assets/css/nav-tide-styles-v4.css" />
+  <link rel="stylesheet" href="/assets/css/warning-banner-v4.css" />
+
+  <style>
+    .site-tagline {
+      background: linear-gradient(to bottom, rgba(224, 242, 255, 0.5), rgba(224, 242, 255, 0.8));
+      text-align: center;
+      font-size: 1rem;
+      font-style: italic;
+      color: #2c5282;
+      padding: 1rem 1.5rem;
+      margin: 0;
+      border-bottom: 1px solid rgba(66, 153, 225, 0.2);
+    }
+
+    .region-section {
+      margin: 2rem 0;
+    }
+
+    .region-header {
+      background: linear-gradient(to bottom, #004b7c, #003d66);
+      color: white;
+      padding: 0.75rem 1rem;
+      font-size: 1.2rem;
+      font-weight: 600;
+      border-radius: 6px 6px 0 0;
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background 0.2s;
+    }
+
+    .region-header:hover {
+      background: linear-gradient(to bottom, #005a94, #004b7c);
+    }
+
+    .region-header .toggle-icon {
+      font-size: 1.3rem;
+      font-weight: bold;
+      margin-left: 0.5rem;
+    }
+
+    .region-section.collapsed .region-header {
+      border-radius: 6px;
+    }
+
+    .lightstation-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+      padding: 1rem;
+      background: #f7fafc;
+      border-radius: 0 0 6px 6px;
+      max-height: 2000px;
+      overflow: hidden;
+      transition: max-height 0.3s ease-out, padding 0.3s;
+    }
+
+    .region-section.collapsed .lightstation-grid {
+      max-height: 0;
+      padding: 0 1rem;
+    }
+
+    .lightstation-card {
+      background: white;
+      padding: 1rem;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .lightstation-card h3 {
+      margin: 0 0 0.75rem 0;
+      color: #2c5282;
+      font-size: 1.1rem;
+    }
+
+    .condition-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.4rem 0;
+      border-bottom: 1px solid #edf2f7;
+    }
+
+    .condition-row:last-child {
+      border-bottom: none;
+    }
+
+    .condition-label {
+      font-weight: 600;
+      color: #4a5568;
+    }
+
+    .condition-value {
+      color: #2d3748;
+    }
+
+    .stale-warning {
+      background: #fff5f5;
+      color: #c53030;
+      padding: 0.5rem;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+      text-align: center;
+    }
+
+    .report-time {
+      font-size: 0.85rem;
+      color: #718096;
+      margin-top: 0.5rem;
+      font-style: italic;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <!-- Warning banners container -->
+  <div id="warning-banners"></div>
+
+  <nav class="main-nav">
+    <a href="index.html" class="nav-link">Buoys</a>
+    <a href="tides.html" class="nav-link">Tides</a>
+    <a href="winds.html" class="nav-link">Winds</a>
+    <a href="lightstations.html" class="nav-link active">Lightstations</a>
+    <a href="forecasts.html" class="nav-link">Forecasts</a>
+    <a href="storm_surge.html" class="nav-link">Storm Surge</a>
+  </nav>
+
+  <header>
+    <h1>BC Lightstation Reports</h1>
+  </header>
+
+  <div class="site-tagline">
+    Real-time observations from BC coastal lightstations • Updated every 3 hours from Environment Canada
+  </div>
+
+  <div class="container">
+    <section style="background: #edf2f7; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+      <h2 style="margin-top: 0; color: #2c5282; font-size: 1.3rem;">About Lightstation Reports</h2>
+      <p style="margin-bottom: 0.5rem;">
+        BC's staffed lightstations provide essential weather observations from remote coastal locations.
+        Lightkeepers report wind speed and direction, sea state (wave height and conditions), swell intensity and direction,
+        and visibility every 3 hours.
+      </p>
+      <p style="margin: 0;">
+        <strong>Report Schedule:</strong> 00:00, 03:00, 06:00, 09:00, 12:00, 15:00, 18:00, 21:00 UTC
+        (subtract 8 hours for Pacific Standard Time, 7 hours for Pacific Daylight Time)
+      </p>
+    </section>
+
+    <div id="lightstations-container">
+      <p style="text-align: center; padding: 2rem; color: #718096;">Loading lightstation data...</p>
+    </div>
+  </div>
+
+  <!-- Navigation (Bottom) -->
+  <nav class="main-nav">
+    <a href="index.html" class="nav-link">Buoys</a>
+    <a href="tides.html" class="nav-link">Tides</a>
+    <a href="winds.html" class="nav-link">Winds</a>
+    <a href="lightstations.html" class="nav-link active">Lightstations</a>
+    <a href="forecasts.html" class="nav-link">Forecasts</a>
+    <a href="storm_surge.html" class="nav-link">Storm Surge</a>
+  </nav>
+
+  <footer>
+    <p>Please independently verify this data and do not base recreational activities around this information. This website is in no way affiliated with Environment Canada.</p>
+    <p><small>Data source: Environment Canada FPCN61 Lightstation Reports | Updates every 3 hours</small></p>
+  </footer>
+
+  <script src="/assets/js/warning-banner-v4.js"></script>
+  <script type="module">
+    // Load and display lightstation data
+    async function loadLightstationData() {
+      try {
+        const response = await fetch('/data/latest_lightstation.json');
+        const data = await response.json();
+
+        // Group stations by region
+        const regions = {};
+        for (const [stationName, stationData] of Object.entries(data)) {
+          const region = stationData.region || 'OTHER';
+          if (!regions[region]) {
+            regions[region] = [];
+          }
+          regions[region].push({ name: stationName, ...stationData });
+        }
+
+        // Render grouped by region
+        const container = document.getElementById('lightstations-container');
+        container.innerHTML = '';
+
+        const regionOrder = [
+          'STRAIT OF GEORGIA',
+          'JUAN DE FUCA STRAIT',
+          'WEST COAST VANCOUVER ISLAND',
+          'CENTRAL COAST',
+          'HECATE STRAIT'
+        ];
+
+        for (const region of regionOrder) {
+          if (!regions[region]) continue;
+
+          const section = document.createElement('div');
+          section.className = 'region-section';
+
+          // Collapse all regions except Strait of Georgia by default
+          if (region !== 'STRAIT OF GEORGIA') {
+            section.classList.add('collapsed');
+          }
+
+          const header = document.createElement('div');
+          header.className = 'region-header';
+
+          const regionName = document.createElement('span');
+          regionName.textContent = region;
+          header.appendChild(regionName);
+
+          const toggleIcon = document.createElement('span');
+          toggleIcon.className = 'toggle-icon';
+          // Show − when expanded, + when collapsed
+          toggleIcon.textContent = region === 'STRAIT OF GEORGIA' ? ' −' : ' +';
+          header.appendChild(toggleIcon);
+
+          // Add click handler to toggle collapse
+          header.addEventListener('click', () => {
+            section.classList.toggle('collapsed');
+            // Update icon
+            toggleIcon.textContent = section.classList.contains('collapsed') ? ' +' : ' −';
+          });
+
+          section.appendChild(header);
+
+          const grid = document.createElement('div');
+          grid.className = 'lightstation-grid';
+
+          // Sort stations alphabetically
+          regions[region].sort((a, b) => a.name.localeCompare(b.name));
+
+          for (const station of regions[region]) {
+            const card = createStationCard(station);
+            grid.appendChild(card);
+          }
+
+          section.appendChild(grid);
+          container.appendChild(section);
+        }
+
+      } catch (error) {
+        console.error('Failed to load lightstation data:', error);
+        document.getElementById('lightstations-container').innerHTML =
+          '<p style="text-align: center; color: #e53e3e; padding: 2rem;">Failed to load lightstation data.</p>';
+      }
+    }
+
+    function createStationCard(station) {
+      const card = document.createElement('div');
+      card.className = 'lightstation-card';
+
+      const title = document.createElement('h3');
+      title.textContent = station.name;
+      card.appendChild(title);
+
+      // Wind
+      if (!station.wind_calm) {
+        const windRow = createConditionRow('Wind',
+          `${station.wind_direction || 'N/A'} ${station.wind_speed_kt || 'N/A'} kt${station.wind_gusting ? ' (gusting)' : ''}${station.wind_estimated ? ' (est)' : ''}`
+        );
+        card.appendChild(windRow);
+      } else {
+        card.appendChild(createConditionRow('Wind', 'CALM'));
+      }
+
+      // Sea state
+      if (station.sea_height_ft !== null || station.sea_condition) {
+        const seaText = station.sea_height_ft !== null
+          ? `${station.sea_height_ft} ft ${station.sea_condition || ''}`
+          : station.sea_condition || 'N/A';
+        card.appendChild(createConditionRow('Sea State', seaText));
+      }
+
+      // Swell
+      if (station.swell_intensity || station.swell_direction) {
+        const swellText = `${station.swell_intensity || ''} ${station.swell_direction || ''} swell`.trim();
+        card.appendChild(createConditionRow('Swell', swellText || 'N/A'));
+      }
+
+      // Report time
+      if (station.report_time_str) {
+        const reportTime = document.createElement('div');
+        reportTime.className = 'report-time';
+        reportTime.textContent = `Report: ${station.report_time_str}`;
+        card.appendChild(reportTime);
+      }
+
+      // Staleness warning
+      if (station.stale) {
+        const warning = document.createElement('div');
+        warning.className = 'stale-warning';
+        warning.textContent = '⚠️ Data >6 hours old';
+        card.appendChild(warning);
+      }
+
+      return card;
+    }
+
+    function createConditionRow(label, value) {
+      const row = document.createElement('div');
+      row.className = 'condition-row';
+
+      const labelEl = document.createElement('span');
+      labelEl.className = 'condition-label';
+      labelEl.textContent = label + ':';
+
+      const valueEl = document.createElement('span');
+      valueEl.className = 'condition-value';
+      valueEl.textContent = value;
+
+      row.appendChild(labelEl);
+      row.appendChild(valueEl);
+
+      return row;
+    }
+
+    // Load data on page load
+    loadLightstationData();
+  </script>
+</body>
+</html>
