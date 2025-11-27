@@ -38,13 +38,13 @@ function createWaveDirectionArrowData(waveDirectionData, waveHeightData) {
     const direction = dirPoint.value; // Wave direction (coming FROM)
 
     // Position arrows in a straight line at top
-    // Arrow SVG points DOWN by default
-    // Wave direction indicates where waves come FROM, arrow shows where they're going TO
-    // ECharts rotates counter-clockwise, so negate to get clockwise rotation
-    // 0° North swell → -0° = arrow points down, 90° East → -90° = arrow points left
+    // Arrow SVG points DOWN at rotation=0
+    // Direction indicates where waves COME FROM (meteorological convention)
+    // Arrow shows where waves are TRAVELING TO (propagation direction)
+    // Rotation = direction (counter-clockwise from down)
     arrowData.push({
       value: [timestamp, arrowYPosition],
-      symbolRotate: -direction,
+      symbolRotate: direction,
       itemStyle: {
         color: '#1e88e5',
         opacity: 0.7
@@ -109,7 +109,7 @@ function createSpectralDirectionArrows(directionData, heightData, color) {
 
     arrowData.push({
       value: [timestamp, yPosition],
-      symbolRotate: -direction, // Negative for clockwise rotation
+      symbolRotate: direction, // Arrow shows wave propagation direction
       itemStyle: {
         color: color,
         opacity: 0.8

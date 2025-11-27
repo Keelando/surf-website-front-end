@@ -96,9 +96,12 @@ function createDirectionalMarker(direction, height, type) {
   const isWave = type === 'wave';
   const arrowColor = isWave ? '#1e88e5' : '#718096'; // Match ECharts blue for waves, gray for wind
 
-  // Arrow points in the direction waves/wind are COMING FROM (meteorological convention)
-  // Negate direction for clockwise rotation (matches ECharts behavior)
-  const rotation = -direction;
+  // Meteorological convention: direction value = where wave is COMING FROM
+  // Arrow shows propagation direction (where waves are TRAVELING TO)
+  // Arrow SVG points DOWN at rotation=0 (South/180° compass)
+  // Direction 0° (from North) → traveling South → arrow down → rotation 0
+  // Direction 90° (from East) → traveling West → arrow left → rotation 90
+  const rotation = direction;
 
   // Build height label if height is available
   const heightLabel = (height !== null && height !== undefined)
