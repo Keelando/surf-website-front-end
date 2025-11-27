@@ -191,7 +191,7 @@ function renderSpectralCharts(waveChart, buoy, ts) {
       },
     },
     legend: {
-      data: ["Wind Waves", "Wind Wave Dir", "Ocean Swell", "Swell Dir", "Total (Significant)"],
+      data: ["Wind Waves", "Ocean Swell", "Total (Significant)"],
       bottom: getResponsiveLegendBottom()
     },
     grid: {
@@ -368,7 +368,7 @@ function renderSpectralCharts(waveChart, buoy, ts) {
         },
       },
       legend: {
-        data: ["Wind Wave Period", "Wind Wave Dir", "Swell Period", "Swell Dir", "Average Period"],
+        data: ["Wind Wave Period", "Swell Period", "Average Period"],
         bottom: getResponsiveLegendBottom()
       },
       grid: {
@@ -572,7 +572,7 @@ function renderStandardWaveChart(waveChart, buoy, buoyId, ts) {
     });
   }
 
-  // Add wave direction arrows if available
+  // Add wave direction arrows if available (show in legend)
   if (hasWaveDirection && arrowData.length > 0) {
     legendData.push("Wave Direction");
     series.push({

@@ -85,35 +85,140 @@ async function loadStationsAndMarkers() {
   }
 }
 
+/**
+ * Create directional marker with triangular arrow (exact ECharts style match)
+ * @param {number} direction - Direction in degrees (meteorological: coming FROM)
+ * @param {number} height - Wave height in meters (optional)
+ * @param {string} type - 'wave' or 'wind-on-wave'
+ * @returns {string} HTML for marker
+ */
+function createDirectionalMarker(direction, height, type) {
+  const isWave = type === 'wave';
+  const arrowColor = isWave ? '#1e88e5' : '#718096'; // Match ECharts blue for waves, gray for wind
+
+  // Arrow points in the direction waves/wind are COMING FROM (meteorological convention)
+  // Negate direction for clockwise rotation (matches ECharts behavior)
+  const rotation = -direction;
+
+  // Build height label if height is available
+  const heightLabel = (height !== null && height !== undefined)
+    ? `<div style="
+        background: ${arrowColor};
+        color: white;
+        padding: 2px 5px;
+        border-radius: 3px;
+        font-size: 10px;
+        font-weight: bold;
+        white-space: nowrap;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        margin-bottom: 2px;
+      ">${height.toFixed(1)}m</div>`
+    : '';
+
+  // Use exact ECharts arrow path from standard wave chart: 'M0,12 L-4,-8 L0,-6 L4,-8 Z'
+  // This creates a filled triangular arrow with notch, pointing down by default
+  // symbolSize 16 in ECharts - scale up for better visibility on map
+  return `
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+      ${heightLabel}
+      <div style="transform: rotate(${rotation}deg); transform-origin: center center;">
+        <svg width="22" height="26" viewBox="-5 -9 10 22" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));">
+          <path d="M0,12 L-4,-8 L0,-6 L4,-8 Z" fill="${arrowColor}" fill-opacity="0.98" stroke="${arrowColor}" stroke-width="1"/>
+        </svg>
+      </div>
+    </div>
+  `;
+}
+
 // Add buoy marker to map
 function addBuoyMarker(buoy) {
   // Determine marker icon and type label based on station type
   let markerEmoji = '🌊'; // Default: wave buoy (includes pile-mounted wave stations)
   let typeLabel = 'Wave Buoy';
+  let isWaveStation = true;
 
   if (buoy.type === 'pile_mounted_wave_station') {
     // Keep wave icon since it measures waves
     markerEmoji = '🌊';
     typeLabel = 'Pile-Mounted Wave Station';
+    isWaveStation = true;
   } else if (buoy.type === 'wind_monitoring_station') {
     markerEmoji = '💨';
     typeLabel = 'Wind Monitoring Station';
+    isWaveStation = false;
   } else if (buoy.type === 'weather_station') {
     markerEmoji = '💨';
     typeLabel = 'Weather Station';
+    isWaveStation = false;
   } else if (buoy.type === 'c_man_station') {
     markerEmoji = '💨';
     typeLabel = 'C-MAN Station';
+    isWaveStation = false;
   } else if (buoy.type === 'land_station') {
     markerEmoji = '💨';
     typeLabel = 'Land Station';
+    isWaveStation = false;
+  }
+
+  // Check if we have live data with direction for this buoy
+  let iconHtml = `<div class="marker-icon">${markerEmoji}</div>`;
+  let iconSize = [30, 30];
+  let iconAnchor = [15, 15];
+
+  try {
+    if (latestBuoyData && latestBuoyData[buoy.id]) {
+      const data = latestBuoyData[buoy.id];
+      // Try multiple possible field names for wave direction
+      const waveDirection = data.wave_direction_avg || data.wave_direction_peak || data.wave_direction;
+      const waveHeight = data.wave_height_sig;
+      const windDirection = data.wind_direction;
+
+      // Debug log for first few buoys to check data
+      if (buoy.id === '4600146' || buoy.id === '46087') {
+        console.log(`${buoy.id} directions:`, {
+          waveDir: waveDirection,
+          windDir: windDirection,
+          height: waveHeight,
+          isWaveStation,
+          availableFields: Object.keys(data).filter(k => k.includes('direction'))
+        });
+      }
+
+      // For wave stations with wave direction data
+      if (isWaveStation && waveDirection !== null && waveDirection !== undefined) {
+        // Create directional arrow marker with wave height (BLUE)
+        iconHtml = createDirectionalMarker(waveDirection, waveHeight, 'wave');
+        // Arrow size: 22x26px (scaled up), label adds ~18px height
+        iconSize = [22, waveHeight ? 44 : 26];
+        // Anchor at center of rotation
+        iconAnchor = [11, waveHeight ? 34 : 13];
+      }
+      // For wave stations without wave direction but with wind direction and wave height
+      else if (isWaveStation && waveHeight !== null && waveHeight !== undefined && windDirection !== null && windDirection !== undefined) {
+        // Show wind direction with wave height (GRAY)
+        iconHtml = createDirectionalMarker(windDirection, waveHeight, 'wind-on-wave');
+        iconSize = [22, 44];
+        iconAnchor = [11, 34];
+      }
+      // For non-wave stations with wind direction
+      else if (!isWaveStation && windDirection !== null && windDirection !== undefined) {
+        // Keep emoji for now, but could show wind direction later
+        iconHtml = `<div class="marker-icon">${markerEmoji}</div>`;
+      }
+    }
+  } catch (error) {
+    console.error('Error creating directional marker for', buoy.id, error);
+    // Fall back to emoji on error
+    iconHtml = `<div class="marker-icon">${markerEmoji}</div>`;
+    iconSize = [30, 30];
+    iconAnchor = [15, 15];
   }
 
   const icon = L.divIcon({
     className: `station-marker buoy-marker ${buoy.type || 'wave_buoy'}`,
-    html: `<div class="marker-icon">${markerEmoji}</div>`,
-    iconSize: [30, 30],
-    iconAnchor: [15, 15],
+    html: iconHtml,
+    iconSize: iconSize,
+    iconAnchor: iconAnchor,
     popupAnchor: [0, -15]
   });
 
