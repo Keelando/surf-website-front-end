@@ -9,6 +9,21 @@ let buoyMarkers = {}; // Store buoy markers by ID for easy access
 let latestBuoyData = null; // Cache for latest buoy data
 let stormSurgeData = null; // Cache for storm surge forecast data
 
+// Helper function for directional arrows
+function getDirectionalArrow(degrees, arrowType = 'wind') {
+  if (degrees == null || degrees === '—') return '';
+
+  // Meteorological convention: direction indicates WHERE wind/waves are COMING FROM
+  const rotation = arrowType === 'wind' ? degrees : degrees + 90;
+
+  // SVG arrows: wind points down, wave points right
+  const svg = arrowType === 'wind'
+    ? `<svg width="16" height="16" viewBox="0 0 16 16"><path d="M8 2v12m0 0l-3-3m3 3l3-3" stroke="#004b7c" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`
+    : `<svg width="16" height="16" viewBox="0 0 16 16"><path d="M2 8h12m0 0l-3-3m3 3l-3 3" stroke="#004b7c" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;
+
+  return `<span style="display:inline-block;transform:rotate(${rotation}deg);margin-left:0.3rem;vertical-align:middle;">${svg}</span>`;
+}
+
 // Initialize the map
 function initStationsMap() {
   // Create map centered on Salish Sea
@@ -230,18 +245,102 @@ function addBuoyMarker(buoy) {
   // Build popup with latest data at top
   let popupContent = `<div class="station-popup"><h3>${buoy.name}</h3>`;
 
-  // Add latest wave data if available (priority data at top)
+  // Add latest buoy data if available (priority data at top)
   if (latestBuoyData && latestBuoyData[buoy.id]) {
     const data = latestBuoyData[buoy.id];
     const obsTime = data.observation_time ? new Date(data.observation_time) : null;
 
     popupContent += `<div style="background: #f0f8ff; padding: 8px; margin: 8px 0; border-radius: 4px; border-left: 3px solid #0077be;">`;
-    popupContent += `<div style="font-weight: 600; margin-bottom: 4px;">Latest Data:</div>`;
+    popupContent += `<div style="font-weight: 600; margin-bottom: 4px;">Latest Conditions:</div>`;
 
-    // Show wave data
+    // Show wind data
+    if (data.wind_speed !== null && data.wind_speed !== undefined) {
+      const windSpeed = Math.round(data.wind_speed);
+      const windGust = data.wind_gust !== null && data.wind_gust !== undefined ? Math.round(data.wind_gust) : null;
+      const windCardinal = data.wind_direction_cardinal || '—';
+      const windDegrees = data.wind_direction !== null && data.wind_direction !== undefined ? ` (${Math.round(data.wind_direction)}°)` : '';
+      const windArrow = getDirectionalArrow(data.wind_direction, 'wind');
+      const gustPart = windGust !== null ? ` G ${windGust}` : '';
+
+      popupContent += `<div><strong>💨 Wind:</strong> ${windCardinal} ${windSpeed}${gustPart} kt${windDegrees} ${windArrow}</div>`;
+    }
+
+    // Show wave data with direction
     if (data.wave_height_sig !== null && data.wave_height_sig !== undefined) {
-      const period = data.wave_period_avg || data.wave_period_peak || '—';
-      popupContent += `<div><strong>Wave:</strong> ${data.wave_height_sig.toFixed(1)}m @ ${typeof period === 'number' ? period.toFixed(1) + 's' : period}</div>`;
+      const waveHeight = data.wave_height_sig.toFixed(1);
+      const period = data.wave_period_avg || data.wave_period_peak || null;
+      const periodStr = period !== null ? ` @ ${typeof period === 'number' ? period.toFixed(1) + 's' : period}` : '';
+
+      // Check if this is a NOAA buoy with spectral wave data
+      const hasSpectralData = (buoy.id === '46087' || buoy.id === '46088' || buoy.id === '46267') &&
+                               (data.swell_height !== null || data.wind_wave_height !== null);
+
+      if (hasSpectralData) {
+        // Show detailed wave breakdown for NOAA buoys
+        popupContent += `<div style="margin: 4px 0;"><strong>🌊 Waves (Spectral):</strong></div>`;
+        popupContent += `<div style="margin-left: 8px; font-size: 0.9em;">`;
+
+        // Significant wave (combined)
+        popupContent += `<div style="margin: 2px 0;"><em>Combined:</em> ${waveHeight}m${periodStr}</div>`;
+
+        // Wind waves (local chop)
+        if (data.wind_wave_height !== null && data.wind_wave_height !== undefined) {
+          const windWaveHeight = data.wind_wave_height.toFixed(1);
+          const windWavePeriod = data.wind_wave_period !== null ? ` @ ${data.wind_wave_period.toFixed(1)}s` : '';
+          const windWaveCardinal = data.wind_wave_direction_cardinal || '';
+          const windWaveDeg = data.wind_wave_direction !== null ? ` (${Math.round(data.wind_wave_direction)}°)` : '';
+          const windWaveArrow = data.wind_wave_direction !== null ? getDirectionalArrow(data.wind_wave_direction, 'wave') : '';
+          const windWaveDir = windWaveCardinal ? `${windWaveCardinal} ` : '';
+
+          popupContent += `<div style="margin: 2px 0;"><em>Wind Wave:</em> ${windWaveDir}${windWaveHeight}m${windWavePeriod}${windWaveDeg} ${windWaveArrow}</div>`;
+        }
+
+        // Ocean swell
+        if (data.swell_height !== null && data.swell_height !== undefined) {
+          const swellHeight = data.swell_height.toFixed(1);
+          const swellPeriod = data.swell_period !== null ? ` @ ${data.swell_period.toFixed(1)}s` : '';
+          const swellCardinal = data.swell_direction_cardinal || '';
+          const swellDeg = data.swell_direction !== null ? ` (${Math.round(data.swell_direction)}°)` : '';
+          const swellArrow = data.swell_direction !== null ? getDirectionalArrow(data.swell_direction, 'wave') : '';
+          const swellDir = swellCardinal ? `${swellCardinal} ` : '';
+
+          popupContent += `<div style="margin: 2px 0;"><em>Swell:</em> ${swellDir}${swellHeight}m${swellPeriod}${swellDeg} ${swellArrow}</div>`;
+        }
+
+        popupContent += `</div>`;
+      } else {
+        // Standard wave display for non-spectral buoys
+        // Match map marker logic: use wave_direction_avg first, then peak, then swell (same as map markers)
+        const waveDir = data.wave_direction_avg || data.wave_direction_peak || data.swell_direction || null;
+
+        if (waveDir !== null) {
+          // Try to get cardinal direction matching the numeric direction we're using
+          let waveCardinal = '';
+          if (data.wave_direction_avg && data.wave_direction_avg === waveDir) {
+            waveCardinal = data.wave_direction_avg_cardinal || '';
+          } else if (data.wave_direction_peak && data.wave_direction_peak === waveDir) {
+            waveCardinal = data.wave_direction_peak_cardinal || '';
+          } else if (data.swell_direction && data.swell_direction === waveDir) {
+            waveCardinal = data.swell_direction_cardinal || '';
+          }
+
+          const waveDegrees = ` (${Math.round(waveDir)}°)`;
+          const waveArrow = getDirectionalArrow(waveDir, 'wave');
+          const dirDisplay = waveCardinal ? `${waveCardinal} ` : '';
+
+          popupContent += `<div><strong>🌊 Wave:</strong> ${dirDisplay}${waveHeight}m${periodStr}${waveDegrees} ${waveArrow}</div>`;
+        } else {
+          // No direction data available
+          popupContent += `<div><strong>🌊 Wave:</strong> ${waveHeight}m${periodStr}</div>`;
+        }
+      }
+    }
+
+    // Show temperatures
+    if (data.sea_temp !== null && data.sea_temp !== undefined || data.air_temp !== null && data.air_temp !== undefined) {
+      const seaTemp = data.sea_temp !== null && data.sea_temp !== undefined ? data.sea_temp.toFixed(1) : '—';
+      const airTemp = data.air_temp !== null && data.air_temp !== undefined ? data.air_temp.toFixed(1) : '—';
+      popupContent += `<div><strong>🌡️ Temp:</strong> Sea ${seaTemp}°C | Air ${airTemp}°C</div>`;
     }
 
     // Show timestamp
