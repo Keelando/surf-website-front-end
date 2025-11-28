@@ -61,19 +61,17 @@
 
     .lightstation-card .view-chart-link {
       display: inline-block;
-      margin-top: 0.5rem;
-      padding: 0.4rem 0.8rem;
-      background: #4299e1;
-      color: white;
-      text-decoration: none;
-      border-radius: 4px;
+      margin-top: 0.75rem;
+      padding: 0;
+      color: #4299e1;
+      text-decoration: underline;
       font-size: 0.85rem;
-      text-align: center;
-      transition: background 0.2s;
+      transition: color 0.2s;
     }
 
     .lightstation-card .view-chart-link:hover {
-      background: #3182ce;
+      color: #2b6cb0;
+      text-decoration: underline;
     }
 
     .lightstation-grid {
@@ -145,6 +143,58 @@
       margin-top: 0.5rem;
       font-style: italic;
       text-align: center;
+    }
+
+    /* Mobile responsive styles */
+    @media (max-width: 768px) {
+      /* Fix dropdown overflow on mobile */
+      #lightstation-station-search {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box;
+      }
+
+      #lightstation-station-select {
+        min-width: unset !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box;
+      }
+
+      /* Make selector labels and inputs stack vertically */
+      #station-selector > div {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+      }
+
+      #station-selector label {
+        margin-right: 0 !important;
+      }
+
+      /* Allow card content to wrap instead of getting cut off */
+      .condition-row {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .condition-label {
+        flex-shrink: 0;
+        min-width: 80px;
+      }
+
+      .condition-value {
+        flex: 1;
+        min-width: 0;
+        text-align: right;
+      }
+
+      /* Reduce grid spacing on mobile */
+      .lightstation-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+      }
     }
   </style>
 </head>
@@ -417,11 +467,11 @@
         card.appendChild(warning);
       }
 
-      // View Chart link
+      // View historical data link
       const chartLink = document.createElement('a');
       chartLink.className = 'view-chart-link';
-      chartLink.href = '#lightstation-chart-section';
-      chartLink.textContent = '📊 View 24hr Charts';
+      chartLink.href = '#lightstation-data-table-section';
+      chartLink.textContent = 'View historical';
       chartLink.onclick = (e) => {
         e.preventDefault();
         viewLightstationChart(station.name);

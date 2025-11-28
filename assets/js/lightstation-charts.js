@@ -323,11 +323,11 @@ function renderWindSpeedChart(stationName, station) {
       }
     },
     grid: {
-      left: '80px',
+      left: '15%',
       right: '4%',
       bottom: '15%',
       top: '20%',
-      containLabel: true
+      containLabel: false
     },
     xAxis: {
       type: 'time',
@@ -358,9 +358,9 @@ function renderWindSpeedChart(stationName, station) {
       type: 'value',
       name: 'Wind Speed (kt)',
       nameLocation: 'middle',
-      nameGap: 55,
+      nameGap: 35,
       nameTextStyle: {
-        fontSize: 14,
+        fontSize: 13,
         fontWeight: 600
       },
       min: 0
@@ -501,11 +501,11 @@ function renderWaveHeightChart(stationName, station) {
       }
     },
     grid: {
-      left: '80px',
+      left: '15%',
       right: '4%',
       bottom: '15%',
       top: '20%',
-      containLabel: true
+      containLabel: false
     },
     xAxis: {
       type: 'time',
@@ -536,9 +536,9 @@ function renderWaveHeightChart(stationName, station) {
       type: 'value',
       name: 'Wave Height (ft)',
       nameLocation: 'middle',
-      nameGap: 55,
+      nameGap: 35,
       nameTextStyle: {
-        fontSize: 14,
+        fontSize: 13,
         fontWeight: 600
       },
       min: 0
