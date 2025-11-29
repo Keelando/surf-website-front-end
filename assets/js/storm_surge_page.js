@@ -140,10 +140,10 @@ function updatePeakToday(stationId) {
     },
     {
       startHours: 72,
-      endHours: 156,
+      endHours: 168,
       valueEl: peak7DayValue,
       timeEl: peak7DayTime,
-      label: "72-156 Hours"
+      label: "72-168 Hours"
     }
   ];
 
@@ -365,9 +365,19 @@ function updateForecastChart(stationId) {
   // Set chart options (notMerge: true to replace all data when switching stations)
   forecastChart.setOption({
     title: {
-      text: `${station.station_name} - Surge Forecast`,
+      text: window.innerWidth < 600 ? station.station_name : `${station.station_name} - Surge Forecast`,
+      subtext: window.innerWidth < 600 ? 'Surge Forecast' : '',
       left: "center",
-      textStyle: { fontSize: window.innerWidth < 600 ? 12 : 14, fontWeight: 'bold' }
+      textStyle: {
+        fontSize: window.innerWidth < 600 ? 11 : 14,
+        fontWeight: 'bold',
+        overflow: 'truncate',
+        width: window.innerWidth < 600 ? window.innerWidth - 40 : null
+      },
+      subtextStyle: {
+        fontSize: 10,
+        color: '#666'
+      }
     },
     tooltip: {
       trigger: "axis",
@@ -392,8 +402,8 @@ function updateForecastChart(stationId) {
       }
     },
     grid: {
-      left: window.innerWidth < 600 ? "10%" : "8%",
-      right: window.innerWidth < 600 ? "8%" : "6%",
+      left: window.innerWidth < 600 ? "8%" : "8%",
+      right: window.innerWidth < 600 ? "4%" : "6%",
       bottom: peakLabels.length > 0 ? "25%" : "15%", // More space when showing peak labels
       top: "15%",
       containLabel: true
@@ -730,11 +740,20 @@ function updateHindcastChart(stationId) {
   // Set chart options (notMerge: true to replace all data when switching stations)
   hindcastChart.setOption({
     title: {
-      text: `${station.station_name} - Hindcast Comparison (48h Predictions)`,
-      subtext: 'Black line = Tide offset observations | Colored lines = Historical forecast runs',
+      text: window.innerWidth < 600
+        ? `${station.station_name} - Hindcast`
+        : `${station.station_name} - Hindcast Comparison (48h Predictions)`,
+      subtext: window.innerWidth < 600
+        ? 'Observed (black) vs Forecast runs (colored)'
+        : 'Black line = Tide offset observations | Colored lines = Historical forecast runs',
       left: "center",
-      textStyle: { fontSize: window.innerWidth < 600 ? 12 : 14, fontWeight: 'bold' },
-      subtextStyle: { fontSize: 11, color: '#666' }
+      textStyle: {
+        fontSize: window.innerWidth < 600 ? 11 : 14,
+        fontWeight: 'bold',
+        overflow: 'truncate',
+        width: window.innerWidth < 600 ? window.innerWidth - 40 : null
+      },
+      subtextStyle: { fontSize: 10, color: '#666' }
     },
     tooltip: {
       trigger: "axis",
@@ -768,8 +787,8 @@ function updateHindcastChart(stationId) {
       type: "plain"
     },
     grid: {
-      left: window.innerWidth < 600 ? "10%" : "8%",
-      right: window.innerWidth < 600 ? "8%" : "6%",
+      left: window.innerWidth < 600 ? "8%" : "8%",
+      right: window.innerWidth < 600 ? "4%" : "6%",
       bottom: "18%",
       top: "15%",
       containLabel: true

@@ -187,8 +187,8 @@ function displayStation(stationKey) {
   // Display storm surge
   displayStormSurge(currentStation);
 
-  // Display high/low table
-  displayHighLowTable(highlowStation);
+  // Display high/low table (for current day)
+  displayHighLowTable(highlowStation, currentDayOffset);
 
   // Show the section first (so chart can measure properly)
   section.style.display = 'block';
@@ -503,7 +503,7 @@ function displayStormSurge(station) {
    High/Low Table Display
    ===================================================== */
 
-function displayHighLowTable(station) {
+function displayHighLowTable(station, dayOffset = 0) {
   const tbody = document.querySelector('#highlow-table tbody');
 
   if (!station || !station.events || station.events.length === 0) {
@@ -511,8 +511,30 @@ function displayHighLowTable(station) {
     return;
   }
 
+  // Calculate target day in Pacific timezone
+  const pacific = 'America/Vancouver';
+  const now = new Date();
+  const targetDay = new Date(now);
+  targetDay.setDate(now.getDate() + dayOffset);
+
+  // Get target day string in Pacific timezone (YYYY-MM-DD)
+  const targetDateStr = new Date(targetDay.toLocaleString('en-US', { timeZone: pacific }))
+    .toISOString()
+    .split('T')[0];
+
+  // Filter events for the target day
+  const eventsForDay = station.events.filter(event => {
+    // event.date is in format "YYYY-MM-DD" (Pacific time)
+    return event.date === targetDateStr;
+  });
+
+  if (eventsForDay.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" style="color: #999; text-align: center;">No high/low data available for this day</td></tr>';
+    return;
+  }
+
   // Sort events by time
-  const events = [...station.events].sort((a, b) => new Date(a.time) - new Date(b.time));
+  const events = [...eventsForDay].sort((a, b) => new Date(a.time) - new Date(b.time));
 
   // Build table rows
   tbody.innerHTML = events.map(event => {
@@ -569,6 +591,12 @@ function updateChartForDay() {
     displayTideChart(currentStationKey, currentDayOffset);
     updateDayLabel();
     updateNavigationButtons();
+
+    // Also update the high/low table for the selected day
+    const highlowStation = tideHighLowData?.stations?.[currentStationKey];
+    if (highlowStation) {
+      displayHighLowTable(highlowStation, currentDayOffset);
+    }
   }
 }
 
@@ -624,22 +652,46 @@ function displayTideChart(stationKey, dayOffset = 0) {
   // Calculate target day range (Pacific timezone)
   const pacific = 'America/Vancouver';
   const now = new Date();
-  const targetDay = new Date(now);
-  targetDay.setDate(now.getDate() + dayOffset);
 
-  // Get start and end of target day in Pacific timezone
-  const dayStart = new Date(targetDay.toLocaleString('en-US', { timeZone: pacific }));
-  dayStart.setHours(0, 0, 0, 0);
+  // Calculate the target date (add dayOffset to current date)
+  const targetDate = new Date(now);
+  targetDate.setDate(now.getDate() + dayOffset);
 
-  const dayEnd = new Date(dayStart);
-  dayEnd.setDate(dayStart.getDate() + 1);
-  dayEnd.setMilliseconds(-1);
+  // Format the target date in Pacific timezone to get year/month/day
+  const pacificYear = parseInt(targetDate.toLocaleString('en-US', { timeZone: pacific, year: 'numeric' }));
+  const pacificMonth = parseInt(targetDate.toLocaleString('en-US', { timeZone: pacific, month: 'numeric' }));
+  const pacificDay = parseInt(targetDate.toLocaleString('en-US', { timeZone: pacific, day: 'numeric' }));
+
+  // Create a date string for this Pacific day
+  const targetDateStr = `${pacificYear}-${String(pacificMonth).padStart(2, '0')}-${String(pacificDay).padStart(2, '0')}`;
+
+  // Helper function to get a Date object for midnight Pacific time on a given date
+  function getPacificMidnight(year, month, day) {
+    // Try PST (UTC-8, which is UTC+8 hours for midnight)
+    let testDate = new Date(Date.UTC(year, month - 1, day, 8, 0, 0, 0));
+    let testHour = parseInt(testDate.toLocaleString('en-US', {
+      timeZone: pacific,
+      hour: 'numeric',
+      hour12: false
+    }));
+
+    // If it's midnight, we found it
+    if (testHour === 0) return testDate;
+
+    // Otherwise try PDT (UTC-7, which is UTC+7 hours for midnight)
+    testDate = new Date(Date.UTC(year, month - 1, day, 7, 0, 0, 0));
+    return testDate;
+  }
+
+  // Get midnight Pacific for the start and end of the target day
+  const dayStart = getPacificMidnight(pacificYear, pacificMonth, pacificDay);
+  const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000); // Add 24 hours
 
   // Helper function to filter data by day
   function filterByDay(dataArray, timeKey) {
     return dataArray.filter(item => {
       const itemDate = new Date(item[timeKey]);
-      return itemDate >= dayStart && itemDate <= dayEnd;
+      return itemDate >= dayStart && itemDate < dayEnd;
     });
   }
 
@@ -647,38 +699,20 @@ function displayTideChart(stationKey, dayOffset = 0) {
   let predictions = [];
   let observations = [];
 
+  // Always try to use tide-timeseries.json first (now contains 3 days of data)
+  const stationData = tideTimeseriesData?.stations?.[stationKey];
+
+  if (!stationData) {
+    chartContainer.innerHTML = '<p style="text-align: center; color: #999; padding: 2rem;">No tide data available for this station</p>';
+    return;
+  }
+
+  // Filter predictions for the target day
+  predictions = filterByDay(stationData.predictions || [], 'time');
+
+  // Only include observations for today (dayOffset === 0)
   if (dayOffset === 0) {
-    // Today: Use tide-timeseries.json for predictions and observations
-    const stationData = tideTimeseriesData?.stations?.[stationKey];
-
-    if (!stationData) {
-      chartContainer.innerHTML = '<p style="text-align: center; color: #999; padding: 2rem;">No tide data available for this station</p>';
-      return;
-    }
-
-    predictions = filterByDay(stationData.predictions || [], 'time');
     observations = filterByDay(stationData.observations || [], 'time');
-  } else {
-    // Future days: Extract predictions from combined water level data
-    if (combinedWaterLevelData && combinedWaterLevelData.stations && combinedWaterLevelData.stations[stationKey]) {
-      const combinedStation = combinedWaterLevelData.stations[stationKey];
-      const forecast = combinedStation.forecast || [];
-
-      // Extract astronomical tide from combined forecast
-      const filtered = forecast.filter(item => {
-        const itemDate = new Date(item.time);
-        return itemDate >= dayStart && itemDate <= dayEnd;
-      });
-
-      predictions = filtered.map(item => ({
-        time: item.time,
-        value: item.astronomical_tide_m
-      }));
-
-      logger.info('Tides', `Future day ${dayOffset}: Found ${predictions.length} prediction points`);
-    } else {
-      logger.warn('Tides', `No combined water level data available for station ${stationKey}`);
-    }
   }
 
   if (predictions.length === 0) {
@@ -727,6 +761,41 @@ function displayTideChart(stationKey, dayOffset = 0) {
   const option = {
     tooltip: {
       trigger: 'axis',
+      confine: true,  // Keep tooltip within chart bounds
+      position: function (point, params, dom, rect, size) {
+        // point: [x, y] position of mouse
+        // size: { contentSize: [width, height], viewSize: [width, height] }
+        const chartWidth = size.viewSize[0];
+        const chartHeight = size.viewSize[1];
+        const tooltipWidth = size.contentSize[0];
+        const tooltipHeight = size.contentSize[1];
+
+        // Default position is to the right of the point
+        let x = point[0] + 10;
+        let y = point[1] - tooltipHeight / 2;
+
+        // If tooltip would go off the right edge, position it to the left
+        if (x + tooltipWidth > chartWidth) {
+          x = point[0] - tooltipWidth - 10;
+        }
+
+        // If tooltip would go off the bottom, position it above
+        if (y + tooltipHeight > chartHeight) {
+          y = chartHeight - tooltipHeight - 10;
+        }
+
+        // If tooltip would go off the top, position it below
+        if (y < 0) {
+          y = 10;
+        }
+
+        // If tooltip would go off the left edge (shouldn't happen but just in case)
+        if (x < 0) {
+          x = 10;
+        }
+
+        return [x, y];
+      },
       formatter: function(params) {
         const date = new Date(params[0].value[0]);
         const timeStr = date.toLocaleString('en-US', {
@@ -755,8 +824,8 @@ function displayTideChart(stationKey, dayOffset = 0) {
       textStyle: { fontSize: 10 }
     },
     grid: {
-      left: window.innerWidth < 600 ? '12%' : '10%',
-      right: window.innerWidth < 600 ? '12%' : '10%',
+      left: window.innerWidth < 600 ? '8%' : '8%',
+      right: window.innerWidth < 600 ? '4%' : '6%',
       top: '10%',
       bottom: '22%',
       containLabel: true
@@ -794,9 +863,12 @@ function displayTideChart(stationKey, dayOffset = 0) {
     },
     yAxis: {
       type: 'value',
-      name: 'Height (m)',
+      name: window.innerWidth < 600 ? 'height (meters)' : 'Height (m)',
       nameLocation: 'middle',
-      nameGap: 45
+      nameGap: window.innerWidth < 600 ? 25 : 45,
+      nameTextStyle: {
+        fontSize: window.innerWidth < 600 ? 9 : 12
+      }
     },
     series: [
       {

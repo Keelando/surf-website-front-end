@@ -583,8 +583,12 @@ footer {
 
 @media (max-width: 600px) {
   #charts-section,
-  #storm-surge-section {
-    padding: 0 0.5rem;
+  #storm-surge-section,
+  #wind-table-section,
+  #map-section,
+  #wind-chart-section,
+  #wind-data-table-section {
+    padding: 0 0.25rem !important;
   }
   
   .buoy-metric.indent {
