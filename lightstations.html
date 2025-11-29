@@ -13,6 +13,12 @@
   <link rel="stylesheet" href="/assets/css/style-v4.css?v=20251112" />
   <link rel="stylesheet" href="/assets/css/nav-tide-styles-v4.css" />
   <link rel="stylesheet" href="/assets/css/warning-banner-v4.css" />
+  <link rel="stylesheet" href="/assets/css/stations-map-v4.css" />
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""/>
 
   <style>
     .site-tagline {
@@ -72,6 +78,73 @@
     .lightstation-card .view-chart-link:hover {
       color: #2b6cb0;
       text-decoration: underline;
+    }
+
+    .station-details-toggle {
+      display: block;
+      margin-top: 0.75rem;
+      padding: 0.4rem;
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s;
+      font-size: 0.85rem;
+      color: #2c5282;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .station-details-toggle:hover {
+      background: #edf2f7;
+    }
+
+    .station-details-toggle .toggle-icon {
+      display: inline-block;
+      margin-left: 0.3rem;
+      transition: transform 0.2s;
+    }
+
+    .station-details-toggle.expanded .toggle-icon {
+      transform: rotate(180deg);
+    }
+
+    .station-details-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease-out;
+      background: #f7fafc;
+      border-radius: 4px;
+      margin-top: 0.5rem;
+    }
+
+    .station-details-content.expanded {
+      max-height: 300px;
+      padding: 0.75rem;
+      border: 1px solid #e2e8f0;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.3rem 0;
+      font-size: 0.85rem;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+
+    .detail-label {
+      font-weight: 600;
+      color: #4a5568;
+    }
+
+    .detail-value {
+      color: #2d3748;
+      text-align: right;
     }
 
     .lightstation-grid {
@@ -219,32 +292,38 @@
     Real-time observations from BC coastal lightstations • Updated every 3 hours from Environment Canada
   </div>
 
-  <!-- Development Notice -->
   <div class="container">
-    <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-left: 4px solid #f59e0b; padding: 1rem 1.5rem; margin: 1.5rem auto; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-width: 1200px;">
-      <div style="display: flex; align-items: center; gap: 0.75rem;">
-        <span style="font-size: 1.5rem;">🚧</span>
-        <div>
-          <strong style="color: #92400e; font-size: 1.05rem;">Under Development</strong>
-          <p style="margin: 0.25rem 0 0 0; color: #78350f; font-size: 0.95rem;">
-            This page is actively being developed. Features like historical charts and map integration are coming soon.
-            Data may occasionally be delayed due to Environment Canada's publishing schedule.
-          </p>
-        </div>
-      </div>
-    </div>
-
     <section style="background: #edf2f7; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
       <h2 style="margin-top: 0; color: #2c5282; font-size: 1.3rem;">About Lightstation Reports</h2>
       <p style="margin-bottom: 0.5rem;">
         BC's staffed lightstations provide essential weather observations from remote coastal locations.
         Lightkeepers report wind speed and direction, sea state (wave height and conditions), swell intensity and direction,
-        and visibility every 3 hours.
+        and visibility. Most stations report every 3 hours, though some report less frequently (once or twice daily).
       </p>
       <p style="margin: 0;">
-        <strong>Report Schedule:</strong> 00:00, 03:00, 06:00, 09:00, 12:00, 15:00, 18:00, 21:00 UTC
+        <strong>Standard Report Schedule:</strong> 00:00, 03:00, 06:00, 09:00, 12:00, 15:00, 18:00, 21:00 UTC
         (subtract 8 hours for Pacific Standard Time, 7 hours for Pacific Daylight Time)
       </p>
+    </section>
+
+    <!-- Lightstation Map Section -->
+    <section id="lightstation-map-section" style="max-width: 1200px; margin: 2rem auto; padding: 0 1rem;">
+      <h2>Lightstation Locations</h2>
+      <div class="map-legend" style="text-align: center; margin-bottom: 1rem;">
+        <span class="legend-item">
+          <span class="legend-icon" aria-label="Lighthouse icon">
+            <svg width="16" height="18" viewBox="0 0 28 32" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle;">
+              <circle cx="14" cy="4" r="2.5" fill="#FFD700" stroke="#FFA500" stroke-width="1"/>
+              <path d="M11 7 L10.5 13 L17.5 13 L17 7 Z" fill="#FFFFFF" stroke="#2c3e50" stroke-width="0.5"/>
+              <path d="M10.5 13 L10 19 L18 19 L17.5 13 Z" fill="#E53935" stroke="#2c3e50" stroke-width="0.5"/>
+              <path d="M10 19 L9.5 25 L18.5 25 L18 19 Z" fill="#FFFFFF" stroke="#2c3e50" stroke-width="0.5"/>
+              <rect x="8" y="25" width="12" height="4" rx="1" fill="#C62828" stroke="#2c3e50" stroke-width="0.5"/>
+              <rect x="6" y="29" width="16" height="2" rx="1" fill="#5D4037" stroke="#3e2723" stroke-width="0.5"/>
+            </svg>
+          </span> Lightstation
+        </span>
+      </div>
+      <div id="lightstation-map" style="height: 500px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);"></div>
     </section>
 
     <div id="lightstations-container">
@@ -326,15 +405,42 @@
     <p><small>Data source: Environment Canada FPCN61 Lightstation Reports | Updates every 3 hours</small></p>
   </footer>
 
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""></script>
+
   <!-- ECharts for lightstation charts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
 
   <script src="/assets/js/warning-banner.js"></script>
+  <script src="/assets/js/lightstation-map.js"></script>
   <script src="/assets/js/lightstation-charts.js"></script>
   <script type="module">
     // Load and display lightstation data
     async function loadLightstationData() {
       try {
+        // Load station metadata for details expansion
+        try {
+          const metaResponse = await fetch('/data/stations.json');
+          const metaData = await metaResponse.json();
+          // Store lightstation metadata globally for card creation
+          window.stationMetadata = {};
+          if (metaData.lightstations) {
+            Object.values(metaData.lightstations).forEach(station => {
+              // Store with multiple key formats for easier lookup
+              // Format 1: Title case name (e.g., "Addenbroke Island")
+              window.stationMetadata[station.name] = station;
+              // Format 2: Uppercase with spaces (e.g., "ADDENBROKE ISLAND") - matches latest_lightstation.json
+              window.stationMetadata[station.name.toUpperCase()] = station;
+              // Format 3: Uppercase with underscores (e.g., "ADDENBROKE_ISLAND") - matches ID
+              window.stationMetadata[station.id] = station;
+            });
+          }
+        } catch (err) {
+          console.warn('Could not load station metadata:', err);
+        }
+
         const response = await fetch('/data/latest_lightstation.json');
         const data = await response.json();
 
@@ -365,6 +471,7 @@
 
           const section = document.createElement('div');
           section.className = 'region-section';
+          section.setAttribute('data-region', region);
 
           // Collapse all regions except Strait of Georgia by default
           if (region !== 'STRAIT OF GEORGIA') {
@@ -412,6 +519,9 @@
           container.appendChild(section);
         }
 
+        // Handle hash navigation (e.g., #lightstation-CHROME_ISLAND)
+        handleLightstationHash();
+
       } catch (error) {
         console.error('Failed to load lightstation data:', error);
         document.getElementById('lightstations-container').innerHTML =
@@ -419,9 +529,46 @@
       }
     }
 
+    // Handle hash-based navigation to specific lightstation
+    function handleLightstationHash() {
+      const hash = window.location.hash;
+      if (!hash || !hash.startsWith('#lightstation-')) return;
+
+      // Extract station ID from hash (e.g., "#lightstation-CHROME_ISLAND" -> "CHROME_ISLAND")
+      const stationId = hash.replace('#lightstation-', '');
+
+      // Find the card with this station ID
+      const targetCard = document.querySelector(`[data-station-id="${stationId}"]`);
+      if (!targetCard) {
+        console.warn('Station not found:', stationId);
+        return;
+      }
+
+      // Find the region section containing this card
+      const regionSection = targetCard.closest('.region-section');
+      if (!regionSection) return;
+
+      // Collapse all region sections first
+      document.querySelectorAll('.region-section').forEach(section => {
+        section.classList.add('collapsed');
+      });
+
+      // Expand the target region
+      regionSection.classList.remove('collapsed');
+
+      // Scroll to the region header with the card
+      setTimeout(() => {
+        regionSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
+    }
+
     function createStationCard(station) {
       const card = document.createElement('div');
       card.className = 'lightstation-card';
+      // Add data attribute for hash navigation
+      if (window.stationMetadata && window.stationMetadata[station.name]) {
+        card.setAttribute('data-station-id', window.stationMetadata[station.name].id);
+      }
 
       const title = document.createElement('h3');
       title.textContent = station.name;
@@ -478,6 +625,73 @@
       };
       card.appendChild(chartLink);
 
+      // Station details toggle button
+      const detailsToggle = document.createElement('div');
+      detailsToggle.className = 'station-details-toggle';
+      detailsToggle.innerHTML = 'Station Details <span class="toggle-icon">▼</span>';
+
+      // Station details content (initially hidden)
+      const detailsContent = document.createElement('div');
+      detailsContent.className = 'station-details-content';
+
+      // Add metadata rows (fetch from window.stationMetadata if available)
+      if (window.stationMetadata && window.stationMetadata[station.name]) {
+        const meta = window.stationMetadata[station.name];
+
+        if (meta.id) {
+          const idRow = document.createElement('div');
+          idRow.className = 'detail-row';
+          idRow.innerHTML = `<span class="detail-label">Station ID:</span><span class="detail-value">${meta.id}</span>`;
+          detailsContent.appendChild(idRow);
+        }
+
+        if (meta.lat && meta.lon) {
+          const coordRow = document.createElement('div');
+          coordRow.className = 'detail-row';
+          coordRow.innerHTML = `<span class="detail-label">Coordinates:</span><span class="detail-value">${meta.lat.toFixed(4)}°N, ${Math.abs(meta.lon).toFixed(4)}°W</span>`;
+          detailsContent.appendChild(coordRow);
+        }
+
+        if (meta.region) {
+          const regionRow = document.createElement('div');
+          regionRow.className = 'detail-row';
+          regionRow.innerHTML = `<span class="detail-label">Region:</span><span class="detail-value">${meta.region}</span>`;
+          detailsContent.appendChild(regionRow);
+        }
+
+        if (meta.established) {
+          const estRow = document.createElement('div');
+          estRow.className = 'detail-row';
+          estRow.innerHTML = `<span class="detail-label">Established:</span><span class="detail-value">${meta.established}</span>`;
+          detailsContent.appendChild(estRow);
+        }
+
+        if (meta.update_frequency_hours) {
+          const freqRow = document.createElement('div');
+          freqRow.className = 'detail-row';
+          freqRow.innerHTML = `<span class="detail-label">Update Frequency:</span><span class="detail-value">Every ${meta.update_frequency_hours} hours</span>`;
+          detailsContent.appendChild(freqRow);
+        }
+
+        if (meta.notes) {
+          const notesRow = document.createElement('div');
+          notesRow.className = 'detail-row';
+          notesRow.style.flexDirection = 'column';
+          notesRow.style.alignItems = 'flex-start';
+          notesRow.innerHTML = `<span class="detail-label">Notes:</span><span class="detail-value" style="text-align: left; margin-top: 0.3rem; font-size: 0.8rem; color: #666;">${meta.notes}</span>`;
+          detailsContent.appendChild(notesRow);
+        }
+      }
+
+      // Toggle functionality
+      detailsToggle.addEventListener('click', () => {
+        detailsToggle.classList.toggle('expanded');
+        detailsContent.classList.toggle('expanded');
+      });
+
+      card.appendChild(detailsToggle);
+      card.appendChild(detailsContent);
+
       return card;
     }
 
@@ -494,10 +708,10 @@
         window.renderLightstationCharts(stationName);
       }
 
-      // Scroll to chart section
-      const chartSection = document.getElementById('lightstation-chart-section');
-      if (chartSection) {
-        chartSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Scroll to data table section (top of the tables/charts area)
+      const tableSection = document.getElementById('lightstation-data-table-section');
+      if (tableSection) {
+        tableSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }
 
