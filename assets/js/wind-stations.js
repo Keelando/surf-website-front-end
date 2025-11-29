@@ -158,17 +158,17 @@ async function loadWindTable() {
 
     // Combine wind stations and buoys
     const allStations = [];
+    const offlineStations = []; // Stations with data > 4 hours old
 
     // Add wind stations
     Object.entries(windData)
       .filter(([key]) => key !== '_meta')
       .forEach(([id, station]) => {
-        // Exclude data older than 4 hours
+        // Calculate data age
         const obsTime = station.observation_time ? new Date(station.observation_time) : null;
         const ageHours = obsTime ? (Date.now() - obsTime.getTime()) / (1000 * 60 * 60) : Infinity;
-        if (ageHours >= 4) return; // Skip stations with data 4+ hours old
 
-        allStations.push([id, {
+        const stationData = {
           name: station.name + ' 💨',
           wind_speed_kt: station.wind_speed_kt != null ? Math.round(station.wind_speed_kt) : null,
           wind_gust_kt: station.wind_gust_kt != null ? Math.round(station.wind_gust_kt) : null,
@@ -177,9 +177,18 @@ async function loadWindTable() {
           air_temp_c: station.air_temp_c,
           pressure_hpa: station.pressure_hpa,
           observation_time: station.observation_time,
-          stale: station.stale,
+          ageHours: ageHours,
+          stale: ageHours >= 2 && ageHours < 4, // Mark as stale if 2-4 hours old
           type: 'land'
-        }]);
+        };
+
+        if (ageHours >= 4) {
+          // Data is too old - add to offline list
+          offlineStations.push([id, stationData]);
+        } else {
+          // Data is fresh enough - add to main table
+          allStations.push([id, stationData]);
+        }
       });
 
     // Add buoys (with wind data)
@@ -195,10 +204,9 @@ async function loadWindTable() {
             windObsTime = buoy.field_times.wind_speed || buoy.field_times.wind_direction;
           }
 
-          // Exclude data older than 4 hours
+          // Calculate data age
           const obsTime = windObsTime ? new Date(windObsTime) : null;
           const ageHours = obsTime ? (Date.now() - obsTime.getTime()) / (1000 * 60 * 60) : Infinity;
-          if (ageHours >= 4) return; // Skip stations with data 4+ hours old
 
           // Determine icon based on station type from metadata
           const stationMeta = stationsMetadata.buoys?.[id];
@@ -208,7 +216,7 @@ async function loadWindTable() {
                                 stationMeta?.type === 'land_station';
           const icon = isWindStation ? ' 💨' : ' 🌊';
 
-          allStations.push([id, {
+          const stationData = {
             name: buoy.name + icon,
             wind_speed_kt: buoy.wind_speed != null ? Math.round(buoy.wind_speed) : null,
             wind_gust_kt: buoy.wind_gust != null ? Math.round(buoy.wind_gust) : null,
@@ -217,9 +225,18 @@ async function loadWindTable() {
             air_temp_c: buoy.air_temp,
             pressure_hpa: buoy.pressure,
             observation_time: windObsTime,
-            stale: buoy.stale,
+            ageHours: ageHours,
+            stale: ageHours >= 2 && ageHours < 4, // Mark as stale if 2-4 hours old
             type: isWindStation ? 'land' : 'buoy'
-          }]);
+          };
+
+          if (ageHours >= 4) {
+            // Data is too old - add to offline list
+            offlineStations.push([id, stationData]);
+          } else {
+            // Data is fresh enough - add to main table
+            allStations.push([id, stationData]);
+          }
         }
       });
 
@@ -352,6 +369,41 @@ async function loadWindTable() {
       currentSort.ascending = false; // Descending to show highest first
       sortTable('wind_speed_kt', 'number', false);
       updateSortIndicators(speedHeader);
+    }
+
+    // Display offline stations list (data > 4 hours old)
+    const offlineListContainer = document.getElementById('offline-stations-list');
+    if (offlineListContainer && offlineStations.length > 0) {
+      // Sort offline stations by name
+      offlineStations.sort((a, b) => a[1].name.localeCompare(b[1].name));
+
+      let offlineHTML = '<div style="margin-top: 1rem; padding: 1rem; background: #fff9e6; border-left: 3px solid #f59e0b; border-radius: 4px;">';
+      offlineHTML += '<h3 style="margin: 0 0 0.5rem 0; font-size: 1rem; color: #92400e;">Stations with Stale Data (>4 hours)</h3>';
+      offlineHTML += '<p style="margin: 0 0 0.75rem 0; font-size: 0.9rem; color: #78350f;">The following stations have not reported wind data in over 4 hours:</p>';
+
+      // Use single column on mobile, 2 columns on desktop
+      const isMobile = window.innerWidth < 768;
+      const columnStyle = isMobile ? '' : 'columns: 2; column-gap: 2rem;';
+      offlineHTML += `<ul style="margin: 0; padding-left: 1.5rem; ${columnStyle}">`;
+
+      offlineStations.forEach(([id, station]) => {
+        const hours = Math.floor(station.ageHours);
+        const minutes = Math.round((station.ageHours - hours) * 60);
+        let ageText = '';
+        if (hours > 0) {
+          ageText = `${hours}h`;
+          if (minutes > 0) ageText += ` ${minutes}m`;
+        } else {
+          ageText = `${minutes}m`;
+        }
+
+        offlineHTML += `<li style="margin-bottom: 0.25rem; break-inside: avoid;"><strong>${station.name.replace(' 💨', '').replace(' 🌊', '')}</strong> (${ageText} ago)</li>`;
+      });
+
+      offlineHTML += '</ul></div>';
+      offlineListContainer.innerHTML = offlineHTML;
+    } else if (offlineListContainer) {
+      offlineListContainer.innerHTML = '';
     }
 
     // Update footer timestamp (use wind data timestamp)

@@ -1006,6 +1006,135 @@ header {
 
 ---
 
+## BACKEND: DATA SOURCE UNIFICATION FOR WIND STATIONS
+
+### ISSUE
+Wind station data is currently split across two JSON files based on data source rather than station type, creating confusion in the frontend code.
+
+**Current State:**
+- Environment Canada wind stations → `latest_wind.json` (CWVF, CWGT, CWEL, etc.)
+- NOAA land/C-MAN stations → `latest_buoy_v2.json` (CPMW1, SISW1, COLEB)
+
+**Problems:**
+1. Station type (`wind_monitoring_station`, `land_station`, `c_man_station`) doesn't indicate data source
+2. Frontend must check both JSON files for wind station data
+3. Field names differ between sources:
+   - `latest_wind.json`: `wind_direction_deg`, `wind_speed_kt`
+   - `latest_buoy_v2.json`: `wind_direction`, `wind_speed`
+4. Popup code duplicates data source checking logic
+5. New developers won't know where to find wind station data
+
+**Current Workaround (stations-map.js:316-332):**
+```javascript
+// For wind stations, check both sources (prefer wind data, fall back to buoy data)
+data = (latestWindData && latestWindData[buoy.id]) || (latestBuoyData && latestBuoyData[buoy.id]);
+```
+
+### SOLUTION OPTIONS
+
+#### Option 1: Unify All Wind Stations (Recommended)
+Move all wind-measuring stations (regardless of source) into a single `latest_wind.json` file.
+
+**Backend Changes:**
+```python
+# In export script (e.g., export_wind_json.py)
+def export_unified_wind_data():
+    wind_data = {}
+
+    # Add EC wind stations
+    ec_stations = fetch_ec_wind_stations()
+    for station_id, data in ec_stations.items():
+        wind_data[station_id] = {
+            'wind_speed_kt': data['wind_speed_kt'],
+            'wind_direction_deg': data['wind_direction_deg'],
+            'wind_direction_cardinal': data['wind_direction_cardinal'],
+            'wind_gust_kt': data.get('wind_gust_kt'),
+            'air_temp_c': data.get('air_temp_c'),
+            'observation_time': data['observation_time'],
+            'stale': data['stale']
+        }
+
+    # Add NOAA land/C-MAN stations (normalize field names)
+    noaa_wind_stations = ['CPMW1', 'SISW1', 'COLEB']
+    buoy_data = load_latest_buoy_data()
+    for station_id in noaa_wind_stations:
+        if station_id in buoy_data:
+            data = buoy_data[station_id]
+            wind_data[station_id] = {
+                'wind_speed_kt': data['wind_speed'],  # Normalize to kt
+                'wind_direction_deg': data['wind_direction'],  # Normalize to deg
+                'wind_direction_cardinal': data.get('wind_direction_cardinal'),
+                'wind_gust_kt': data.get('wind_gust'),
+                'air_temp_c': data.get('air_temp'),
+                'observation_time': data['observation_time'],
+                'stale': data.get('stale', False)
+            }
+
+    # Write unified file
+    with open('latest_wind.json', 'w') as f:
+        json.dump(wind_data, f)
+```
+
+**Frontend Simplification (stations-map.js):**
+```javascript
+// BEFORE (complex):
+let data = null;
+if (isWaveStation) {
+  data = latestBuoyData ? latestBuoyData[buoy.id] : null;
+} else {
+  data = (latestWindData && latestWindData[buoy.id]) || (latestBuoyData && latestBuoyData[buoy.id]);
+}
+
+// AFTER (simple):
+const data = isWaveStation
+  ? latestBuoyData?.[buoy.id]
+  : latestWindData?.[buoy.id];
+```
+
+**Benefits:**
+- Single source of truth for wind data
+- Consistent field names across all wind stations
+- Simpler frontend logic
+- Clearer separation: buoys = waves, wind = wind
+
+#### Option 2: Separate Station Collections in stations.json
+Keep data sources separate but organize `stations.json` by data source.
+
+**stations.json Structure:**
+```json
+{
+  "wave_buoys": {
+    "4600146": { "name": "Halibut Bank", "type": "wave_buoy", ... },
+    "46087": { "name": "Neah Bay", "type": "wave_buoy", ... }
+  },
+  "ec_wind_stations": {
+    "CWVF": { "name": "Vancouver", "source": "latest_wind.json", ... }
+  },
+  "noaa_wind_stations": {
+    "CPMW1": { "name": "Cherry Point", "source": "latest_buoy_v2.json", ... }
+  }
+}
+```
+
+**Pros:** Explicit about data sources
+**Cons:** Still requires frontend to check multiple files; doesn't solve field name inconsistency
+
+### RECOMMENDATION
+**Option 1** is strongly recommended. It provides:
+- Clear data ownership (wind stations → wind file)
+- Normalized field names
+- Simplified frontend code
+- Better developer experience
+
+**Implementation Priority:** Medium (works fine now, but technical debt will grow as more stations are added)
+
+**Affected Files:**
+- Backend: `buoy_to_influx_sqlite.py`, wind export scripts
+- Frontend: `stations-map.js`, `winds-map.js`
+- Data: `latest_wind.json`, `latest_buoy_v2.json`
+
+---
+
 ## Summary
 
 These examples provide concrete implementations for the recommendations in the analysis report. Start with the quick wins and work your way through the recommendations in priority order.

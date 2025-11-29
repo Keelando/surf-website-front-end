@@ -7,9 +7,34 @@ let stationsMap = null;
 let markersLayer = null;
 let buoyMarkers = {}; // Store buoy markers by ID for easy access
 let latestBuoyData = null; // Cache for latest buoy data
+let latestWindData = null; // Cache for latest wind station data
 let stormSurgeData = null; // Cache for storm surge forecast data
 let lightstationMarkers = {}; // Store lightstation markers by ID for easy access
 let latestLightstationData = null; // Cache for latest lightstation observations
+
+// Helper function to convert cardinal direction to degrees
+function cardinalToDegrees(cardinal) {
+  if (!cardinal) return null;
+  const directions = {
+    'N': 0, 'NORTH': 0,
+    'NNE': 22.5, 'NORTH-NORTHEAST': 22.5,
+    'NE': 45, 'NORTHEAST': 45,
+    'ENE': 67.5, 'EAST-NORTHEAST': 67.5,
+    'E': 90, 'EAST': 90,
+    'ESE': 112.5, 'EAST-SOUTHEAST': 112.5,
+    'SE': 135, 'SOUTHEAST': 135,
+    'SSE': 157.5, 'SOUTH-SOUTHEAST': 157.5,
+    'S': 180, 'SOUTH': 180,
+    'SSW': 202.5, 'SOUTH-SOUTHWEST': 202.5,
+    'SW': 225, 'SOUTHWEST': 225,
+    'WSW': 247.5, 'WEST-SOUTHWEST': 247.5,
+    'W': 270, 'WEST': 270,
+    'WNW': 292.5, 'WEST-NORTHWEST': 292.5,
+    'NW': 315, 'NORTHWEST': 315,
+    'NNW': 337.5, 'NORTH-NORTHWEST': 337.5
+  };
+  return directions[cardinal.toUpperCase()] ?? null;
+}
 
 // Helper function for directional arrows
 function getDirectionalArrow(degrees, arrowType = 'wind') {
@@ -57,6 +82,14 @@ async function loadStationsAndMarkers() {
       latestBuoyData = await fetchWithTimeout('/data/latest_buoy_v2.json');
     } catch (err) {
       logger.warn('StationsMap', 'Could not fetch latest buoy data', err);
+    }
+
+    // Fetch latest wind station data
+    try {
+      latestWindData = await fetchWithTimeout('/data/latest_wind.json');
+      logger.debug('StationsMap', 'Loaded latest wind station data');
+    } catch (err) {
+      logger.warn('StationsMap', 'Could not fetch latest wind data', err);
     }
 
     // Fetch storm surge forecast data
@@ -163,13 +196,13 @@ function createLighthouseSVG() {
 
 /**
  * Create simple tide station SVG icon
- * Simple blue circle - universally understood
+ * Purple circle - distinguishes from blue wave markers
  * @returns {string} SVG string
  */
 function createTideGaugeSVG() {
   return `
     <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="12" cy="12" r="10" fill="#2196F3" stroke="#1565C0" stroke-width="2"/>
+      <circle cx="12" cy="12" r="10" fill="#9333ea" stroke="#6b21a8" stroke-width="2"/>
     </svg>
   `;
 }
@@ -178,23 +211,29 @@ function createTideGaugeSVG() {
  * Create directional marker with triangular arrow (exact ECharts style match)
  * @param {number} direction - Direction in degrees (meteorological: coming FROM)
  * @param {number} height - Wave height in meters (optional)
- * @param {string} type - 'wave' or 'wind-on-wave'
+ * @param {string} type - 'wave', 'wind-on-wave', or 'wind'
  * @returns {string} HTML for marker
  */
 function createDirectionalMarker(direction, height, type) {
   const isWave = type === 'wave';
-  const arrowColor = isWave ? '#1e88e5' : '#718096'; // Match ECharts blue for waves, gray for wind
+  const isWind = type === 'wind';
+  const arrowColor = isWave ? '#1e88e5' : (isWind ? '#dc2626' : '#718096'); // Blue for waves, red for wind, gray for wind-on-wave
 
-  // Meteorological convention: direction value = where wave is COMING FROM
-  // Arrow shows propagation direction (where waves are TRAVELING TO)
+  // Meteorological convention: direction value = where wave/wind is COMING FROM
+  // Arrow shows propagation direction (where waves/wind are TRAVELING TO)
   // Arrow SVG points DOWN at rotation=0 (South/180° compass)
   // Direction 0° (from North) → traveling South → arrow down → rotation 0
   // Direction 90° (from East) → traveling West → arrow left → rotation 90
   const rotation = direction;
 
-  // Build height label if height is available
-  const heightLabel = (height !== null && height !== undefined)
-    ? `<div style="
+  // Build label if height/speed is available
+  // For waves: show height in meters
+  // For wind: show speed in knots
+  let valueLabel = '';
+  if (height !== null && height !== undefined) {
+    if (isWind) {
+      // Wind speed in knots (rounded to nearest integer)
+      valueLabel = `<div style="
         background: ${arrowColor};
         color: white;
         padding: 2px 5px;
@@ -204,8 +243,22 @@ function createDirectionalMarker(direction, height, type) {
         white-space: nowrap;
         box-shadow: 0 1px 2px rgba(0,0,0,0.3);
         margin-bottom: 2px;
-      ">${height.toFixed(1)}m</div>`
-    : '';
+      ">${Math.round(height)}kt</div>`;
+    } else {
+      // Wave height in meters
+      valueLabel = `<div style="
+        background: ${arrowColor};
+        color: white;
+        padding: 2px 5px;
+        border-radius: 3px;
+        font-size: 10px;
+        font-weight: bold;
+        white-space: nowrap;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        margin-bottom: 2px;
+      ">${height.toFixed(1)}m</div>`;
+    }
+  }
 
   // Use ECharts-style arrow path, fattened for better map visibility
   // Original: 'M0,12 L-4,-8 L0,-6 L4,-8 Z' (width 8)
@@ -214,7 +267,7 @@ function createDirectionalMarker(direction, height, type) {
   // Scaled up from ECharts symbolSize 16 for better visibility on map
   return `
     <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-      ${heightLabel}
+      ${valueLabel}
       <div style="transform: rotate(${rotation}deg); transform-origin: center center;">
         <svg width="26" height="30" viewBox="-6 -10 12 24" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));">
           <path d="M0,12 L-5,-8 L0,-5 L5,-8 Z" fill="${arrowColor}" fill-opacity="0.98" stroke="${arrowColor}" stroke-width="1.5"/>
@@ -260,23 +313,30 @@ function addBuoyMarker(buoy) {
   let iconAnchor = [15, 15];
 
   try {
-    if (latestBuoyData && latestBuoyData[buoy.id]) {
-      const data = latestBuoyData[buoy.id];
+    // TODO: REFACTOR - Data source unification needed
+    // ISSUE: Wind stations are split across two data sources:
+    //   - EC wind stations: latest_wind.json (CWVF, CWGT, etc.)
+    //   - NOAA land/C-MAN: latest_buoy_v2.json (CPMW1, SISW1, COLEB)
+    // This creates confusion because:
+    //   1. Station type (wind_monitoring_station, land_station, c_man_station) doesn't indicate data source
+    //   2. Must check both JSON files for wind station data
+    //   3. Field names differ between sources (wind_direction vs wind_direction_deg)
+    // SOLUTION: Unify all wind stations into a single latest_wind.json OR clearly separate
+    //           station collections (buoys vs wind_stations) in stations.json
+    let data = null;
+    if (isWaveStation) {
+      data = latestBuoyData ? latestBuoyData[buoy.id] : null;
+    } else {
+      // For wind stations, check both sources (prefer wind data, fall back to buoy data)
+      data = (latestWindData && latestWindData[buoy.id]) || (latestBuoyData && latestBuoyData[buoy.id]);
+    }
+
+    if (data) {
       // Try multiple possible field names for wave direction
       const waveDirection = data.wave_direction_avg || data.wave_direction_peak || data.wave_direction;
       const waveHeight = data.wave_height_sig;
-      const windDirection = data.wind_direction;
-
-      // Debug log for first few buoys to check data
-      if (buoy.id === '4600146' || buoy.id === '46087') {
-        console.log(`${buoy.id} directions:`, {
-          waveDir: waveDirection,
-          windDir: windDirection,
-          height: waveHeight,
-          isWaveStation,
-          availableFields: Object.keys(data).filter(k => k.includes('direction'))
-        });
-      }
+      // Wind data format differs: wind stations use wind_direction_deg
+      const windDirection = data.wind_direction_deg !== undefined ? data.wind_direction_deg : data.wind_direction;
 
       // For wave stations with wave direction data
       if (isWaveStation && waveDirection !== null && waveDirection !== undefined) {
@@ -296,8 +356,12 @@ function addBuoyMarker(buoy) {
       }
       // For non-wave stations with wind direction
       else if (!isWaveStation && windDirection !== null && windDirection !== undefined) {
-        // Keep emoji for now, but could show wind direction later
-        iconHtml = `<div class="marker-icon">${markerEmoji}</div>`;
+        // Show red wind direction marker
+        // Wind stations use wind_speed_kt, buoys use wind_speed
+        const windSpeed = data.wind_speed_kt !== undefined ? data.wind_speed_kt : data.wind_speed;
+        iconHtml = createDirectionalMarker(windDirection, windSpeed, 'wind');
+        iconSize = [26, windSpeed ? 48 : 30];
+        iconAnchor = [13, windSpeed ? 38 : 15];
       }
     }
   } catch (error) {
@@ -321,24 +385,36 @@ function addBuoyMarker(buoy) {
   // Build popup with latest data at top
   let popupContent = `<div class="station-popup"><h3>${buoy.name}</h3>`;
 
-  // Add latest buoy data if available (priority data at top)
-  if (latestBuoyData && latestBuoyData[buoy.id]) {
-    const data = latestBuoyData[buoy.id];
+  // Add latest data if available (priority data at top)
+  // TODO: REFACTOR - See data source unification note above (line 316)
+  let popupData = null;
+  if (isWaveStation) {
+    popupData = latestBuoyData ? latestBuoyData[buoy.id] : null;
+  } else {
+    // For wind stations, check both sources
+    popupData = (latestWindData && latestWindData[buoy.id]) || (latestBuoyData && latestBuoyData[buoy.id]);
+  }
+
+  if (popupData) {
+    const data = popupData;
     const obsTime = data.observation_time ? new Date(data.observation_time) : null;
 
     popupContent += `<div style="background: #f0f8ff; padding: 8px; margin: 8px 0; border-radius: 4px; border-left: 3px solid #0077be;">`;
     popupContent += `<div style="font-weight: 600; margin-bottom: 4px;">Latest Conditions:</div>`;
 
-    // Show wind data
-    if (data.wind_speed !== null && data.wind_speed !== undefined) {
-      const windSpeed = Math.round(data.wind_speed);
-      const windGust = data.wind_gust !== null && data.wind_gust !== undefined ? Math.round(data.wind_gust) : null;
+    // Show wind data (handle both buoy and wind station formats)
+    const windSpeed = data.wind_speed_kt !== undefined ? data.wind_speed_kt : data.wind_speed;
+    if (windSpeed !== null && windSpeed !== undefined) {
+      const windSpeedRounded = Math.round(windSpeed);
+      const windGust = data.wind_gust_kt !== undefined ? data.wind_gust_kt : data.wind_gust;
+      const windGustRounded = windGust !== null && windGust !== undefined ? Math.round(windGust) : null;
       const windCardinal = data.wind_direction_cardinal || '—';
-      const windDegrees = data.wind_direction !== null && data.wind_direction !== undefined ? ` (${Math.round(data.wind_direction)}°)` : '';
-      const windArrow = getDirectionalArrow(data.wind_direction, 'wind');
-      const gustPart = windGust !== null ? ` G ${windGust}` : '';
+      const windDir = data.wind_direction_deg !== undefined ? data.wind_direction_deg : data.wind_direction;
+      const windDegrees = windDir !== null && windDir !== undefined ? ` (${Math.round(windDir)}°)` : '';
+      const windArrow = getDirectionalArrow(windDir, 'wind');
+      const gustPart = windGustRounded !== null ? ` G ${windGustRounded}` : '';
 
-      popupContent += `<div><strong>💨 Wind:</strong> ${windCardinal} ${windSpeed}${gustPart} kt${windDegrees} ${windArrow}</div>`;
+      popupContent += `<div><strong>💨 Wind:</strong> ${windCardinal} ${windSpeedRounded}${gustPart} kt${windDegrees} ${windArrow}</div>`;
     }
 
     // Show wave data with direction
@@ -567,6 +643,7 @@ function addTideMarker(tide, stationKey) {
 
 // Add lightstation marker to map
 function addLightstationMarker(lightstation) {
+  // Always use lighthouse icon for lightstations
   const icon = L.divIcon({
     className: 'station-marker lightstation-marker',
     html: createLighthouseSVG(),

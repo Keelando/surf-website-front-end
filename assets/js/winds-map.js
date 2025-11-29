@@ -44,6 +44,47 @@ function getDirectionalArrow(degrees) {
   return `<span style="display:inline-block;transform:rotate(${rotation}deg);margin-left:0.3rem;vertical-align:middle;">${svg}</span>`;
 }
 
+/**
+ * Create directional marker with triangular arrow for map markers
+ * @param {number} direction - Direction in degrees (meteorological: coming FROM)
+ * @param {number} speed - Wind speed in knots
+ * @returns {string} HTML for marker
+ */
+function createDirectionalMarker(direction, speed) {
+  const arrowColor = '#dc2626'; // Red for wind
+
+  // Meteorological convention: direction value = where wind is COMING FROM
+  // Arrow shows direction wind is TRAVELING TO
+  // Arrow SVG points DOWN at rotation=0 (South/180° compass)
+  const rotation = direction;
+
+  // Build speed label if available
+  const speedLabel = (speed !== null && speed !== undefined)
+    ? `<div style="
+        background: ${arrowColor};
+        color: white;
+        padding: 2px 5px;
+        border-radius: 3px;
+        font-size: 10px;
+        font-weight: bold;
+        white-space: nowrap;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        margin-bottom: 2px;
+      ">${Math.round(speed)}kt</div>`
+    : '';
+
+  return `
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+      ${speedLabel}
+      <div style="transform: rotate(${rotation}deg); transform-origin: center center;">
+        <svg width="26" height="30" viewBox="-6 -10 12 24" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));">
+          <path d="M0,12 L-5,-8 L0,-5 L5,-8 Z" fill="${arrowColor}" fill-opacity="0.98" stroke="${arrowColor}" stroke-width="1.5"/>
+        </svg>
+      </div>
+    </div>
+  `;
+}
+
 // Initialize the map
 function initWindsMap() {
   // Create map centered on Salish Sea
@@ -113,11 +154,23 @@ async function loadWindStationsAndMarkers() {
 
 // Add wind station marker to map
 function addWindStationMarker(station, currentData) {
+  // Create directional marker if we have wind direction data
+  let iconHtml = `<div class="marker-icon">💨</div>`;
+  let iconSize = [30, 30];
+  let iconAnchor = [15, 15];
+
+  if (currentData && !currentData.stale && currentData.wind_direction_deg !== null && currentData.wind_direction_deg !== undefined) {
+    const windSpeed = currentData.wind_speed_kt;
+    iconHtml = createDirectionalMarker(currentData.wind_direction_deg, windSpeed);
+    iconSize = [26, windSpeed ? 48 : 30];
+    iconAnchor = [13, windSpeed ? 38 : 15];
+  }
+
   const icon = L.divIcon({
     className: 'station-marker wind-station-marker',
-    html: `<div class="marker-icon">💨</div>`,
-    iconSize: [30, 30],
-    iconAnchor: [15, 15],
+    html: iconHtml,
+    iconSize: iconSize,
+    iconAnchor: iconAnchor,
     popupAnchor: [0, -15]
   });
 
@@ -192,11 +245,23 @@ function addWindStationMarker(station, currentData) {
 
 // Add buoy marker with wind data to map
 function addBuoyWindMarker(buoy, currentData) {
+  // Create directional marker if we have wind direction data
+  let iconHtml = `<div class="marker-icon">🌊</div>`;
+  let iconSize = [30, 30];
+  let iconAnchor = [15, 15];
+
+  if (currentData && !currentData.stale && currentData.wind_direction_deg !== null && currentData.wind_direction_deg !== undefined) {
+    const windSpeed = currentData.wind_speed_kt;
+    iconHtml = createDirectionalMarker(currentData.wind_direction_deg, windSpeed);
+    iconSize = [26, windSpeed ? 48 : 30];
+    iconAnchor = [13, windSpeed ? 38 : 15];
+  }
+
   const icon = L.divIcon({
     className: 'station-marker buoy-wind-marker',
-    html: `<div class="marker-icon">🌊</div>`,
-    iconSize: [30, 30],
-    iconAnchor: [15, 15],
+    html: iconHtml,
+    iconSize: iconSize,
+    iconAnchor: iconAnchor,
     popupAnchor: [0, -15]
   });
 

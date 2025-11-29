@@ -121,8 +121,13 @@
     }
 
     .data-table tbody tr.stale {
-      opacity: 0.5;
-      background: #fff5f5;
+      opacity: 0.6;
+      background: #f9fafb;
+      color: #6b7280;
+    }
+
+    .data-table tbody tr.stale:hover {
+      background: #f3f4f6;
     }
 
     .w-full {
@@ -211,6 +216,9 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Offline stations list (populated by JavaScript) -->
+    <div id="offline-stations-list"></div>
 
     <p style="margin-top: 1rem; padding: 0.75rem; background: #f0f7ff; border-left: 3px solid #4299e1; border-radius: 4px; max-width: 1200px; margin-left: auto; margin-right: auto;">
       <strong>Missing your favorite station?</strong> <a href="mailto:windwaves604@outlook.com?subject=Wind%20Station%20Suggestion" class="color-primary">Let me know so I can add it!</a>

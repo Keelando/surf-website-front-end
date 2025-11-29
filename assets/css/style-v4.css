@@ -789,9 +789,20 @@ header h2 {
   }
 
   .map-legend {
-    flex-direction: column;
-    gap: 0.5rem;
-    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem 1rem;
+    justify-content: flex-start;
+    padding: 0.75rem;
+  }
+
+  .legend-item {
+    font-size: 0.85rem;
+    flex: 0 0 calc(50% - 0.5rem); /* Two items per row on mobile */
+    min-width: 0; /* Allow items to shrink */
+  }
+
+  .legend-icon {
+    font-size: 1.2rem;
   }
 
   .station-popup {
