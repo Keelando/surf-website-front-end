@@ -352,10 +352,10 @@ function scrollToZoneIfNeeded() {
   }
 }
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', () => {
+// Initialize on page load - wait for HTMX to load footer with timestamp
+document.addEventListener('htmx:load', () => {
   loadForecasts().then(() => {
     scrollToZoneIfNeeded();
   });
   startAutoRefresh();
-});
+}, { once: true });

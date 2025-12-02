@@ -1023,8 +1023,10 @@ window.showSelectedTideOnMap = showSelectedTideOnMap;
    Initialization
    ===================================================== */
 
-// Load data on page load
-loadTideData();
+// Load data on page load - wait for HTMX to load footer with timestamp
+document.addEventListener('htmx:load', function() {
+  loadTideData();
+}, { once: true });
 
 // Auto-refresh every 5 minutes
 setInterval(loadTideData, 5 * 60 * 1000);
