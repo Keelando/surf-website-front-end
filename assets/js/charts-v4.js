@@ -91,8 +91,10 @@ function updateCharts(buoyId) {
   renderComparisonChart(waveComparisonChart, chartData);
 }
 
-// Load on page load
-loadChartsData();
+// Wait for HTMX to load footer (which contains timestamp element) before initializing
+document.addEventListener('htmx:load', function() {
+  loadChartsData();
+}, { once: true });
 
 // Auto-refresh every 15 minutes
 setInterval(loadChartsData, 15 * 60 * 1000);

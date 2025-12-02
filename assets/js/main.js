@@ -747,7 +747,11 @@ function handleHashNavigation() {
   }
 }
 
-loadBuoyData();
+// Wait for HTMX to load footer (which contains timestamp element) before initializing
+document.addEventListener('htmx:load', function() {
+  loadBuoyData();
+}, { once: true });
+
 setInterval(loadBuoyData, 5 * 60 * 1000);
 
 // Handle hash navigation when hash changes (clicking map links)
