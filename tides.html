@@ -21,25 +21,6 @@
     header {
       margin-bottom: 0;
     }
-
-    .site-tagline {
-      background: linear-gradient(to bottom, rgba(224, 242, 255, 0.5), rgba(224, 242, 255, 0.8));
-      text-align: center;
-      font-size: 1rem;
-      font-style: italic;
-      color: #2c5282;
-      padding: 1rem 1.5rem;
-      margin: 0;
-      border-bottom: 1px solid rgba(66, 153, 225, 0.2);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    }
-
-    @media (max-width: 768px) {
-      .site-tagline {
-        font-size: 0.9rem;
-        padding: 0.85rem 1rem;
-      }
-    }
   </style>
 </head>
 
@@ -160,30 +141,7 @@
   </main>
 
   <!-- About Section -->
-  <section class="about-section">
-    <h3>About Tide Data</h3>
-    <p>
-      <strong>Tide observations</strong> are updated every 30 minutes from DFO (Fisheries and Oceans Canada)
-      water level stations. <strong>Astronomical tide predictions</strong> are based on harmonic
-      constituents and are updated daily.
-    </p>
-    <p>
-      <strong>Total Water Level</strong> combines astronomical tides with storm surge forecasts from
-      Environment Canada's GDSPS model. Storm surge is the elevation of water caused by wind stress
-      and atmospheric pressure changes during weather systems.
-    </p>
-    <p>
-      <strong>Chart Legend:</strong><br>
-      • <span style="color: #0077be;">━━</span> Astronomical Tide (predicted)<br>
-      • <span style="color: #43a047;">●</span> Observation (real-time, today only)<br>
-      • <span style="color: #ff9800;">━━</span> Storm Surge (forecast anomaly)<br>
-      • <span style="color: #9c27b0; font-weight: bold;">━━</span> Total Water Level (tide + surge)
-    </p>
-    <p>
-      High and low tide times represent the predicted maximum and minimum water levels for
-      the current day in Pacific Time. Use the arrow buttons to view forecasts for the next 2 days.
-    </p>
-  </section>
+  <div hx-get="/components/about-tides.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
 
   <!-- Navigation (Bottom) -->
   <div hx-get="/components/nav.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
