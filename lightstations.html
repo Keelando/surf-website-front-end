@@ -273,16 +273,9 @@
 </head>
 <body>
   <!-- Warning banners container -->
-  <div id="warning-banners"></div>
+  <div hx-get="/components/warning-banner.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
 
-  <nav class="main-nav">
-    <a href="index.html" class="nav-link">Buoys</a>
-    <a href="tides.html" class="nav-link">Tides</a>
-    <a href="winds.html" class="nav-link">Winds</a>
-    <a href="lightstations.html" class="nav-link active">Lightstations</a>
-    <a href="forecasts.html" class="nav-link">Forecasts</a>
-    <a href="storm_surge.html" class="nav-link">Storm Surge</a>
-  </nav>
+  <div hx-get="/components/nav.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
 
   <header>
     <h1>BC Lightstation Reports</h1>
@@ -412,14 +405,7 @@
   </section>
 
   <!-- Navigation (Bottom) -->
-  <nav class="main-nav">
-    <a href="index.html" class="nav-link">Buoys</a>
-    <a href="tides.html" class="nav-link">Tides</a>
-    <a href="winds.html" class="nav-link">Winds</a>
-    <a href="lightstations.html" class="nav-link active">Lightstations</a>
-    <a href="forecasts.html" class="nav-link">Forecasts</a>
-    <a href="storm_surge.html" class="nav-link">Storm Surge</a>
-  </nav>
+  <div hx-get="/components/nav.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
 
   <footer>
     <p>Please independently verify this data and do not base recreational activities around this information. This website is in no way affiliated with Environment Canada.</p>
@@ -757,5 +743,6 @@
     // Load data on page load
     loadLightstationData();
   </script>
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 </body>
 </html>

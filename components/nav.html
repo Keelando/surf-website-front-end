@@ -1,0 +1,31 @@
+<nav class="main-nav">
+  <a href="/" class="nav-link" data-page="buoys">Buoys</a>
+  <a href="/tides.html" class="nav-link" data-page="tides">Tides</a>
+  <a href="/winds.html" class="nav-link" data-page="winds">Winds</a>
+  <a href="/lightstations.html" class="nav-link" data-page="lightstations">Lightstations</a>
+  <a href="/forecasts.html" class="nav-link" data-page="forecasts">Forecasts</a>
+  <a href="/storm_surge.html" class="nav-link" data-page="storm_surge">Storm Surge</a>
+</nav>
+
+<script>
+  (function() {
+    // Use setTimeout to ensure nav is in DOM after swap
+    setTimeout(() => {
+      const path = window.location.pathname;
+      let activePage = 'buoys';
+
+      if (path === '/' || path === '/index.html') activePage = 'buoys';
+      else if (path.includes('tides')) activePage = 'tides';
+      else if (path.includes('winds')) activePage = 'winds';
+      else if (path.includes('lightstations')) activePage = 'lightstations';
+      else if (path.includes('forecasts')) activePage = 'forecasts';
+      else if (path.includes('storm_surge')) activePage = 'storm_surge';
+
+      document.querySelectorAll('.nav-link').forEach(link => {
+        if (link.dataset.page === activePage) {
+          link.classList.add('active');
+        }
+      });
+    }, 0);
+  })();
+</script>

@@ -57,17 +57,10 @@
 
 <body>
   <!-- Warning Banner Container -->
-  <div id="warning-banner-container" aria-live="polite" role="alert"></div>
+  <div hx-get="/components/warning-banner.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
 
   <!-- Navigation -->
-  <nav class="main-nav">
-    <a href="/" class="nav-link active">Buoys</a>
-    <a href="/tides.html" class="nav-link">Tides</a>
-    <a href="/winds.html" class="nav-link">Winds</a>
-    <a href="/lightstations.html" class="nav-link">Lightstations</a>
-    <a href="/forecasts.html" class="nav-link">Forecasts</a>
-    <a href="/storm_surge.html" class="nav-link">Storm Surge</a>
-  </nav>
+  <div hx-get="/components/nav.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
 
   <header>
     <h1>Salish Sea Wave Conditions</h1>
@@ -243,14 +236,7 @@
   </section>
 
   <!-- Navigation (Bottom) -->
-  <nav class="main-nav">
-    <a href="/" class="nav-link active">Buoys</a>
-    <a href="/tides.html" class="nav-link">Tides</a>
-    <a href="/winds.html" class="nav-link">Winds</a>
-    <a href="/lightstations.html" class="nav-link">Lightstations</a>
-    <a href="/forecasts.html" class="nav-link">Forecasts</a>
-    <a href="/storm_surge.html" class="nav-link">Storm Surge</a>
-  </nav>
+  <div hx-get="/components/nav.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
 
   <footer>
     <p>Please independently verify this data and do not base recreational activities around this information. This website is in no way affiliated with Environment Canada, NOAA, DFO, or City of Surrey.</p>
@@ -285,5 +271,6 @@
   <script src="/assets/js/wave-table-v4.js?v=20251117"></script>
   <script src="/assets/js/charts-v4.js?v=20251117"></script>
   <script src="/assets/js/storm_surge_chart-v4.js?v=20251117"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 </body>
 </html>

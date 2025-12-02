@@ -45,17 +45,10 @@
 
 <body>
   <!-- Warning Banner Container -->
-  <div id="warning-banner-container" aria-live="polite" role="alert"></div>
+  <div hx-get="/components/warning-banner.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
 
   <!-- Navigation -->
-  <nav class="main-nav">
-    <a href="/" class="nav-link">Buoys</a>
-    <a href="/tides.html" class="nav-link active">Tides</a>
-    <a href="/winds.html" class="nav-link">Winds</a>
-    <a href="/lightstations.html" class="nav-link">Lightstations</a>
-    <a href="/forecasts.html" class="nav-link">Forecasts</a>
-    <a href="/storm_surge.html" class="nav-link">Storm Surge</a>
-  </nav>
+  <div hx-get="/components/nav.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
 
   <header>
     <h1>Salish Sea Tide Conditions</h1>
@@ -197,14 +190,7 @@
   </section>
 
   <!-- Navigation (Bottom) -->
-  <nav class="main-nav">
-    <a href="/" class="nav-link">Buoys</a>
-    <a href="/tides.html" class="nav-link active">Tides</a>
-    <a href="/winds.html" class="nav-link">Winds</a>
-    <a href="/lightstations.html" class="nav-link">Lightstations</a>
-    <a href="/forecasts.html" class="nav-link">Forecasts</a>
-    <a href="/storm_surge.html" class="nav-link">Storm Surge</a>
-  </nav>
+  <div hx-get="/components/nav.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
 
   <footer>
     <p>Please independently verify this data and do not base recreational activities around this information.</p>
@@ -224,5 +210,6 @@
   <script src="/assets/js/warning-banner.js?v=20251117"></script>
   <script src="/assets/js/chart-utils-v4.js?v=20251117"></script>
   <script src="/assets/js/tides.js?v=20251120a"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 </body>
 </html>

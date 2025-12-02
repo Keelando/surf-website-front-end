@@ -206,17 +206,10 @@
 
 <body>
   <!-- Warning Banner Container (will be populated by warning-banner.js) -->
-  <div id="warning-banner-container" aria-live="polite" role="alert"></div>
+  <div hx-get="/components/warning-banner.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
 
   <!-- Navigation -->
-  <nav class="main-nav">
-    <a href="/" class="nav-link">Buoys</a>
-    <a href="/tides.html" class="nav-link">Tides</a>
-    <a href="/winds.html" class="nav-link">Winds</a>
-    <a href="/lightstations.html" class="nav-link">Lightstations</a>
-    <a href="/forecasts.html" class="nav-link active">Forecasts</a>
-    <a href="/storm_surge.html" class="nav-link">Storm Surge</a>
-  </nav>
+  <div hx-get="/components/nav.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
 
   <header>
     <h1>Marine Weather Forecasts</h1>
@@ -256,14 +249,7 @@
   </section>
 
   <!-- Navigation (Bottom) -->
-  <nav class="main-nav">
-    <a href="/" class="nav-link">Buoys</a>
-    <a href="/tides.html" class="nav-link">Tides</a>
-    <a href="/winds.html" class="nav-link">Winds</a>
-    <a href="/lightstations.html" class="nav-link">Lightstations</a>
-    <a href="/forecasts.html" class="nav-link active">Forecasts</a>
-    <a href="/storm_surge.html" class="nav-link">Storm Surge</a>
-  </nav>
+  <div hx-get="/components/nav.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
 
   <footer>
     <p>Marine forecasts provided by Environment Canada. Please independently verify this data and do not base recreational activities solely on this information.</p>
@@ -283,5 +269,6 @@
   <script src="/assets/js/warning-banner.js?v=20251117"></script>
   <script src="/assets/js/chart-utils-v4.js?v=20251117"></script>
   <script src="/assets/js/forecasts.js?v=20251117"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 </body>
 </html>
