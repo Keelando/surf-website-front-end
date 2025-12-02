@@ -277,13 +277,9 @@
 
   <div hx-get="/components/nav.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
 
-  <header>
-    <h1>BC Lightstation Reports</h1>
-  </header>
+  <div hx-get="/components/header-lightstations.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
 
-  <div class="site-tagline">
-    Real-time observations from BC coastal lightstations • Updated every 3 hours from Environment Canada
-  </div>
+  <div hx-get="/components/tagline-lightstations.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
 
   <div class="container">
     <section style="background: #edf2f7; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
@@ -407,10 +403,7 @@
   <!-- Navigation (Bottom) -->
   <div hx-get="/components/nav.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
 
-  <footer>
-    <p>Please independently verify this data and do not base recreational activities around this information. This website is in no way affiliated with Environment Canada.</p>
-    <p><small>Data source: Environment Canada FPCN61 Lightstation Reports | Updates every 3 hours</small></p>
-  </footer>
+  <div hx-get="/components/footer.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
