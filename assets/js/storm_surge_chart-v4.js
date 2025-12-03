@@ -240,15 +240,16 @@ function updateMetadata(station, times, values) {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-    timeZone: "America/Vancouver"
+    timeZone: "America/Vancouver",
+    timeZoneName: "short"
   });
-  
+
   metaEl.innerHTML = `
     <strong>Station:</strong> ${station.station_name}<br/>
     <strong>Location:</strong> ${station.location.lat.toFixed(4)}°N, ${Math.abs(station.location.lon).toFixed(4)}°W<br/>
     <strong>Model:</strong> GDSPS (Global Deterministic Storm Surge Prediction System)<br/>
-    <strong>Data Retrieved:</strong> ${formatDate(generatedTime)} PT<br/>
-    <strong>Forecast Period:</strong> ${formatDate(firstForecast)} to ${formatDate(lastForecast)} PT<br/>
+    <strong>Data Retrieved:</strong> ${formatDate(generatedTime)}<br/>
+    <strong>Forecast Period:</strong> ${formatDate(firstForecast)} to ${formatDate(lastForecast)}<br/>
     <strong>Resolution:</strong> ${values.length} hours (1-hour intervals)
   `;
 }

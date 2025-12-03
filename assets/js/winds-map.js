@@ -213,9 +213,10 @@ function addWindStationMarker(station, currentData) {
       const timeStr = obsTime.toLocaleTimeString('en-US', {
         hour: '2-digit',
         minute: '2-digit',
-        timeZone: 'America/Vancouver'
+        timeZone: 'America/Vancouver',
+        timeZoneName: 'short'
       });
-      popupContent += `<div style="font-size: 0.85em; color: #666; margin-top: 4px;">Updated: ${timeStr} PT</div>`;
+      popupContent += `<div style="font-size: 0.85em; color: #666; margin-top: 4px;">Updated: ${timeStr}</div>`;
     }
 
     popupContent += `</div>`;
@@ -304,9 +305,10 @@ function addBuoyWindMarker(buoy, currentData) {
       const timeStr = obsTime.toLocaleTimeString('en-US', {
         hour: '2-digit',
         minute: '2-digit',
-        timeZone: 'America/Vancouver'
+        timeZone: 'America/Vancouver',
+        timeZoneName: 'short'
       });
-      popupContent += `<div style="font-size: 0.85em; color: #666; margin-top: 4px;">Updated: ${timeStr} PT</div>`;
+      popupContent += `<div style="font-size: 0.85em; color: #666; margin-top: 4px;">Updated: ${timeStr}</div>`;
     }
 
     popupContent += `</div>`;

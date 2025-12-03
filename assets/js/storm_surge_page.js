@@ -390,9 +390,10 @@ function updateForecastChart(stationId) {
           hour: "2-digit",
           minute: "2-digit",
           hour12: false,
-          timeZone: "America/Vancouver"
+          timeZone: "America/Vancouver",
+          timeZoneName: "short"
         });
-        let tooltip = `<b>${time} PT</b><br/>`;
+        let tooltip = `<b>${time}</b><br/>`;
         params.forEach(param => {
           const value = param.data[1];
           const sign = value >= 0 ? "+" : "";
@@ -487,17 +488,18 @@ function updateForecastMetadata(station, times, values) {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-    timeZone: "America/Vancouver"
+    timeZone: "America/Vancouver",
+    timeZoneName: "short"
   });
 
   metaEl.innerHTML = `
     <strong>Station:</strong> ${station.station_name}<br/>
     <strong>Location:</strong> ${station.location.lat.toFixed(4)}°N, ${Math.abs(station.location.lon).toFixed(4)}°W<br/>
-    <strong>Data Retrieved:</strong> ${formatDate(generatedTime)} PT<br/>
-    <strong>Forecast Period:</strong> ${formatDate(firstForecast)} to ${formatDate(lastForecast)} PT<br/>
+    <strong>Data Retrieved:</strong> ${formatDate(generatedTime)}<br/>
+    <strong>Forecast Period:</strong> ${formatDate(firstForecast)} to ${formatDate(lastForecast)}<br/>
     <strong>Resolution:</strong> ${values.length} hours (1-hour intervals)<br/>
-    <strong>Peak High:</strong> +${maxSurge.toFixed(3)} m at ${formatDate(new Date(maxTime))} PT<br/>
-    <strong>Peak Low:</strong> ${minSurge.toFixed(3)} m at ${formatDate(new Date(minTime))} PT
+    <strong>Peak High:</strong> +${maxSurge.toFixed(3)} m at ${formatDate(new Date(maxTime))}<br/>
+    <strong>Peak Low:</strong> ${minSurge.toFixed(3)} m at ${formatDate(new Date(minTime))}
   `;
 }
 
@@ -769,7 +771,7 @@ function updateHindcastChart(stationId) {
           timeZone: "America/Vancouver"
         });
 
-        let tooltip = `<b>${time} PT</b><br/>`;
+        let tooltip = `<b>${time}</b><br/>`;
         params.forEach(param => {
           const value = param.data[1];
           const sign = value >= 0 ? "+" : "";
@@ -872,13 +874,14 @@ function updateHindcastMetadata(station) {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-    timeZone: "America/Vancouver"
+    timeZone: "America/Vancouver",
+    timeZoneName: "short"
   });
 
   metaEl.innerHTML = `
     <strong>Station:</strong> ${station.station_name}<br/>
     <strong>Location:</strong> ${station.location.lat.toFixed(4)}°N, ${Math.abs(station.location.lon).toFixed(4)}°W<br/>
-    <strong>Data Retrieved:</strong> ${formatDate(generatedTime)} PT<br/>
+    <strong>Data Retrieved:</strong> ${formatDate(generatedTime)}<br/>
     <strong>Forecast Horizon:</strong> ${hindcastData.forecast_horizon_hours || 48} hours ahead<br/>
     <strong>Historical Days:</strong> ${daysAvailable} day${daysAvailable !== 1 ? 's' : ''} (max ${hindcastData.max_days_back || 10})<br/>
     <strong>Collection Time:</strong> 18Z model run (closest to noon Pacific)
@@ -899,8 +902,9 @@ function initPage() {
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-      timeZone: "America/Vancouver"
-    }) + " PT";
+      timeZone: "America/Vancouver",
+      timeZoneName: "short"
+    });
   }
 
   // Load all datasets (observed surge first, then charts)

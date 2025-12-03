@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Coastal Webcams | Salish Sea Live Views</title>
+
+  <meta name="description" content="Live webcam views from coastal locations around the Salish Sea, including White Rock Pier and Boundary Bay." />
+  <meta name="keywords" content="Salish Sea webcams, White Rock Pier camera, coastal webcams, BC beach webcams, live ocean views, marine webcams, Boundary Bay" />
+
+  <link rel="canonical" href="https://halibutbank.ca/webcams.html" />
+  <link rel="stylesheet" href="/assets/css/style-v4.css?v=20251112" />
+  <link rel="stylesheet" href="/assets/css/nav-tide-styles-v4.css" />
+  <link rel="stylesheet" href="/assets/css/warning-banner-v4.css" />
+
+  <style>
+    .webcam-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+      gap: 2rem;
+      margin: 2rem 0;
+    }
+
+    .webcam-card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      transition: box-shadow 0.2s;
+    }
+
+    .webcam-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .webcam-header {
+      background: linear-gradient(to right, #004b7c, #005a94);
+      color: white;
+      padding: 1rem 1.5rem;
+    }
+
+    .webcam-header h3 {
+      margin: 0 0 0.25rem 0;
+      font-size: 1.3rem;
+    }
+
+    .webcam-location {
+      font-size: 0.9rem;
+      opacity: 0.9;
+      margin: 0;
+    }
+
+    .webcam-image-container {
+      position: relative;
+      width: 100%;
+      background: #f0f0f0;
+      min-height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .webcam-image {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .webcam-loading {
+      color: #718096;
+      font-style: italic;
+    }
+
+    .webcam-info {
+      padding: 1rem 1.5rem;
+      background: #f7fafc;
+    }
+
+    .webcam-timestamp {
+      font-size: 0.85rem;
+      color: #4a5568;
+      margin-bottom: 0.5rem;
+    }
+
+    .webcam-source {
+      font-size: 0.85rem;
+      color: #4a5568;
+    }
+
+    .webcam-source a {
+      color: #4299e1;
+      text-decoration: none;
+    }
+
+    .webcam-source a:hover {
+      text-decoration: underline;
+    }
+
+    .refresh-button {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      background: #4299e1;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+      transition: background 0.2s;
+    }
+
+    .refresh-button:hover {
+      background: #3182ce;
+    }
+
+    .webcam-error {
+      padding: 1rem;
+      background: #fff5f5;
+      color: #c53030;
+      border-radius: 4px;
+      margin: 1rem;
+      text-align: center;
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+      .webcam-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+
+      .webcam-image-container {
+        min-height: 200px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Warning banners container -->
+  <div hx-get="/components/warning-banner.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
+
+  <div hx-get="/components/nav.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
+
+  <div hx-get="/components/header-webcams.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
+
+  <div hx-get="/components/tagline-webcams.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
+
+  <div class="container">
+    <section style="background: #edf2f7; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+      <h2 style="margin-top: 0; color: #2c5282; font-size: 1.3rem;">About Coastal Webcams</h2>
+      <p style="margin-bottom: 0.5rem;">
+        Live and near-live views from coastal webcams around the Salish Sea.
+        Images are updated regularly to provide current visual conditions for beaches, piers, and marine areas.
+      </p>
+      <p style="margin: 0;">
+        <strong>Note:</strong> Image update frequency varies by camera. Check the timestamp on each image for freshness.
+      </p>
+    </section>
+
+    <div id="webcams-container" class="webcam-grid">
+      <!-- Webcams will be loaded here -->
+    </div>
+  </div>
+
+  <!-- About Section -->
+  <div hx-get="/components/about-generic.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
+
+  <!-- Navigation (Bottom) -->
+  <div hx-get="/components/nav.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
+
+  <div hx-get="/components/footer.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
+
+  <script src="/assets/js/warning-banner.js"></script>
+  <script>
+    // Webcam configuration
+    const webcams = [
+      {
+        id: 'whiterock',
+        name: 'White Rock Pier',
+        location: 'White Rock, BC',
+        dataUrl: '/data/wrcam/latest.json',
+        imageUrl: '/data/wrcam/latest.jpg'
+      }
+      // Add more webcams here as they become available
+    ];
+
+    // Format timestamp for display (24-hour format)
+    function formatTimestamp(isoString) {
+      const date = new Date(isoString);
+      const options = {
+        timeZone: 'America/Vancouver',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZoneName: 'short'
+      };
+      return date.toLocaleString('en-US', options);
+    }
+
+    // Create webcam card
+    function createWebcamCard(webcam, metadata) {
+      const card = document.createElement('div');
+      card.className = 'webcam-card';
+
+      // Header
+      const header = document.createElement('div');
+      header.className = 'webcam-header';
+
+      const title = document.createElement('h3');
+      title.textContent = webcam.name;
+
+      const location = document.createElement('p');
+      location.className = 'webcam-location';
+      location.textContent = webcam.location;
+
+      header.appendChild(title);
+      header.appendChild(location);
+      card.appendChild(header);
+
+      // Image container
+      const imageContainer = document.createElement('div');
+      imageContainer.className = 'webcam-image-container';
+
+      const image = document.createElement('img');
+      image.className = 'webcam-image';
+      image.src = webcam.imageUrl + '?t=' + Date.now(); // Cache bust
+      image.alt = webcam.name + ' webcam view';
+      image.loading = 'lazy';
+
+      imageContainer.appendChild(image);
+      card.appendChild(imageContainer);
+
+      // Info section
+      const info = document.createElement('div');
+      info.className = 'webcam-info';
+
+      if (metadata) {
+        const timestamp = document.createElement('div');
+        timestamp.className = 'webcam-timestamp';
+        timestamp.textContent = 'Last updated: ' + formatTimestamp(metadata.timestamp);
+        info.appendChild(timestamp);
+
+        if (metadata.source || metadata.url) {
+          const source = document.createElement('div');
+          source.className = 'webcam-source';
+
+          if (metadata.url) {
+            const link = document.createElement('a');
+            link.href = metadata.url;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.textContent = metadata.source || 'View Source';
+            source.appendChild(document.createTextNode('Source: '));
+            source.appendChild(link);
+          } else {
+            source.textContent = 'Source: ' + metadata.source;
+          }
+
+          info.appendChild(source);
+        }
+
+        // Refresh button
+        const refreshBtn = document.createElement('button');
+        refreshBtn.className = 'refresh-button';
+        refreshBtn.textContent = 'Refresh Image';
+        refreshBtn.onclick = () => {
+          image.src = webcam.imageUrl + '?t=' + Date.now();
+          loadWebcamMetadata(webcam, card);
+        };
+        info.appendChild(refreshBtn);
+      }
+
+      card.appendChild(info);
+      return card;
+    }
+
+    // Load metadata for a webcam
+    async function loadWebcamMetadata(webcam, card) {
+      try {
+        const response = await fetch(webcam.dataUrl);
+        const metadata = await response.json();
+
+        // Update timestamp if card exists
+        if (card) {
+          const timestampEl = card.querySelector('.webcam-timestamp');
+          if (timestampEl) {
+            timestampEl.textContent = 'Last updated: ' + formatTimestamp(metadata.timestamp);
+          }
+        }
+
+        return metadata;
+      } catch (error) {
+        console.error('Failed to load metadata for ' + webcam.name + ':', error);
+        return null;
+      }
+    }
+
+    // Load all webcams
+    async function loadWebcams() {
+      const container = document.getElementById('webcams-container');
+
+      if (webcams.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #718096; padding: 2rem;">No webcams currently available.</p>';
+        return;
+      }
+
+      container.innerHTML = '';
+
+      for (const webcam of webcams) {
+        try {
+          const metadata = await loadWebcamMetadata(webcam);
+          const card = createWebcamCard(webcam, metadata);
+          container.appendChild(card);
+        } catch (error) {
+          console.error('Failed to load webcam ' + webcam.name + ':', error);
+
+          const errorCard = document.createElement('div');
+          errorCard.className = 'webcam-card';
+          errorCard.innerHTML = `
+            <div class="webcam-header">
+              <h3>${webcam.name}</h3>
+              <p class="webcam-location">${webcam.location}</p>
+            </div>
+            <div class="webcam-error">
+              Failed to load webcam data. Please try again later.
+            </div>
+          `;
+          container.appendChild(errorCard);
+        }
+      }
+    }
+
+    // Auto-refresh webcams every 5 minutes
+    function startAutoRefresh() {
+      setInterval(() => {
+        console.log('Auto-refreshing webcam images...');
+        const images = document.querySelectorAll('.webcam-image');
+        images.forEach(img => {
+          const currentSrc = img.src.split('?')[0];
+          img.src = currentSrc + '?t=' + Date.now();
+        });
+
+        // Reload metadata
+        webcams.forEach(webcam => {
+          loadWebcamMetadata(webcam, null);
+        });
+      }, 5 * 60 * 1000); // 5 minutes
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      loadWebcams();
+      startAutoRefresh();
+    });
+
+    // Also load immediately if DOM is already ready
+    if (document.readyState === 'loading') {
+      // Already set up listener above
+    } else {
+      loadWebcams();
+      startAutoRefresh();
+    }
+  </script>
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</body>
+</html>

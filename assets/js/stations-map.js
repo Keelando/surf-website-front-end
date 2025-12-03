@@ -500,9 +500,10 @@ function addBuoyMarker(buoy) {
       const timeStr = obsTime.toLocaleTimeString('en-US', {
         hour: '2-digit',
         minute: '2-digit',
-        timeZone: 'America/Vancouver'
+        timeZone: 'America/Vancouver',
+        timeZoneName: 'short'
       });
-      popupContent += `<div style="font-size: 0.85em; color: #666; margin-top: 4px;">Updated: ${timeStr} PT</div>`;
+      popupContent += `<div style="font-size: 0.85em; color: #666; margin-top: 4px;">Updated: ${timeStr}</div>`;
     }
 
     popupContent += `</div>`;
@@ -612,13 +613,14 @@ function addTideMarker(tide, stationKey) {
     const timeStr = surgeForecast.time.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
-      timeZone: 'America/Vancouver'
+      timeZone: 'America/Vancouver',
+      timeZoneName: 'short'
     });
 
     popupContent += `<div style="background: #fff3e0; padding: 8px; margin: 8px 0; border-radius: 4px; border-left: 3px solid #ff9800;">`;
     popupContent += `<div style="font-weight: 600; margin-bottom: 4px;">Storm Surge Forecast:</div>`;
     popupContent += `<div><strong>${surgeSign}${surgeForecast.value.toFixed(2)}m</strong></div>`;
-    popupContent += `<div style="font-size: 0.85em; color: #666; margin-top: 4px;">Next: ${timeStr} PT</div>`;
+    popupContent += `<div style="font-size: 0.85em; color: #666; margin-top: 4px;">Next: ${timeStr}</div>`;
     popupContent += `</div>`;
   }
 
