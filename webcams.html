@@ -19,7 +19,10 @@
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
       gap: 2rem;
-      margin: 2rem 0;
+      margin: 2rem auto;
+      max-width: 1200px;
+      padding: 0 1rem;
+      justify-content: center;
     }
 
     .webcam-card {
@@ -28,6 +31,7 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       overflow: hidden;
       transition: box-shadow 0.2s;
+      max-width: 100%;
     }
 
     .webcam-card:hover {
@@ -54,17 +58,77 @@
     .webcam-image-container {
       position: relative;
       width: 100%;
+      max-width: 100%;
       background: #f0f0f0;
       min-height: 300px;
       display: flex;
       align-items: center;
       justify-content: center;
+      overflow: hidden;
     }
 
     .webcam-image {
       width: 100%;
+      max-width: 100%;
       height: auto;
       display: block;
+      object-fit: contain;
+    }
+
+    .slideshow-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0, 0, 0, 0.5);
+      color: white;
+      border: none;
+      padding: 1rem;
+      cursor: pointer;
+      font-size: 1.5rem;
+      z-index: 10;
+      transition: background 0.2s, opacity 0.2s;
+      display: none; /* Hidden until slideshow data loads */
+    }
+
+    .slideshow-nav:hover:not(:disabled) {
+      background: rgba(0, 0, 0, 0.7);
+    }
+
+    .slideshow-nav:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .slideshow-nav.prev {
+      left: 0;
+    }
+
+    .slideshow-nav.next {
+      right: 0;
+    }
+
+    .slideshow-dots {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none; /* Hidden until slideshow data loads */
+      gap: 0.5rem;
+      z-index: 10;
+    }
+
+    .slideshow-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.5);
+      border: 2px solid rgba(0, 0, 0, 0.5);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .slideshow-dot.active {
+      background: rgba(255, 255, 255, 0.9);
     }
 
     .webcam-loading {
@@ -77,10 +141,28 @@
       background: #f7fafc;
     }
 
+    .webcam-update-notice {
+      font-size: 0.9rem;
+      color: #2c5282;
+      background: #e6f2ff;
+      padding: 0.5rem;
+      margin-bottom: 0.75rem;
+      border-radius: 4px;
+      text-align: center;
+      font-weight: 500;
+    }
+
     .webcam-timestamp {
       font-size: 0.85rem;
       color: #4a5568;
       margin-bottom: 0.5rem;
+    }
+
+    .slideshow-age-indicator {
+      font-size: 0.8rem;
+      color: #718096;
+      font-style: italic;
+      margin-top: 0.25rem;
     }
 
     .webcam-source {
@@ -123,15 +205,30 @@
       text-align: center;
     }
 
-    /* Mobile responsive */
+    /* Mobile and tablet responsive */
+    @media (max-width: 1024px) {
+      .webcam-grid {
+        grid-template-columns: 1fr;
+        padding: 0 1rem;
+      }
+    }
+
     @media (max-width: 768px) {
       .webcam-grid {
         grid-template-columns: 1fr;
         gap: 1.5rem;
+        padding: 0 0.5rem;
       }
 
       .webcam-image-container {
         min-height: 200px;
+      }
+    }
+
+    @media (max-width: 550px) {
+      .webcam-grid {
+        grid-template-columns: 1fr;
+        padding: 0 0.25rem;
       }
     }
   </style>
@@ -180,9 +277,19 @@
         name: 'White Rock Pier',
         location: 'White Rock, BC',
         dataUrl: '/data/wrcam/latest.json',
-        imageUrl: '/data/wrcam/latest.jpg'
+        imageUrl: '/data/wrcam/latest.jpg',
+        slideshowUrl: '/data/wrcam/slideshow_manifest.json',
+        slideshowPath: '/data/wrcam/'
+      },
+      {
+        id: 'boundarybay',
+        name: 'Boundary Bay',
+        location: 'Boundary Bay, BC',
+        dataUrl: '/data/bbcam/latest.json',
+        imageUrl: '/data/bbcam/latest.jpg',
+        slideshowUrl: '/data/bbcam/slideshow_manifest.json',
+        slideshowPath: '/data/bbcam/'
       }
-      // Add more webcams here as they become available
     ];
 
     // Format timestamp for display (24-hour format)
@@ -201,10 +308,14 @@
       return date.toLocaleString('en-US', options);
     }
 
+    // Slideshow state (per webcam)
+    const slideshowState = {};
+
     // Create webcam card
     function createWebcamCard(webcam, metadata) {
       const card = document.createElement('div');
       card.className = 'webcam-card';
+      card.dataset.webcamId = webcam.id;
 
       // Header
       const header = document.createElement('div');
@@ -221,22 +332,50 @@
       header.appendChild(location);
       card.appendChild(header);
 
-      // Image container
+      // Image container with slideshow controls
       const imageContainer = document.createElement('div');
       imageContainer.className = 'webcam-image-container';
 
       const image = document.createElement('img');
       image.className = 'webcam-image';
-      image.src = webcam.imageUrl + '?t=' + Date.now(); // Cache bust
+      image.src = webcam.imageUrl + '?t=' + Date.now();
       image.alt = webcam.name + ' webcam view';
       image.loading = 'lazy';
 
+      // Previous button (shows older images)
+      const prevBtn = document.createElement('button');
+      prevBtn.className = 'slideshow-nav prev';
+      prevBtn.innerHTML = '‹';
+      prevBtn.onclick = () => navigateSlideshow(webcam.id, 1); // +1 = older (higher index)
+
+      // Next button (shows newer images)
+      const nextBtn = document.createElement('button');
+      nextBtn.className = 'slideshow-nav next';
+      nextBtn.innerHTML = '›';
+      nextBtn.onclick = () => navigateSlideshow(webcam.id, -1); // -1 = newer (lower index)
+
+      // Dots container
+      const dotsContainer = document.createElement('div');
+      dotsContainer.className = 'slideshow-dots';
+
       imageContainer.appendChild(image);
+      imageContainer.appendChild(prevBtn);
+      imageContainer.appendChild(nextBtn);
+      imageContainer.appendChild(dotsContainer);
       card.appendChild(imageContainer);
+
+      // Load slideshow data
+      loadSlideshow(webcam);
 
       // Info section
       const info = document.createElement('div');
       info.className = 'webcam-info';
+
+      // Update notice
+      const updateNotice = document.createElement('div');
+      updateNotice.className = 'webcam-update-notice';
+      updateNotice.textContent = 'Updated every 10 minutes';
+      info.appendChild(updateNotice);
 
       if (metadata) {
         const timestamp = document.createElement('div');
@@ -334,19 +473,150 @@
       }
     }
 
+    // Load slideshow manifest and setup navigation
+    async function loadSlideshow(webcam) {
+      try {
+        const response = await fetch(webcam.slideshowUrl + '?t=' + Date.now());
+        if (!response.ok) {
+          console.warn('Slideshow not available for ' + webcam.name);
+          return;
+        }
+
+        const manifest = await response.json();
+        if (!manifest || manifest.length === 0) {
+          console.warn('No slideshow images for ' + webcam.name);
+          return;
+        }
+
+        // Store slideshow state
+        slideshowState[webcam.id] = {
+          images: manifest,
+          currentIndex: 0, // Start with newest image
+          basePath: webcam.slideshowPath
+        };
+
+        // Show navigation controls
+        const card = document.querySelector(`[data-webcam-id="${webcam.id}"]`);
+        if (card && manifest.length > 1) {
+          const prevBtn = card.querySelector('.slideshow-nav.prev');
+          const nextBtn = card.querySelector('.slideshow-nav.next');
+          const dotsContainer = card.querySelector('.slideshow-dots');
+
+          prevBtn.style.display = 'block';
+          nextBtn.style.display = 'block';
+          dotsContainer.style.display = 'flex';
+
+          // Create dots in reverse order (rightmost = newest)
+          manifest.slice().reverse().forEach((img, reverseIndex) => {
+            const actualIndex = manifest.length - 1 - reverseIndex;
+            const dot = document.createElement('div');
+            dot.className = 'slideshow-dot' + (actualIndex === 0 ? ' active' : '');
+            dot.dataset.index = actualIndex;
+            dot.onclick = () => goToSlide(webcam.id, actualIndex);
+            dotsContainer.appendChild(dot);
+          });
+        }
+
+      } catch (error) {
+        console.error('Failed to load slideshow for ' + webcam.name + ':', error);
+      }
+    }
+
+    // Navigate slideshow (no looping)
+    function navigateSlideshow(webcamId, direction) {
+      const state = slideshowState[webcamId];
+      if (!state || !state.images) return;
+
+      const newIndex = state.currentIndex + direction;
+
+      // Don't allow looping - clamp to valid range
+      if (newIndex < 0 || newIndex >= state.images.length) return;
+
+      state.currentIndex = newIndex;
+      updateSlideshowDisplay(webcamId);
+    }
+
+    // Go to specific slide
+    function goToSlide(webcamId, index) {
+      const state = slideshowState[webcamId];
+      if (!state || !state.images) return;
+
+      state.currentIndex = index;
+      updateSlideshowDisplay(webcamId);
+    }
+
+    // Update slideshow display
+    function updateSlideshowDisplay(webcamId) {
+      const state = slideshowState[webcamId];
+      if (!state) return;
+
+      const card = document.querySelector(`[data-webcam-id="${webcamId}"]`);
+      if (!card) return;
+
+      const image = card.querySelector('.webcam-image');
+      const currentImage = state.images[state.currentIndex];
+
+      // Update image src
+      image.src = state.basePath + currentImage.path + '?t=' + Date.now();
+
+      // Update timestamp
+      const timestamp = card.querySelector('.webcam-timestamp');
+      if (timestamp) {
+        const capturedTime = new Date(currentImage.timestamp);
+        timestamp.textContent = 'Captured: ' + formatTimestamp(currentImage.timestamp);
+
+        // Add age indicator if not the latest image
+        let ageIndicator = card.querySelector('.slideshow-age-indicator');
+        if (state.currentIndex > 0) {
+          const minutesAgo = state.currentIndex * 10; // Images are 10 minutes apart
+          if (!ageIndicator) {
+            ageIndicator = document.createElement('div');
+            ageIndicator.className = 'slideshow-age-indicator';
+            timestamp.parentNode.insertBefore(ageIndicator, timestamp.nextSibling);
+          }
+          ageIndicator.textContent = `(${minutesAgo} minutes ago)`;
+        } else if (ageIndicator) {
+          ageIndicator.remove();
+        }
+      }
+
+      // Update navigation buttons (disable at ends, no looping)
+      const prevBtn = card.querySelector('.slideshow-nav.prev');
+      const nextBtn = card.querySelector('.slideshow-nav.next');
+
+      // At latest (index 0): can't go newer (right), can go older (left)
+      // At oldest (max index): can't go older (left), can go newer (right)
+      if (prevBtn) prevBtn.disabled = state.currentIndex === state.images.length - 1; // Disable left at oldest
+      if (nextBtn) nextBtn.disabled = state.currentIndex === 0; // Disable right at newest
+
+      // Update dots (dots are in reverse order, so match by data-index)
+      const dots = card.querySelectorAll('.slideshow-dot');
+      dots.forEach((dot) => {
+        const dotIndex = parseInt(dot.dataset.index);
+        dot.classList.toggle('active', dotIndex === state.currentIndex);
+      });
+    }
+
     // Auto-refresh webcams every 5 minutes
     function startAutoRefresh() {
       setInterval(() => {
         console.log('Auto-refreshing webcam images...');
-        const images = document.querySelectorAll('.webcam-image');
-        images.forEach(img => {
-          const currentSrc = img.src.split('?')[0];
-          img.src = currentSrc + '?t=' + Date.now();
-        });
 
-        // Reload metadata
+        // Reload each webcam's latest image and slideshow
         webcams.forEach(webcam => {
-          loadWebcamMetadata(webcam, null);
+          const card = document.querySelector(`[data-webcam-id="${webcam.id}"]`);
+          if (!card) return;
+
+          // Only refresh if viewing the latest image (index 0)
+          const state = slideshowState[webcam.id];
+          if (!state || state.currentIndex === 0) {
+            const image = card.querySelector('.webcam-image');
+            image.src = webcam.imageUrl + '?t=' + Date.now();
+          }
+
+          // Reload slideshow manifest
+          loadSlideshow(webcam);
+          loadWebcamMetadata(webcam, card);
         });
       }, 5 * 60 * 1000); // 5 minutes
     }

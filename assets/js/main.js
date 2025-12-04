@@ -416,13 +416,16 @@ async function loadBuoyData() {
     }); // end buoyGroups forEach
 
     const now = new Date();
-    timestamp.textContent = `Page refreshed at ${now.toLocaleString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
-      timeZone: "America/Vancouver"
-    })}`;
+    if (timestamp) {
+      timestamp.textContent = `Page refreshed at ${now.toLocaleString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+        timeZone: "America/Vancouver",
+        timeZoneName: "short"
+      })}`;
+    }
 
     // Handle hash navigation after cards are loaded
     handleHashNavigation();
