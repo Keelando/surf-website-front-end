@@ -206,6 +206,57 @@
   }
 }
 
+/* Compact Metrics Grid */
+.tide-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.tide-metric-card {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  transition: box-shadow 0.2s;
+}
+
+.tide-metric-card:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.tide-metric-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #0077be;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
+.tide-metric-value {
+  /* Content populated by JavaScript */
+}
+
+/* Mobile: Stack cards vertically */
+@media (max-width: 768px) {
+  .tide-metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .tide-metric-card {
+    padding: 0.75rem;
+  }
+
+  .tide-metric-label {
+    font-size: 0.8rem;
+  }
+}
+
+/* Legacy styles for high/low section */
 .tide-data-group {
   margin-bottom: 1.25rem;
   padding-bottom: 1.25rem;

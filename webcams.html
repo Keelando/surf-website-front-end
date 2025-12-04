@@ -75,60 +75,60 @@
       object-fit: contain;
     }
 
+    .slideshow-controls {
+      display: none; /* Hidden until slideshow data loads */
+      padding: 0.75rem;
+      background: #f7fafc;
+      border-top: 1px solid #e2e8f0;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+    }
+
     .slideshow-nav {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      background: rgba(0, 0, 0, 0.5);
+      background: #4299e1;
       color: white;
       border: none;
-      padding: 1rem;
+      padding: 0.5rem 1rem;
       cursor: pointer;
-      font-size: 1.5rem;
-      z-index: 10;
+      font-size: 1.2rem;
+      border-radius: 4px;
       transition: background 0.2s, opacity 0.2s;
-      display: none; /* Hidden until slideshow data loads */
+      min-width: 40px;
     }
 
     .slideshow-nav:hover:not(:disabled) {
-      background: rgba(0, 0, 0, 0.7);
+      background: #3182ce;
     }
 
     .slideshow-nav:disabled {
       opacity: 0.3;
       cursor: not-allowed;
-    }
-
-    .slideshow-nav.prev {
-      left: 0;
-    }
-
-    .slideshow-nav.next {
-      right: 0;
+      background: #cbd5e0;
     }
 
     .slideshow-dots {
-      position: absolute;
-      bottom: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: none; /* Hidden until slideshow data loads */
+      display: flex;
       gap: 0.5rem;
-      z-index: 10;
+      align-items: center;
     }
 
     .slideshow-dot {
-      width: 10px;
-      height: 10px;
+      width: 12px;
+      height: 12px;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.5);
-      border: 2px solid rgba(0, 0, 0, 0.5);
+      background: #cbd5e0;
+      border: none;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .slideshow-dot:hover {
+      transform: scale(1.2);
     }
 
     .slideshow-dot.active {
-      background: rgba(255, 255, 255, 0.9);
+      background: #4299e1;
     }
 
     .webcam-loading {
@@ -248,10 +248,14 @@
       <h2 style="margin-top: 0; color: #2c5282; font-size: 1.3rem;">About Coastal Webcams</h2>
       <p style="margin-bottom: 0.5rem;">
         Live and near-live views from coastal webcams around the Salish Sea.
-        Images are updated regularly to provide current visual conditions for beaches, piers, and marine areas.
+        Images are updated every 10 minutes to provide current visual conditions for beaches, piers, and marine areas.
+      </p>
+      <p style="margin-bottom: 0.5rem;">
+        <strong>Important:</strong> Due to YouTube livestream latency, still images are delayed by 6-20 minutes from real-time.
+        For current conditions, click "View Source" to watch the live stream directly.
       </p>
       <p style="margin: 0;">
-        <strong>Note:</strong> Image update frequency varies by camera. Check the timestamp on each image for freshness.
+        <strong>Note:</strong> Check the timestamp on each image for exact capture time.
       </p>
     </section>
 
@@ -279,7 +283,8 @@
         dataUrl: '/data/wrcam/latest.json',
         imageUrl: '/data/wrcam/latest.jpg',
         slideshowUrl: '/data/wrcam/slideshow_manifest.json',
-        slideshowPath: '/data/wrcam/'
+        slideshowPath: '/data/wrcam/',
+        streamDelay: 6  // minutes
       },
       {
         id: 'boundarybay',
@@ -288,7 +293,8 @@
         dataUrl: '/data/bbcam/latest.json',
         imageUrl: '/data/bbcam/latest.jpg',
         slideshowUrl: '/data/bbcam/slideshow_manifest.json',
-        slideshowPath: '/data/bbcam/'
+        slideshowPath: '/data/bbcam/',
+        streamDelay: 20  // minutes
       }
     ];
 
@@ -332,7 +338,7 @@
       header.appendChild(location);
       card.appendChild(header);
 
-      // Image container with slideshow controls
+      // Image container
       const imageContainer = document.createElement('div');
       imageContainer.className = 'webcam-image-container';
 
@@ -342,11 +348,22 @@
       image.alt = webcam.name + ' webcam view';
       image.loading = 'lazy';
 
+      imageContainer.appendChild(image);
+      card.appendChild(imageContainer);
+
+      // Slideshow controls container (below image)
+      const controlsContainer = document.createElement('div');
+      controlsContainer.className = 'slideshow-controls';
+
       // Previous button (shows older images)
       const prevBtn = document.createElement('button');
       prevBtn.className = 'slideshow-nav prev';
       prevBtn.innerHTML = '‹';
       prevBtn.onclick = () => navigateSlideshow(webcam.id, 1); // +1 = older (higher index)
+
+      // Dots container
+      const dotsContainer = document.createElement('div');
+      dotsContainer.className = 'slideshow-dots';
 
       // Next button (shows newer images)
       const nextBtn = document.createElement('button');
@@ -354,15 +371,10 @@
       nextBtn.innerHTML = '›';
       nextBtn.onclick = () => navigateSlideshow(webcam.id, -1); // -1 = newer (lower index)
 
-      // Dots container
-      const dotsContainer = document.createElement('div');
-      dotsContainer.className = 'slideshow-dots';
-
-      imageContainer.appendChild(image);
-      imageContainer.appendChild(prevBtn);
-      imageContainer.appendChild(nextBtn);
-      imageContainer.appendChild(dotsContainer);
-      card.appendChild(imageContainer);
+      controlsContainer.appendChild(prevBtn);
+      controlsContainer.appendChild(dotsContainer);
+      controlsContainer.appendChild(nextBtn);
+      card.appendChild(controlsContainer);
 
       // Load slideshow data
       loadSlideshow(webcam);
@@ -371,10 +383,10 @@
       const info = document.createElement('div');
       info.className = 'webcam-info';
 
-      // Update notice
+      // Update notice with delay info
       const updateNotice = document.createElement('div');
       updateNotice.className = 'webcam-update-notice';
-      updateNotice.textContent = 'Updated every 10 minutes';
+      updateNotice.textContent = `Updated every 10 minutes • ~${webcam.streamDelay} min stream delay`;
       info.appendChild(updateNotice);
 
       if (metadata) {
@@ -498,13 +510,13 @@
         // Show navigation controls
         const card = document.querySelector(`[data-webcam-id="${webcam.id}"]`);
         if (card && manifest.length > 1) {
-          const prevBtn = card.querySelector('.slideshow-nav.prev');
-          const nextBtn = card.querySelector('.slideshow-nav.next');
+          const controlsContainer = card.querySelector('.slideshow-controls');
           const dotsContainer = card.querySelector('.slideshow-dots');
 
-          prevBtn.style.display = 'block';
-          nextBtn.style.display = 'block';
-          dotsContainer.style.display = 'flex';
+          controlsContainer.style.display = 'flex';
+
+          // Clear existing dots before creating new ones (prevents duplicates on refresh)
+          dotsContainer.innerHTML = '';
 
           // Create dots in reverse order (rightmost = newest)
           manifest.slice().reverse().forEach((img, reverseIndex) => {
@@ -597,10 +609,26 @@
       });
     }
 
-    // Auto-refresh webcams every 5 minutes
+    // Auto-refresh webcams every 5 minutes (up to 30 minutes, then stop)
     function startAutoRefresh() {
-      setInterval(() => {
-        console.log('Auto-refreshing webcam images...');
+      const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+      const MAX_REFRESH_TIME = 30 * 60 * 1000; // 30 minutes
+      const startTime = Date.now();
+      let refreshCount = 0;
+
+      const intervalId = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+
+        // Stop auto-refresh after 30 minutes
+        if (elapsed >= MAX_REFRESH_TIME) {
+          clearInterval(intervalId);
+          console.log('Auto-refresh stopped after 30 minutes. Refresh page to resume.');
+          showRefreshNotice();
+          return;
+        }
+
+        refreshCount++;
+        console.log(`Auto-refreshing webcam images... (${refreshCount}/6)`);
 
         // Reload each webcam's latest image and slideshow
         webcams.forEach(webcam => {
@@ -618,7 +646,47 @@
           loadSlideshow(webcam);
           loadWebcamMetadata(webcam, card);
         });
-      }, 5 * 60 * 1000); // 5 minutes
+      }, REFRESH_INTERVAL);
+    }
+
+    // Show notice when auto-refresh stops
+    function showRefreshNotice() {
+      const notice = document.createElement('div');
+      notice.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #2c5282;
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 1000;
+        font-size: 0.95rem;
+        text-align: center;
+      `;
+      notice.innerHTML = `
+        Auto-refresh stopped after 30 minutes
+        <button onclick="location.reload()" style="
+          margin-left: 1rem;
+          padding: 0.5rem 1rem;
+          background: white;
+          color: #2c5282;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          font-weight: 600;
+        ">Refresh Page</button>
+      `;
+      document.body.appendChild(notice);
+
+      // Auto-hide notice after 10 seconds
+      setTimeout(() => {
+        notice.style.transition = 'opacity 0.5s';
+        notice.style.opacity = '0';
+        setTimeout(() => notice.remove(), 500);
+      }, 10000);
     }
 
     // Initialize on page load
