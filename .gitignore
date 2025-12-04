@@ -2,6 +2,16 @@
 data/*.json
 data/storm_surge/*.json
 
+# Webcam images and metadata (regenerated automatically every 10 minutes)
+data/wrcam/latest.jpg
+data/wrcam/latest.json
+data/bbcam/latest.jpg
+data/bbcam/latest.json
+data/wrcam/slideshow/*.jpg
+data/bbcam/slideshow/*.jpg
+data/wrcam/slideshow_manifest.json
+data/bbcam/slideshow_manifest.json
+
 # Logs
 *.log
 
