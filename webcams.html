@@ -421,6 +421,13 @@
         refreshBtn.onclick = () => {
           image.src = webcam.imageUrl + '?t=' + Date.now();
           loadWebcamMetadata(webcam, card);
+
+          // Reset slideshow to newest image and update dots
+          const state = slideshowState[webcam.id];
+          if (state) {
+            state.currentIndex = 0;
+            updateSlideshowDisplay(webcam.id);
+          }
         };
         info.appendChild(refreshBtn);
       }

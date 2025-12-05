@@ -3,6 +3,42 @@
    Shared formatting and config functions
    ----------------------------- */
 
+/* =============================================================================
+   DIRECTION ARROW DEFINITIONS (CENTRALIZED)
+   All direction markers across the frontend use these definitions
+   ============================================================================= */
+
+/**
+ * ECharts arrow symbol path - points DOWNWARD at 0° rotation
+ * Skinny notched arrow design
+ *
+ * CRITICAL: Arrow shows where wind/waves are TRAVELING TO, not coming from
+ * Meteorological convention: direction value = where wind/waves COME FROM
+ * Therefore: arrow must point OPPOSITE to the bearing (hence negative rotation)
+ *
+ * Philosophy: Arrow defaults pointing DOWN, rotates COUNTER-CLOCKWISE (negated degrees)
+ *   0° = FROM NORTH → arrow points down (traveling south) → rotation: -0° = 0°
+ *   90° = FROM EAST → arrow points left (traveling west) → rotation: -90°
+ *   180° = FROM SOUTH → arrow points up (traveling north) → rotation: -180°
+ *   270° = FROM WEST → arrow points right (traveling east) → rotation: -270°
+ */
+const DIRECTION_ARROW_PATH = 'path://M0,15 L-3,-5 L0,0 L3,-5 Z';
+
+/**
+ * Calculate arrow rotation for direction display
+ *
+ * ALWAYS USE THIS FUNCTION - DO NOT rotate by direction directly!
+ *
+ * @param {number} direction - Direction in degrees (meteorological: coming FROM)
+ * @returns {number} Rotation angle in degrees (NEGATED for counter-clockwise)
+ *
+ * Why negative? Meteorological direction = source bearing (where FROM)
+ * Arrow shows destination (where TO) = opposite direction = negate the value
+ */
+function calculateArrowRotation(direction) {
+  return -direction;
+}
+
 /**
  * Fetch with timeout and retry logic
  * @param {string} url - URL to fetch

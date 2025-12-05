@@ -1,6 +1,7 @@
 /* -----------------------------
    Wave Chart Module
    Handles wave height and period visualization
+   Uses centralized arrow definitions from chart-utils-v4.js
    ----------------------------- */
 
 /**
@@ -37,14 +38,9 @@ function createWaveDirectionArrowData(waveDirectionData, waveHeightData) {
     const timestamp = new Date(dirPoint.time).getTime();
     const direction = dirPoint.value; // Wave direction (coming FROM)
 
-    // Position arrows in a straight line at top
-    // Arrow SVG points DOWN at rotation=0
-    // Direction indicates where waves COME FROM (meteorological convention)
-    // Arrow shows where waves are TRAVELING TO (propagation direction)
-    // Rotation = direction (counter-clockwise from down)
     arrowData.push({
       value: [timestamp, arrowYPosition],
-      symbolRotate: direction,
+      symbolRotate: calculateArrowRotation(direction),
       itemStyle: {
         color: '#1e88e5',
         opacity: 0.7
@@ -109,7 +105,7 @@ function createSpectralDirectionArrows(directionData, heightData, color) {
 
     arrowData.push({
       value: [timestamp, yPosition],
-      symbolRotate: direction, // Arrow shows wave propagation direction
+      symbolRotate: calculateArrowRotation(direction),
       itemStyle: {
         color: color,
         opacity: 0.8
@@ -259,7 +255,7 @@ function renderSpectralCharts(waveChart, buoy, ts) {
         name: "Wind Wave Dir",
         type: "scatter",
         data: windWaveArrows,
-        symbol: 'path://M0,10 L-3,-8 L0,-6 L3,-8 Z',
+        symbol: DIRECTION_ARROW_PATH,
         symbolSize: 14,
         symbolRotate: function(params) {
           return windWaveArrows[params.dataIndex]?.symbolRotate || 0;
@@ -280,7 +276,7 @@ function renderSpectralCharts(waveChart, buoy, ts) {
         name: "Swell Dir",
         type: "scatter",
         data: swellArrows,
-        symbol: 'path://M0,10 L-3,-8 L0,-6 L3,-8 Z',
+        symbol: DIRECTION_ARROW_PATH,
         symbolSize: 14,
         symbolRotate: function(params) {
           return swellArrows[params.dataIndex]?.symbolRotate || 0;
@@ -434,7 +430,7 @@ function renderSpectralCharts(waveChart, buoy, ts) {
           name: "Wind Wave Dir",
           type: "scatter",
           data: windWavePeriodArrows,
-          symbol: 'path://M0,10 L-3,-8 L0,-6 L3,-8 Z',
+          symbol: DIRECTION_ARROW_PATH,
           symbolSize: 14,
           symbolRotate: function(params) {
             return windWavePeriodArrows[params.dataIndex]?.symbolRotate || 0;
@@ -455,7 +451,7 @@ function renderSpectralCharts(waveChart, buoy, ts) {
           name: "Swell Dir",
           type: "scatter",
           data: swellPeriodArrows,
-          symbol: 'path://M0,10 L-3,-8 L0,-6 L3,-8 Z',
+          symbol: DIRECTION_ARROW_PATH,
           symbolSize: 14,
           symbolRotate: function(params) {
             return swellPeriodArrows[params.dataIndex]?.symbolRotate || 0;
@@ -472,7 +468,7 @@ function renderSpectralCharts(waveChart, buoy, ts) {
           z: 3
         }
       ]
-    });
+    }, true);
 
     setTimeout(() => {
       if (window.wavePeriodChart) {
@@ -579,7 +575,7 @@ function renderStandardWaveChart(waveChart, buoy, buoyId, ts) {
       name: "Wave Direction",
       type: "scatter",
       data: arrowData,
-      symbol: 'path://M0,12 L-4,-8 L0,-6 L4,-8 Z', // Custom centered arrow pointing DOWN
+      symbol: 'path://M0,15 L-3,-5 L0,0 L3,-5 Z', // Skinny notched arrow pointing DOWN
       symbolSize: 16,
       symbolRotate: function(dataIndex) {
         return arrowData[dataIndex]?.symbolRotate || 0;
@@ -590,7 +586,7 @@ function renderStandardWaveChart(waveChart, buoy, buoyId, ts) {
           return arrowData[params.dataIndex]?.itemStyle?.color || '#1e88e5';
         },
         opacity: function(params) {
-          return arrowData[params.dataIndex]?.itemStyle?.opacity || 0.7;
+          return arrowData[params.dataIndex]?.itemStyle?.opacity || 1.0;
         }
       },
       silent: true,
@@ -656,7 +652,7 @@ function renderStandardWaveChart(waveChart, buoy, buoyId, ts) {
       { type: "value", name: "Period (s)", position: "right" },
     ],
     series: series
-  });
+  }, true);
 }
 
 /**

@@ -153,7 +153,7 @@ function renderWindChart(windChart, buoy) {
         name: "Wind Direction",
         type: "scatter",
         data: arrowData,
-        symbol: 'path://M0,12 L-4,-8 L0,-6 L4,-8 Z', // Custom centered arrow pointing DOWN
+        symbol: DIRECTION_ARROW_PATH,
         symbolSize: 16,
         symbolRotate: function(dataIndex) {
           // Read rotation from data point
@@ -166,7 +166,7 @@ function renderWindChart(windChart, buoy) {
           },
           opacity: function(params) {
             // Read opacity from data point
-            return arrowData[params.dataIndex]?.itemStyle?.opacity || 0.7;
+            return arrowData[params.dataIndex]?.itemStyle?.opacity || 1.0;
           }
         },
         silent: true, // Don't trigger mouse events

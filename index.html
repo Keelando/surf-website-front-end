@@ -122,15 +122,21 @@
     <div id="buoy-selector">
       <label for="chart-buoy-select">Select Buoy:</label>
       <select id="chart-buoy-select">
-        <option value="4600146">Halibut Bank</option>
-        <option value="4600304">English Bay</option>
-        <option value="CRPILE">Crescent Beach Ocean (Boundary Bay)</option>
-        <option value="CRCHAN">Crescent Channel</option>
-        <option value="4600303">Southern Georgia Strait</option>
-        <option value="4600131">Sentry Shoal</option>
-        <option value="46087">Neah Bay</option>
-        <option value="46088">New Dungeness (Hein Bank)</option>
-        <option value="46267">Angeles Point</option>
+        <optgroup label="Strait of Georgia">
+          <option value="4600146">Halibut Bank</option>
+          <option value="4600304">English Bay</option>
+          <option value="4600303">Southern Georgia Strait</option>
+          <option value="4600131">Sentry Shoal</option>
+        </optgroup>
+        <optgroup label="Boundary Bay">
+          <option value="CRPILE">Crescent Beach Ocean</option>
+          <option value="CRCHAN">Crescent Channel</option>
+        </optgroup>
+        <optgroup label="Juan de Fuca">
+          <option value="46087">Neah Bay</option>
+          <option value="46088">New Dungeness (Hein Bank)</option>
+          <option value="46267">Angeles Point</option>
+        </optgroup>
       </select>
       <a href="#stations-map" id="show-buoy-on-map-btn" onclick="showSelectedBuoyOnMap(event)" style="margin-left: 1rem; padding: 0.5rem 1rem; background: #0077be; color: white; text-decoration: none; border-radius: 4px; font-size: 0.9rem; display: inline-block;">Show on Map</a>
     </div>
@@ -192,11 +198,11 @@
   <script src="/assets/js/logger.js?v=20251117"></script>
   <script src="/assets/js/warning-banner.js?v=20251117"></script>
   <!-- Load chart utilities first to avoid race conditions -->
-  <script src="/assets/js/chart-utils-v4.js?v=20251117"></script>
+  <script src="/assets/js/chart-utils-v4.js?v=20251205e"></script>
   <script src="/assets/js/main.js?v=20251120b"></script>
   <script src="/assets/js/stations-map.js?v=20251117"></script>
-  <script src="/assets/js/wave-chart-v4.js?v=20251117"></script>
-  <script src="/assets/js/wind-chart-v4.js?v=20251117"></script>
+  <script src="/assets/js/wave-chart-v4.js?v=20251205c"></script>
+  <script src="/assets/js/wind-chart-v4.js?v=20251205c"></script>
   <script src="/assets/js/temperature-chart-v4.js"></script>
   <script src="/assets/js/comparison-chart-v4.js?v=20251117"></script>
   <script src="/assets/js/wave-table-v4.js?v=20251117"></script>
