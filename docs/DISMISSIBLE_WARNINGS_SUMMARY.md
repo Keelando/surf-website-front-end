@@ -312,7 +312,7 @@ Files already in place:
 
 ## 📝 Framework Discussion Documented
 
-See: `/site/FRAMEWORK_DISCUSSION.md`
+See: `archive/docs/historical_analysis/FRAMEWORK_DISCUSSION.md` (archived 2025-12-06)
 
 We evaluated and documented:
 - Alpine.js (lightweight reactivity)

@@ -152,11 +152,11 @@ Smart navigation from warning banners to forecasts:
 **Revisit when:** Site grows to 10+ pages or needs complex user interactions
 
 **Documentation:**
-- `~/site/FRAMEWORK_DISCUSSION.md`
-- `~/site/BROWSER_STATE_EXPLAINED.md`
-- `~/site/STATE_QUICK_REFERENCE.md`
-- `~/site/DISMISSIBLE_WARNINGS_SUMMARY.md`
-- `~/site/MOBILE_UX_IMPROVEMENTS.md`
+- `docs/BROWSER_STATE_EXPLAINED.md`
+- `docs/STATE_QUICK_REFERENCE.md`
+- `docs/DISMISSIBLE_WARNINGS_SUMMARY.md`
+- `docs/MOBILE_UX_IMPROVEMENTS.md`
+- `archive/docs/historical_analysis/FRAMEWORK_DISCUSSION.md` (archived 2025-12-06)
 
 ---
 
