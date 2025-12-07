@@ -56,17 +56,14 @@
 
     .lightstation-card .view-chart-link {
       display: inline-block;
-      margin-top: 0.75rem;
-      padding: 0;
-      color: #4299e1;
-      text-decoration: underline;
-      font-size: 0.85rem;
-      transition: color 0.2s;
+      color: #2c5282;
+      font-weight: 600;
+      transition: background 0.2s, color 0.2s;
     }
 
     .lightstation-card .view-chart-link:hover {
-      color: #2b6cb0;
-      text-decoration: underline;
+      background: #edf2f7 !important;
+      color: #1a365d;
     }
 
     .station-details-toggle {
@@ -322,6 +319,7 @@
           <select id="lightstation-station-select" size="1" style="padding: 0.5rem; font-size: 1rem; border-radius: 4px; border: 1px solid #ccc; min-width: 300px;">
             <option value="">Loading stations...</option>
           </select>
+          <a href="#lightstation-map-section" id="show-lightstation-on-map-btn" onclick="showSelectedLightstationOnMap()" style="margin-left: 1rem; padding: 0.5rem 1rem; background: #0077be; color: white; text-decoration: none; border-radius: 4px; font-size: 0.9rem; display: inline-block;">Show on Map</a>
         </div>
       </div>
     </section>
@@ -585,16 +583,68 @@
         card.appendChild(warning);
       }
 
+      // Navigation links container
+      const navLinks = document.createElement('div');
+      navLinks.style.display = 'flex';
+      navLinks.style.gap = '0.5rem';
+      navLinks.style.marginTop = '0.75rem';
+
       // View historical data link
       const chartLink = document.createElement('a');
       chartLink.className = 'view-chart-link';
       chartLink.href = '#lightstation-data-table-section';
       chartLink.textContent = 'View historical';
+      chartLink.style.flex = '1';
+      chartLink.style.textAlign = 'center';
+      chartLink.style.padding = '0.4rem';
+      chartLink.style.background = '#f7fafc';
+      chartLink.style.border = '1px solid #e2e8f0';
+      chartLink.style.borderRadius = '4px';
+      chartLink.style.textDecoration = 'none';
+      chartLink.style.fontSize = '0.85rem';
       chartLink.onclick = (e) => {
         e.preventDefault();
         viewLightstationChart(station.name);
       };
-      card.appendChild(chartLink);
+      navLinks.appendChild(chartLink);
+
+      // Show on Map button
+      const mapLink = document.createElement('a');
+      mapLink.className = 'view-chart-link';
+      mapLink.href = '#lightstation-map-section';
+      mapLink.textContent = '📍 Show on Map';
+      mapLink.style.flex = '1';
+      mapLink.style.textAlign = 'center';
+      mapLink.style.padding = '0.4rem';
+      mapLink.style.background = '#f7fafc';
+      mapLink.style.border = '1px solid #e2e8f0';
+      mapLink.style.borderRadius = '4px';
+      mapLink.style.textDecoration = 'none';
+      mapLink.style.fontSize = '0.85rem';
+      mapLink.onclick = (e) => {
+        e.preventDefault();
+        const stationId = window.stationMetadata && window.stationMetadata[station.name]
+          ? window.stationMetadata[station.name].id
+          : null;
+
+        if (stationId) {
+          // Scroll to map section
+          const mapSection = document.getElementById('lightstation-map-section');
+          if (mapSection) {
+            mapSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+
+          // Center map on lightstation after scroll
+          setTimeout(() => {
+            if (typeof window.centerMapOnLightstation === 'function') {
+              window.centerMapOnLightstation(stationId);
+            }
+          }, 800);
+        }
+      };
+      navLinks.appendChild(mapLink);
+
+      card.appendChild(navLinks);
 
       // Station details toggle button
       const detailsToggle = document.createElement('div');
@@ -703,6 +753,38 @@
 
       return row;
     }
+
+    // Function to show selected lightstation on map (from dropdown)
+    function showSelectedLightstationOnMap() {
+      const select = document.getElementById('lightstation-station-select');
+      if (!select || !select.value) {
+        console.warn('No lightstation selected');
+        return;
+      }
+
+      const stationName = select.value;
+
+      // Get station ID from metadata
+      if (window.stationMetadata && window.stationMetadata[stationName]) {
+        const stationId = window.stationMetadata[stationName].id;
+
+        // Scroll to map section
+        const mapSection = document.getElementById('lightstation-map-section');
+        if (mapSection) {
+          mapSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Center map on lightstation after scroll
+        setTimeout(() => {
+          if (typeof window.centerMapOnLightstation === 'function') {
+            window.centerMapOnLightstation(stationId);
+          }
+        }, 800);
+      }
+    }
+
+    // Make function globally accessible
+    window.showSelectedLightstationOnMap = showSelectedLightstationOnMap;
 
     // Load data on page load
     loadLightstationData();

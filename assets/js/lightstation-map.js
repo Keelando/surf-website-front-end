@@ -189,38 +189,42 @@ function addLightstationMapMarker(lightstation) {
     const obs = latestLightstationData[lookupName];
 
     popupContent += `<div style="background: #f0f8ff; padding: 8px; margin: 8px 0; border-radius: 4px; border-left: 3px solid #0077be;">`;
-    popupContent += `<div style="font-weight: 600; margin-bottom: 4px;">Latest Conditions:</div>`;
+    popupContent += `<div style="font-weight: 600; margin-bottom: 6px; color: #004b7c; font-size: 0.95em;">Latest Conditions:</div>`;
+
+    // Wave Height (prominent display)
+    if (obs.sea_height_ft !== null) {
+      popupContent += `<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 6px 8px; border-radius: 4px; margin-bottom: 6px; text-align: center; font-weight: 600;">`;
+      popupContent += `🌊 Wave Height: ${obs.sea_height_ft} ft`;
+      popupContent += `</div>`;
+    }
 
     // Wind
     if (!obs.wind_calm) {
       const windText = `${obs.wind_direction || 'N/A'} ${obs.wind_speed_kt || 'N/A'} kt${obs.wind_gusting ? ' (gusting)' : ''}${obs.wind_estimated ? ' (est)' : ''}`;
-      popupContent += `<div><strong>💨 Wind:</strong> ${windText}</div>`;
+      popupContent += `<div style="margin: 4px 0;"><strong>💨 Wind:</strong> ${windText}</div>`;
     } else {
-      popupContent += `<div><strong>💨 Wind:</strong> CALM</div>`;
+      popupContent += `<div style="margin: 4px 0;"><strong>💨 Wind:</strong> CALM</div>`;
     }
 
-    // Sea state
-    if (obs.sea_height_ft !== null || obs.sea_condition) {
-      const seaText = obs.sea_height_ft !== null
-        ? `${obs.sea_height_ft} ft ${obs.sea_condition || ''}`
-        : obs.sea_condition || 'N/A';
-      popupContent += `<div><strong>🌊 Sea:</strong> ${seaText}</div>`;
+    // Sea condition (if available, separate from height)
+    if (obs.sea_condition) {
+      popupContent += `<div style="margin: 4px 0;"><strong>🌊 Sea Condition:</strong> ${obs.sea_condition}</div>`;
     }
 
     // Swell
     if (obs.swell_intensity || obs.swell_direction) {
       const swellText = `${obs.swell_intensity || ''} ${obs.swell_direction || ''} swell`.trim();
-      popupContent += `<div><strong>〰️ Swell:</strong> ${swellText || 'N/A'}</div>`;
+      popupContent += `<div style="margin: 4px 0;"><strong>〰️ Swell:</strong> ${swellText || 'N/A'}</div>`;
     }
 
     // Report time
     if (obs.report_time_str) {
-      popupContent += `<div style="font-size: 0.85em; color: #666; margin-top: 4px;">Report: ${obs.report_time_str}</div>`;
+      popupContent += `<div style="font-size: 0.85em; color: #555; margin-top: 6px; padding-top: 4px; border-top: 1px solid rgba(0,75,124,0.2);">📅 Report: ${obs.report_time_str}</div>`;
     }
 
     // Staleness warning
     if (obs.stale) {
-      popupContent += `<div style="color: #c53030; font-size: 0.85em; margin-top: 4px;">⚠️ Data >6 hours old</div>`;
+      popupContent += `<div style="color: #c53030; font-size: 0.85em; margin-top: 4px; font-weight: 600;">⚠️ Data >6 hours old</div>`;
     }
 
     popupContent += `</div>`;

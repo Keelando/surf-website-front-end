@@ -57,10 +57,16 @@ async function loadLightstationTimeseries() {
     // Populate dropdown
     populateLightstationDropdown();
 
-    // Set default selection (first station)
+    // Set default selection (Merry Island, or first station if not found)
     if (allLightstations.length > 0) {
-      select.value = allLightstations[0][0];
-      renderLightstationCharts(allLightstations[0][0]);
+      // Try to find Merry Island
+      const merryIsland = allLightstations.find(([id, station]) =>
+        station.name.toUpperCase() === 'MERRY ISLAND' || id === 'MERRY ISLAND'
+      );
+
+      const defaultStation = merryIsland ? merryIsland[0] : allLightstations[0][0];
+      select.value = defaultStation;
+      renderLightstationCharts(defaultStation);
     }
 
     // Add change listener to dropdown

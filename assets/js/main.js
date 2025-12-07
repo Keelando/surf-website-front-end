@@ -51,6 +51,12 @@ async function loadBuoyData() {
         "46088",   // New Dungeness
         "46267",   // Angeles Point
       ]
+    },
+    {
+      region: "West Coast Vancouver Island",
+      stations: [
+        "4600206", // La Perouse Bank
+      ]
     }
   ];
   // COLEB excluded - wind-only station, available in charts only
@@ -61,6 +67,7 @@ async function loadBuoyData() {
     "4600304": "https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06400&stationID=46304",
     "4600303": "https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46303",
     "4600131": "https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06400&stationID=46131",
+    "4600206": "https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=04&siteID=06400&stationID=46206",
     "46087": "https://www.ndbc.noaa.gov/station_page.php?station=46087",
     "46088": "https://www.ndbc.noaa.gov/station_page.php?station=46088",
     "46267": "https://www.ndbc.noaa.gov/station_page.php?station=46267",
@@ -314,14 +321,61 @@ async function loadBuoyData() {
         `;
       } else {
         // EC Buoys and other stations - show only additional peak values not already displayed
-        const hasPeakData = b.wave_period_peak != null || b.wave_height_peak != null;
+        const hasPeakData = b.wave_period_peak != null || b.wave_height_peak != null || b.wave_height_max != null;
 
         if (hasPeakData) {
           cardContent += `<p class="buoy-metric" style="font-weight: 600; color: #004b7c; margin-bottom: 0.5rem;">📊 Additional Metrics</p>`;
 
+          // Show peak wave height (English Bay, Southern Strait)
           if (b.wave_height_peak != null) {
             cardContent += `<p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Peak Wave Height:</b> ${b.wave_height_peak} m</p>`;
           }
+
+          // Show maximum wave height (Halibut Bank, Sentry Shoal)
+          if (b.wave_height_max != null) {
+            const sigHeight = b.wave_height_sig || 0;
+            const ratio = sigHeight > 0 ? (b.wave_height_max / sigHeight).toFixed(1) : '';
+            const ratioText = ratio ? ` <span style="color: #666; font-size: 0.9em;">(${ratio}× sig)</span>` : '';
+            cardContent += `<p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Maximum Wave Height:</b> ${b.wave_height_max} m${ratioText}</p>`;
+          }
+
+          // Show wave direction spread (Halibut Bank, Sentry Shoal)
+          if (b.wave_direction_spread_avg != null && b.wave_direction_avg != null) {
+            const spread = b.wave_direction_spread_avg;
+            const avgDir = b.wave_direction_avg;
+            let spreadDesc = '';
+            let spreadColor = '#666';
+
+            // Thresholds calibrated for inland waters (Salish Sea, Strait of Georgia)
+            if (spread < 25) {
+              spreadDesc = 'very organized';
+              spreadColor = '#38a169'; // green
+            } else if (spread < 40) {
+              spreadDesc = 'organized';
+              spreadColor = '#48bb78'; // light green
+            } else if (spread < 55) {
+              spreadDesc = 'moderate';
+              spreadColor = '#d69e2e'; // orange
+            } else {
+              spreadDesc = 'confused';
+              spreadColor = '#e53e3e'; // red
+            }
+
+            // Calculate range (assuming ±50% split)
+            const halfSpread = spread / 2;
+            const minDir = (avgDir - halfSpread + 360) % 360;
+            const maxDir = (avgDir + halfSpread) % 360;
+            const minCardinal = degreesToCardinal(minDir);
+            const maxCardinal = degreesToCardinal(maxDir);
+
+            const rangeText = minCardinal === maxCardinal
+              ? `${minCardinal}`
+              : `${minCardinal} to ${maxCardinal}`;
+
+            cardContent += `<p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Wave Direction Spread:</b> ${spread}° <span style="color: ${spreadColor}; font-weight: 600;">(${spreadDesc})</span></p>`;
+            cardContent += `<p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Wave Direction Range:</b> ${rangeText} (${Math.round(minDir)}° to ${Math.round(maxDir)}°)</p>`;
+          }
+
           if (b.wave_period_peak != null) {
             cardContent += `<p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Peak Period:</b> ${b.wave_period_peak} s</p>`;
           }
