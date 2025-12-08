@@ -26,14 +26,14 @@
 
 <body>
   <!-- Warning Banner Container -->
-  <div hx-get="/components/warning-banner.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
+  <div hx-get="/components/warning-banner.html?v=1" hx-trigger="load" hx-swap="outerHTML swap:0ms settle:0ms"></div>
 
   <!-- Navigation -->
-  <div hx-get="/components/nav.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
+  <div hx-get="/components/nav.html?v=1" hx-trigger="load" hx-swap="outerHTML swap:0ms settle:0ms" style="min-height: 60px;"></div>
 
-  <div hx-get="/components/header-tides.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
+  <div hx-get="/components/header-tides.html?v=1" hx-trigger="load" hx-swap="outerHTML swap:0ms settle:0ms" style="min-height: 80px;"></div>
 
-  <div hx-get="/components/tagline-tides.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
+  <div hx-get="/components/tagline-tides.html?v=1" hx-trigger="load" hx-swap="outerHTML swap:0ms settle:0ms" style="min-height: 40px;"></div>
 
   <main class="tide-main-content">
     

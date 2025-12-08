@@ -85,7 +85,7 @@
 .warning-storm {
   background: linear-gradient(to right, #991b1b, #b91c1c);
   color: #fff;
-  border-left: 6px solid #fef2f2; /* Thicker border for urgency */
+  border-left: 6px solid #7f1d1d; /* Dark red border for urgency */
   animation: stormPulse 2s ease-in-out infinite; /* More urgent animation */
 }
 
@@ -103,7 +103,7 @@
 .warning-gale {
   background: linear-gradient(to right, #c2410c, #ea580c);
   color: #fff;
-  border-left: 5px solid #fff7ed; /* Thicker border for high severity */
+  border-left: 5px solid #9a3412; /* Dark orange border for high severity */
 }
 
 .warning-gale .warning-details-link {
@@ -120,7 +120,7 @@
 .warning-strong-wind {
   background: linear-gradient(to right, #b45309, #d97706);
   color: #fff;
-  border-left: 4px solid #fef3c7; /* Standard border */
+  border-left: 4px solid #92400e; /* Dark amber border */
 }
 
 .warning-strong-wind .warning-details-link {
@@ -137,7 +137,7 @@
 .warning-default {
   background: linear-gradient(to right, #1e40af, #2563eb);
   color: #fff;
-  border-left-color: #dbeafe;
+  border-left-color: #1e3a8a;
 }
 
 .warning-default .warning-details-link {

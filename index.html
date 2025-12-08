@@ -38,14 +38,14 @@
 
 <body>
   <!-- Warning Banner Container -->
-  <div hx-get="/components/warning-banner.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
+  <div hx-get="/components/warning-banner.html?v=1" hx-trigger="load" hx-swap="outerHTML swap:0ms settle:0ms"></div>
 
   <!-- Navigation -->
-  <div hx-get="/components/nav.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
+  <div hx-get="/components/nav.html?v=1" hx-trigger="load" hx-swap="outerHTML swap:0ms settle:0ms" style="min-height: 60px;"></div>
 
-  <div hx-get="/components/header-buoys.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
+  <div hx-get="/components/header-buoys.html?v=1" hx-trigger="load" hx-swap="outerHTML swap:0ms settle:0ms" style="min-height: 80px;"></div>
 
-  <div hx-get="/components/tagline-buoys.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
+  <div hx-get="/components/tagline-buoys.html?v=1" hx-trigger="load" hx-swap="outerHTML swap:0ms settle:0ms" style="min-height: 40px;"></div>
 
   <main id="buoy-container" aria-live="polite" aria-label="Buoy data cards">
     <p>Loading latest buoy data…</p>
@@ -136,6 +136,9 @@
           <option value="46087">Neah Bay</option>
           <option value="46088">New Dungeness (Hein Bank)</option>
           <option value="46267">Angeles Point</option>
+        </optgroup>
+        <optgroup label="West Coast Vancouver Island">
+          <option value="4600206">La Perouse Bank</option>
         </optgroup>
       </select>
       <a href="#stations-map" id="show-buoy-on-map-btn" onclick="showSelectedBuoyOnMap(event)" style="margin-left: 1rem; padding: 0.5rem 1rem; background: #0077be; color: white; text-decoration: none; border-radius: 4px; font-size: 0.9rem; display: inline-block;">Show on Map</a>

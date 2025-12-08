@@ -291,6 +291,7 @@ async function loadWindTable() {
         '4600304': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06400&stationID=46304',
         '4600303': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46303',
         '4600131': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06400&stationID=46131',
+        '4600206': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=04&siteID=06400&stationID=46206',
         // NOAA Buoys and Stations
         '46087': 'https://www.ndbc.noaa.gov/station_page.php?station=46087',
         '46088': 'https://www.ndbc.noaa.gov/station_page.php?station=46088',

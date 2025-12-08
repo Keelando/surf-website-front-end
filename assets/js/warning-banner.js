@@ -15,6 +15,22 @@
  *   3. Call displayWarningBanners() after page load
  */
 
+// Helper: Fetch with timeout
+async function fetchWithTimeout(url, timeout = 5000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(id);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return await response.json();
+  } catch (error) {
+    clearTimeout(id);
+    throw error;
+  }
+}
+
 // Configuration
 const STORAGE_KEY = 'dismissed_marine_warnings';
 
@@ -151,28 +167,42 @@ function showDismissalFeedback(banner, message) {
  * @param {string} containerId - ID of container element (default: 'warning-banner-container')
  */
 async function displayWarningBanners(containerId = 'warning-banner-container') {
+  console.log('[WarningBanner] displayWarningBanners() called, looking for container:', containerId);
   const container = document.getElementById(containerId);
 
   if (!container) {
+    console.error('[WarningBanner] Container not found:', containerId);
     logger.warn('WarningBanner', `Warning banner container '${containerId}' not found`);
     return;
   }
 
+  console.log('[WarningBanner] Container found, fetching marine forecast data...');
+
   try {
     const data = await fetchWithTimeout(`/data/marine_forecast.json?t=${Date.now()}`);
+    console.log('[WarningBanner] Forecast data loaded:', data);
+
     const warnings = collectActiveWarnings(data);
+    console.log('[WarningBanner] Collected warnings:', warnings.length, warnings);
 
     // Filter out dismissed warnings
     const activeWarnings = warnings.filter(warning => {
       const warningId = getWarningId(warning);
-      return !isWarningDismissed(warningId);
+      const isDismissed = isWarningDismissed(warningId);
+      console.log('[WarningBanner] Checking warning:', warningId, 'dismissed:', isDismissed);
+      return !isDismissed;
     });
 
+    console.log('[WarningBanner] Active (non-dismissed) warnings:', activeWarnings.length, activeWarnings);
+
     if (activeWarnings.length === 0) {
+      console.log('[WarningBanner] No active warnings to display, hiding container');
       // No active warnings - hide container
       container.style.display = 'none';
       return;
     }
+
+    console.log('[WarningBanner] Displaying', activeWarnings.length, 'warning(s)');
 
     // Combine all warnings into a single banner
     const combinedBanner = createCombinedWarningBanner(activeWarnings);
@@ -209,6 +239,7 @@ async function displayWarningBanners(containerId = 'warning-banner-container') {
     };
 
   } catch (error) {
+    console.error('[WarningBanner] Error loading warnings:', error);
     logger.error('WarningBanner', 'Error loading marine forecast warnings', error);
     container.style.display = 'none';
   }
@@ -328,15 +359,50 @@ function getWarningIcon(type) {
 }
 
 // Auto-initialize if container exists on page load
+console.log('[WarningBanner] Script loaded, readyState:', document.readyState);
 if (document.readyState === 'loading') {
+  console.log('[WarningBanner] Waiting for DOMContentLoaded...');
   document.addEventListener('DOMContentLoaded', () => {
+    console.log('[WarningBanner] DOMContentLoaded fired');
     if (document.getElementById('warning-banner-container')) {
+      console.log('[WarningBanner] Container found on DOMContentLoaded, displaying warnings');
       displayWarningBanners();
+    } else {
+      console.log('[WarningBanner] Container NOT found on DOMContentLoaded');
     }
   });
 } else {
   // DOM already loaded
+  console.log('[WarningBanner] DOM already loaded, checking for container...');
   if (document.getElementById('warning-banner-container')) {
+    console.log('[WarningBanner] Container found, displaying warnings');
     displayWarningBanners();
+  } else {
+    console.log('[WarningBanner] Container NOT found, waiting for htmx...');
   }
 }
+
+// Also listen for htmx afterSwap events (for pages using htmx to load the container)
+console.log('[WarningBanner] Adding htmx:afterSwap event listener');
+document.addEventListener('htmx:afterSwap', (event) => {
+  console.log('[WarningBanner] htmx:afterSwap event fired, target:', event.detail.target.id, event.detail.target);
+
+  // With outerHTML swap, the target IS the newly swapped element
+  // Check if it's the warning banner container or contains it
+  const isWarningBanner = event.detail.target.id === 'warning-banner-container' ||
+                          event.detail.target.querySelector?.('#warning-banner-container') !== null;
+
+  console.log('[WarningBanner] Is warning banner?', isWarningBanner);
+
+  if (isWarningBanner) {
+    console.log('[WarningBanner] Warning banner container was swapped, displaying warnings');
+    displayWarningBanners();
+  } else {
+    // After any swap, check if container now exists (might have been swapped in)
+    const container = document.getElementById('warning-banner-container');
+    if (container) {
+      console.log('[WarningBanner] Container found after swap, displaying warnings');
+      displayWarningBanners();
+    }
+  }
+});

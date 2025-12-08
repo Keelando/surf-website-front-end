@@ -235,13 +235,13 @@
 </head>
 <body>
   <!-- Warning banners container -->
-  <div hx-get="/components/warning-banner.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
+  <div hx-get="/components/warning-banner.html?v=1" hx-trigger="load" hx-swap="outerHTML swap:0ms settle:0ms"></div>
 
-  <div hx-get="/components/nav.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
+  <div hx-get="/components/nav.html?v=1" hx-trigger="load" hx-swap="outerHTML swap:0ms settle:0ms" style="min-height: 60px;"></div>
 
-  <div hx-get="/components/header-webcams.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
+  <div hx-get="/components/header-webcams.html?v=1" hx-trigger="load" hx-swap="outerHTML swap:0ms settle:0ms" style="min-height: 80px;"></div>
 
-  <div hx-get="/components/tagline-webcams.html?v=1" hx-trigger="load" hx-swap="outerHTML"></div>
+  <div hx-get="/components/tagline-webcams.html?v=1" hx-trigger="load" hx-swap="outerHTML swap:0ms settle:0ms" style="min-height: 40px;"></div>
 
   <div class="container">
     <section style="background: #edf2f7; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
