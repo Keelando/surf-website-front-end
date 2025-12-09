@@ -179,43 +179,153 @@
       text-decoration: underline;
     }
 
-    .webcam-conditions {
-      background: #f7fafc;
-      padding: 1rem 1.5rem;
-      border-bottom: 2px solid #e2e8f0;
+    .marine-conditions-banner {
+      background: white;
+      padding: 1.25rem 1.5rem;
+      margin: 0 auto 1.5rem auto;
+      max-width: 1200px;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      border: 1px solid #e2e8f0;
+    }
+
+    .marine-conditions-banner h3 {
+      margin: 0 0 0.75rem 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #2c5282;
+    }
+
+    .conditions-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
     }
 
     .condition-row {
       display: flex;
-      align-items: baseline;
-      gap: 0.5rem;
-      margin-bottom: 0.5rem;
-      font-size: 0.95rem;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #f0f0f0;
     }
 
     .condition-row:last-child {
-      margin-bottom: 0;
+      border-bottom: none;
     }
 
-    .condition-label {
+    .condition-station-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #4a5568;
+      min-width: 160px;
+      flex-shrink: 0;
+    }
+
+    .condition-data {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      flex: 1;
+    }
+
+    .condition-timestamp {
+      font-size: 0.8rem;
+      color: #9ca3af;
+      margin-left: auto;
+      white-space: nowrap;
+    }
+
+    .condition-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-left: 0.5rem;
+    }
+
+    .condition-link {
+      font-size: 0.85rem;
+      color: #0077be;
+      text-decoration: none;
+      padding: 0.25rem 0.5rem;
+      border-radius: 3px;
+      transition: background 0.2s;
+    }
+
+    .condition-link:hover {
+      background: #e6f2ff;
+      text-decoration: underline;
+    }
+
+    .condition-wind,
+    .condition-waves {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .condition-wind-arrow {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+    }
+
+    .condition-wind-details {
+      display: flex;
+      align-items: baseline;
+      gap: 0.35rem;
+    }
+
+    .wind-cardinal {
       font-weight: 600;
       color: #2c5282;
-      min-width: 120px;
     }
 
-    .condition-value {
-      color: #4a5568;
-      font-weight: 500;
+    .wind-degrees {
+      color: #718096;
+      font-size: 0.9rem;
     }
 
-    .condition-separator {
-      color: #cbd5e0;
-      margin: 0 0.25rem;
+    .wind-speed {
+      font-weight: 600;
+      color: #2c5282;
     }
 
-    .webcam-data-stale {
-      opacity: 0.5;
-      font-style: italic;
+    .wind-gust {
+      color: #718096;
+    }
+
+    .wave-icon {
+      font-size: 1.1rem;
+    }
+
+    .wave-details {
+      display: flex;
+      align-items: baseline;
+      gap: 0.35rem;
+    }
+
+    .wave-height {
+      font-weight: 600;
+      color: #2c5282;
+    }
+
+    .wave-period {
+      color: #718096;
+    }
+
+    @media (max-width: 768px) {
+      .condition-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+
+      .condition-station-name {
+        min-width: auto;
+      }
     }
 
     .refresh-button {
@@ -326,8 +436,8 @@
         streamDelay: 6,  // minutes
         conditions: [
           {
-            label: 'East Beach Wind',
-            windStation: 'CZBB',  // Boundary Bay Airport
+            label: 'White Rock East Beach',
+            customStation: 'whiterock_pier',
             fields: ['wind_speed_only']
           },
           {
@@ -348,8 +458,8 @@
         streamDelay: 20,  // minutes
         conditions: [
           {
-            label: 'East Beach Wind',
-            windStation: 'CZBB',
+            label: 'White Rock East Beach',
+            customStation: 'whiterock_pier',
             fields: ['wind_speed_only']
           },
           {
@@ -377,100 +487,221 @@
       return date.toLocaleString('en-US', options);
     }
 
-    // Fetch marine data (buoy and wind data)
+    // Format short timestamp for conditions display
+    function formatShortTimestamp(isoString) {
+      const date = new Date(isoString);
+      const options = {
+        timeZone: 'America/Vancouver',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      };
+      return date.toLocaleString('en-US', options);
+    }
+
+    // Fetch marine data (buoy, wind, and custom stations)
     let cachedMarineData = null;
     async function fetchMarineData() {
       if (cachedMarineData) return cachedMarineData;
 
       try {
-        const [buoyResponse, windResponse] = await Promise.all([
+        const [buoyResponse, windResponse, whiterockResponse] = await Promise.all([
           fetch('/data/latest_buoy_v2.json'),
-          fetch('/data/latest_wind.json')
+          fetch('/data/latest_wind.json'),
+          fetch('/data/whiterock_weather.json')
         ]);
 
         const buoyData = buoyResponse.ok ? await buoyResponse.json() : {};
         const windData = windResponse.ok ? await windResponse.json() : {};
+        const whiterockData = whiterockResponse.ok ? await whiterockResponse.json() : null;
 
-        cachedMarineData = { buoy: buoyData, wind: windData };
+        cachedMarineData = {
+          buoy: buoyData,
+          wind: windData,
+          custom: {
+            whiterock_pier: whiterockData
+          }
+        };
         return cachedMarineData;
       } catch (error) {
         console.error('Failed to fetch marine data:', error);
-        return { buoy: {}, wind: {} };
+        return { buoy: {}, wind: {}, custom: {} };
       }
     }
 
-    // Create conditions display element
-    function createConditionsDisplay(webcam, marineData) {
-      if (!webcam.conditions || !marineData) return null;
+    // Create wind direction arrow SVG
+    function createWindArrow(degrees) {
+      // Arrow points where wind is blowing TO (meteorological convention)
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('width', '20');
+      svg.setAttribute('height', '20');
+      svg.setAttribute('viewBox', '-6 -10 12 24');
+      svg.style.transform = `rotate(${degrees}deg)`;
 
-      const container = document.createElement('div');
-      container.className = 'webcam-conditions';
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', 'M0,12 L-5,-8 L0,-5 L5,-8 Z');
+      path.setAttribute('fill', '#dc2626');
+      path.setAttribute('stroke', '#dc2626');
+      path.setAttribute('stroke-width', '1.5');
 
-      for (const condition of webcam.conditions) {
+      svg.appendChild(path);
+      return svg;
+    }
+
+    // Create marine conditions banner (before webcam cards)
+    function createConditionsBanner(marineData) {
+      if (!marineData) return null;
+
+      const banner = document.createElement('div');
+      banner.className = 'marine-conditions-banner';
+      banner.id = 'marine-conditions-banner';
+
+      const title = document.createElement('h3');
+      title.textContent = 'Current Marine Conditions';
+      banner.appendChild(title);
+
+      const stack = document.createElement('div');
+      stack.className = 'conditions-stack';
+
+      // White Rock East Beach (on-shore wind)
+      const whiterockData = marineData.custom?.whiterock_pier;
+      if (whiterockData && !whiterockData.stale && whiterockData.wind_speed !== null) {
         const row = document.createElement('div');
         row.className = 'condition-row';
 
-        const label = document.createElement('span');
-        label.className = 'condition-label';
-        label.textContent = condition.label + ':';
-        row.appendChild(label);
+        const stationName = document.createElement('div');
+        stationName.className = 'condition-station-name';
+        stationName.textContent = 'White Rock East Beach';
+        row.appendChild(stationName);
 
-        const valueSpan = document.createElement('span');
-        valueSpan.className = 'condition-value';
+        const dataDiv = document.createElement('div');
+        dataDiv.className = 'condition-data';
 
-        let valueParts = [];
+        const windDiv = document.createElement('div');
+        windDiv.className = 'condition-wind';
 
-        // Wind station data
-        if (condition.windStation) {
-          const windStation = marineData.wind[condition.windStation];
-          if (windStation && !windStation.stale) {
-            if (condition.fields.includes('wind_speed_only')) {
-              if (windStation.wind_speed_kt !== null && windStation.wind_speed_kt !== undefined) {
-                valueParts.push(`${windStation.wind_speed_kt.toFixed(1)} kt`);
-              }
-            }
-          }
+        const arrow = document.createElement('span');
+        arrow.className = 'condition-wind-arrow';
+        arrow.appendChild(createWindArrow(whiterockData.wind_direction));
+        windDiv.appendChild(arrow);
+
+        const windDetails = document.createElement('div');
+        windDetails.className = 'condition-wind-details';
+        windDetails.innerHTML = `
+          <span class="wind-cardinal">${whiterockData.wind_direction_cardinal || ''}</span>
+          <span class="wind-degrees">(${Math.round(whiterockData.wind_direction)}°)</span>
+          <span class="wind-speed">${whiterockData.wind_speed.toFixed(0)}</span>
+          ${whiterockData.wind_gust ? `<span class="wind-gust">G ${whiterockData.wind_gust.toFixed(0)}</span>` : ''}
+          <span class="wind-gust">kt</span>
+        `;
+        windDiv.appendChild(windDetails);
+        dataDiv.appendChild(windDiv);
+
+        // Timestamp
+        if (whiterockData.observation_time) {
+          const timestamp = document.createElement('div');
+          timestamp.className = 'condition-timestamp';
+          timestamp.textContent = formatShortTimestamp(whiterockData.observation_time);
+          dataDiv.appendChild(timestamp);
         }
 
-        // Buoy station data
-        if (condition.buoyStation) {
-          const buoyStation = marineData.buoy[condition.buoyStation];
-          if (buoyStation && !buoyStation.stale) {
-            if (condition.fields.includes('wind')) {
-              if (buoyStation.wind_speed !== null && buoyStation.wind_speed !== undefined) {
-                let windStr = `${buoyStation.wind_speed.toFixed(1)} kt`;
-                if (buoyStation.wind_direction_cardinal) {
-                  windStr += ` ${buoyStation.wind_direction_cardinal}`;
-                }
-                valueParts.push(windStr);
-              }
-            }
+        // Action links
+        const actions = document.createElement('div');
+        actions.className = 'condition-actions';
+        actions.innerHTML = `
+          <a href="https://maps.whiterockcity.ca/weather/" target="_blank" class="condition-link">View Data</a>
+        `;
+        dataDiv.appendChild(actions);
 
-            if (condition.fields.includes('waves')) {
-              if (buoyStation.wave_height_sig !== null && buoyStation.wave_height_sig !== undefined &&
-                  buoyStation.wave_period_avg !== null && buoyStation.wave_period_avg !== undefined) {
-                valueParts.push(`${buoyStation.wave_height_sig.toFixed(2)}m @ ${buoyStation.wave_period_avg.toFixed(1)}s`);
-              }
-            }
-          }
-        }
-
-        if (valueParts.length > 0) {
-          valueSpan.innerHTML = valueParts.join(' <span class="condition-separator">|</span> ');
-          row.appendChild(valueSpan);
-          container.appendChild(row);
-        }
+        row.appendChild(dataDiv);
+        stack.appendChild(row);
       }
 
-      // Only return if we have data to show
-      return container.children.length > 0 ? container : null;
+      // Crescent Pile (offshore wind + waves)
+      const crpileData = marineData.buoy?.CRPILE;
+      if (crpileData && !crpileData.stale) {
+        const row = document.createElement('div');
+        row.className = 'condition-row';
+
+        const stationName = document.createElement('div');
+        stationName.className = 'condition-station-name';
+        stationName.textContent = 'Crescent Pile';
+        row.appendChild(stationName);
+
+        const dataDiv = document.createElement('div');
+        dataDiv.className = 'condition-data';
+
+        // Wind
+        if (crpileData.wind_speed !== null && crpileData.wind_direction !== null) {
+          const windDiv = document.createElement('div');
+          windDiv.className = 'condition-wind';
+
+          const arrow = document.createElement('span');
+          arrow.className = 'condition-wind-arrow';
+          arrow.appendChild(createWindArrow(crpileData.wind_direction));
+          windDiv.appendChild(arrow);
+
+          const windDetails = document.createElement('div');
+          windDetails.className = 'condition-wind-details';
+          windDetails.innerHTML = `
+            <span class="wind-cardinal">${crpileData.wind_direction_cardinal || ''}</span>
+            <span class="wind-degrees">(${Math.round(crpileData.wind_direction)}°)</span>
+            <span class="wind-speed">${crpileData.wind_speed.toFixed(0)}</span>
+            ${crpileData.wind_gust ? `<span class="wind-gust">G ${crpileData.wind_gust.toFixed(0)}</span>` : ''}
+            <span class="wind-gust">kt</span>
+          `;
+          windDiv.appendChild(windDetails);
+          dataDiv.appendChild(windDiv);
+        }
+
+        // Waves
+        if (crpileData.wave_height_sig !== null && crpileData.wave_period_avg !== null) {
+          const waveDiv = document.createElement('div');
+          waveDiv.className = 'condition-waves';
+          waveDiv.innerHTML = `
+            <span class="wave-icon">🌊</span>
+            <div class="wave-details">
+              <span class="wave-height">${crpileData.wave_height_sig.toFixed(2)}m</span>
+              <span class="wave-period">@ ${crpileData.wave_period_avg.toFixed(1)}s</span>
+            </div>
+          `;
+          dataDiv.appendChild(waveDiv);
+        }
+
+        // Timestamp
+        if (crpileData.observation_time) {
+          const timestamp = document.createElement('div');
+          timestamp.className = 'condition-timestamp';
+          timestamp.textContent = formatShortTimestamp(crpileData.observation_time);
+          dataDiv.appendChild(timestamp);
+        }
+
+        // Action links
+        const actions = document.createElement('div');
+        actions.className = 'condition-actions';
+        actions.innerHTML = `
+          <a href="/charts.html#CRPILE" class="condition-link">Show on Map</a>
+          <a href="/charts.html?station=CRPILE" class="condition-link">View Charts</a>
+        `;
+        dataDiv.appendChild(actions);
+
+        row.appendChild(dataDiv);
+        stack.appendChild(row);
+      }
+
+      banner.appendChild(stack);
+
+      // Only return if we have any rows
+      return stack.children.length > 0 ? banner : null;
     }
 
     // Slideshow state (per webcam)
     const slideshowState = {};
 
     // Create webcam card
-    async function createWebcamCard(webcam, metadata, buoyData) {
+    async function createWebcamCard(webcam, metadata) {
       const card = document.createElement('div');
       card.className = 'webcam-card';
       card.dataset.webcamId = webcam.id;
@@ -541,14 +772,6 @@
       updateNotice.textContent = `Updated every 10 minutes • ~${webcam.streamDelay} min stream delay`;
       info.appendChild(updateNotice);
 
-      // Marine data display (wind/wave conditions)
-      if (buoyData) {
-        const marineDataEl = createMarineDataDisplay(webcam, buoyData);
-        if (marineDataEl) {
-          info.appendChild(marineDataEl);
-        }
-      }
-
       if (metadata) {
         const timestamp = document.createElement('div');
         timestamp.className = 'webcam-timestamp';
@@ -589,20 +812,18 @@
             updateSlideshowDisplay(webcam.id);
           }
 
-          // Refresh marine data
-          cachedBuoyData = null;
-          const freshBuoyData = await fetchMarineData();
-          if (freshBuoyData) {
-            const existingDataDisplay = card.querySelector('.webcam-data-display');
-            const newDataDisplay = createMarineDataDisplay(webcam, freshBuoyData);
+          // Refresh marine data banner
+          cachedMarineData = null;
+          const freshMarineData = await fetchMarineData();
+          if (freshMarineData) {
+            const existingBanner = document.getElementById('marine-conditions-banner');
+            const newBanner = createConditionsBanner(freshMarineData);
 
-            if (existingDataDisplay && newDataDisplay) {
-              existingDataDisplay.replaceWith(newDataDisplay);
-            } else if (!existingDataDisplay && newDataDisplay) {
-              const updateNotice = info.querySelector('.webcam-update-notice');
-              if (updateNotice && updateNotice.nextSibling) {
-                info.insertBefore(newDataDisplay, updateNotice.nextSibling);
-              }
+            if (existingBanner && newBanner) {
+              existingBanner.replaceWith(newBanner);
+            } else if (!existingBanner && newBanner) {
+              const container = document.getElementById('webcams-container');
+              container.parentNode.insertBefore(newBanner, container);
             }
           }
         };
@@ -645,13 +866,21 @@
 
       container.innerHTML = '';
 
-      // Fetch buoy data once for all webcams
-      const buoyData = await fetchMarineData();
+      // Fetch marine data once
+      const marineData = await fetchMarineData();
+
+      // Create and insert conditions banner before webcam grid
+      if (marineData) {
+        const banner = createConditionsBanner(marineData);
+        if (banner) {
+          container.parentNode.insertBefore(banner, container);
+        }
+      }
 
       for (const webcam of webcams) {
         try {
           const metadata = await loadWebcamMetadata(webcam);
-          const card = await createWebcamCard(webcam, metadata, buoyData);
+          const card = await createWebcamCard(webcam, metadata);
           container.appendChild(card);
         } catch (error) {
           console.error('Failed to load webcam ' + webcam.name + ':', error);
@@ -818,10 +1047,10 @@
         console.log(`Auto-refreshing webcam images... (${refreshCount}/6)`);
 
         // Clear marine data cache to force refresh
-        cachedBuoyData = null;
+        cachedMarineData = null;
 
         // Reload marine data and update all webcam cards
-        fetchMarineData().then(buoyData => {
+        fetchMarineData().then(marineData => {
           webcams.forEach(webcam => {
             const card = document.querySelector(`[data-webcam-id="${webcam.id}"]`);
             if (!card) return;
@@ -833,19 +1062,16 @@
               image.src = webcam.imageUrl + '?t=' + Date.now();
             }
 
-            // Update marine data display
-            if (buoyData) {
-              const existingDataDisplay = card.querySelector('.webcam-data-display');
-              const newDataDisplay = createMarineDataDisplay(webcam, buoyData);
+            // Update conditions banner (only once, not per webcam)
+            if (marineData && webcam === webcams[0]) {
+              const existingBanner = document.getElementById('marine-conditions-banner');
+              const newBanner = createConditionsBanner(marineData);
 
-              if (existingDataDisplay && newDataDisplay) {
-                existingDataDisplay.replaceWith(newDataDisplay);
-              } else if (!existingDataDisplay && newDataDisplay) {
-                const info = card.querySelector('.webcam-info');
-                const updateNotice = info.querySelector('.webcam-update-notice');
-                if (updateNotice && updateNotice.nextSibling) {
-                  info.insertBefore(newDataDisplay, updateNotice.nextSibling);
-                }
+              if (existingBanner && newBanner) {
+                existingBanner.replaceWith(newBanner);
+              } else if (!existingBanner && newBanner) {
+                const container = document.getElementById('webcams-container');
+                container.parentNode.insertBefore(newBanner, container);
               }
             }
 
