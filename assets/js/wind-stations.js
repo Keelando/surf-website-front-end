@@ -254,7 +254,7 @@ async function loadWindTable() {
           <th class="sortable" data-column="air_temp_c" data-type="number">Temp (°C) <span class="sort-indicator"></span></th>
           <th class="sortable" data-column="pressure_hpa" data-type="number">Pressure (hPa) <span class="sort-indicator"></span></th>
           <th class="sortable" data-column="observation_time" data-type="date">Updated <span class="sort-indicator"></span></th>
-          <th>Actions</th>
+          <th>View:</th>
         </tr>
       </thead>
       <tbody>
@@ -339,19 +339,10 @@ async function loadWindTable() {
           <td>${temp}</td>
           <td>${pressure}</td>
           <td>${updated}</td>
-          <td>
-            <button onclick="viewStationChart('${id}')" style="
-              padding: 0.4rem 0.8rem;
-              background: #0077be;
-              color: white;
-              border: none;
-              border-radius: 4px;
-              cursor: pointer;
-              font-size: 0.85em;
-              white-space: nowrap;
-            " onmouseover="this.style.background='#005a8f'" onmouseout="this.style.background='#0077be'">
-              📊 View Chart
-            </button>
+          <td style="white-space: nowrap;">
+            <a href="#map-section" onclick="showStationOnMap('${id}'); return false;" style="color: #0077be; text-decoration: none; cursor: pointer; margin-right: 0.5rem;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Map</a>
+            <span style="color: #ccc;">/</span>
+            <a href="#wind-chart-section" onclick="viewStationChart('${id}'); return false;" style="color: #0077be; text-decoration: none; cursor: pointer; margin-left: 0.5rem;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Chart</a>
           </td>
         </tr>
       `;
@@ -599,8 +590,28 @@ function viewStationChart(stationId) {
   }
 }
 
-// Make function globally accessible
+/**
+ * Show station on map (from table link)
+ */
+function showStationOnMap(stationId) {
+  // Scroll to map section
+  const mapSection = document.getElementById('map-section');
+  if (mapSection) {
+    mapSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // Use the winds-map module to center on the station
+  // The map is initialized in winds-map.js
+  setTimeout(() => {
+    if (window.windsMap && window.windsMap.focusStation) {
+      window.windsMap.focusStation(stationId);
+    }
+  }, 500); // Small delay to allow smooth scroll to complete
+}
+
+// Make functions globally accessible
 window.viewStationChart = viewStationChart;
+window.showStationOnMap = showStationOnMap;
 
 /**
  * Render 24-hour wind data table for selected station

@@ -339,41 +339,76 @@ async function loadBuoyData() {
             cardContent += `<p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Maximum Wave Height:</b> ${b.wave_height_max} m${ratioText}</p>`;
           }
 
-          // Show wave direction spread (Halibut Bank, Sentry Shoal)
-          if (b.wave_direction_spread_avg != null && b.wave_direction_avg != null) {
-            const spread = b.wave_direction_spread_avg;
-            const avgDir = b.wave_direction_avg;
-            let spreadDesc = '';
-            let spreadColor = '#666';
+          // Show wave direction angular spread
+          if (b.wave_direction_spread_peak != null || b.wave_direction_spread_avg != null) {
+            const peakSpread = b.wave_direction_spread_peak;
+            const avgSpread = b.wave_direction_spread_avg;
 
-            // Thresholds calibrated for inland waters (Salish Sea, Strait of Georgia)
-            if (spread < 25) {
-              spreadDesc = 'very organized';
-              spreadColor = '#38a169'; // green
-            } else if (spread < 40) {
-              spreadDesc = 'organized';
-              spreadColor = '#48bb78'; // light green
-            } else if (spread < 55) {
-              spreadDesc = 'moderate';
-              spreadColor = '#d69e2e'; // orange
-            } else {
-              spreadDesc = 'confused';
-              spreadColor = '#e53e3e'; // red
+            cardContent += `
+              <p class="buoy-metric" style="margin-top: 0.75rem; font-weight: 600; color: #004b7c;">
+                🧭 Wave Direction Angular Spread
+                <span onclick="toggleSpreadInfo('${id}')" style="cursor: pointer; font-size: 0.9em; margin-left: 0.3rem; color: #0077be; user-select: none;" title="Click for explanation">ℹ️</span>
+              </p>
+            `;
+
+            // Show Peak Spread (dominant frequency) with labels
+            if (peakSpread != null) {
+              let peakDesc = '';
+              let peakColor = '#666';
+
+              if (peakSpread < 25) {
+                peakDesc = 'very organized';
+                peakColor = '#38a169';
+              } else if (peakSpread < 35) {
+                peakDesc = 'organized';
+                peakColor = '#48bb78';
+              } else if (peakSpread < 45) {
+                peakDesc = 'moderate';
+                peakColor = '#d69e2e';
+              } else {
+                peakDesc = 'confused';
+                peakColor = '#e53e3e';
+              }
+
+              cardContent += `<p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Peak Spread:</b> ${peakSpread}° <span style="color: ${peakColor}; font-weight: 600;">(${peakDesc})</span></p>`;
             }
 
-            // Calculate range (assuming ±50% split)
-            const halfSpread = spread / 2;
-            const minDir = (avgDir - halfSpread + 360) % 360;
-            const maxDir = (avgDir + halfSpread) % 360;
-            const minCardinal = degreesToCardinal(minDir);
-            const maxCardinal = degreesToCardinal(maxDir);
+            // Show Average Spread (all frequencies) with labels
+            if (avgSpread != null) {
+              let avgDesc = '';
+              let avgColor = '#666';
 
-            const rangeText = minCardinal === maxCardinal
-              ? `${minCardinal}`
-              : `${minCardinal} to ${maxCardinal}`;
+              if (avgSpread < 30) {
+                avgDesc = 'very clean';
+                avgColor = '#38a169';
+              } else if (avgSpread < 45) {
+                avgDesc = 'clean';
+                avgColor = '#48bb78';
+              } else if (avgSpread < 60) {
+                avgDesc = 'mixed';
+                avgColor = '#d69e2e';
+              } else {
+                avgDesc = 'messy';
+                avgColor = '#e53e3e';
+              }
 
-            cardContent += `<p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Wave Direction Spread:</b> ${spread}° <span style="color: ${spreadColor}; font-weight: 600;">(${spreadDesc})</span></p>`;
-            cardContent += `<p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Wave Direction Range:</b> ${rangeText} (${Math.round(minDir)}° to ${Math.round(maxDir)}°)</p>`;
+              cardContent += `<p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Average Spread:</b> ${avgSpread}° <span style="color: ${avgColor}; font-weight: 600;">(${avgDesc})</span></p>`;
+            }
+
+            // Add collapsible explanatory footnote (hidden by default)
+            if (peakSpread != null && avgSpread != null) {
+              const gap = avgSpread - peakSpread;
+              cardContent += `
+                <div id="spread-info-${id}" style="display: none; font-size: 0.8em; color: #666; font-style: italic; margin-top: 0.5rem; padding: 0.5rem; background: #f0f8ff; border-left: 3px solid #0077be; border-radius: 4px; line-height: 1.4;">
+                  <strong>What does this mean?</strong><br>
+                  • <strong>Peak Spread:</strong> Organization of the dominant swell (~20° = clean swell)<br>
+                  • <strong>Average Spread:</strong> Entire surface including wind chop<br>
+                  • <strong>Gap:</strong> ${gap}° difference shows how much chop is obscuring the swell<br>
+                  <br>
+                  <span style="font-size: 0.95em; color: #f57c00;">⚠️ <strong>Note:</strong> These interpretations are experimental estimates. Conditions may differ significantly closer to shore, especially at the beach, due to bathymetry, fetch, and local wind effects.</span>
+                </div>
+              `;
+            }
           }
 
           if (b.wave_period_peak != null) {
@@ -566,6 +601,15 @@ function toggleCardDetails(buoyId) {
     const isHidden = detailsDiv.style.display === 'none';
     detailsDiv.style.display = isHidden ? 'block' : 'none';
     button.textContent = isHidden ? '▲ Hide Details' : '▼ Show Details';
+  }
+}
+
+// Toggle angular spread explanation
+function toggleSpreadInfo(buoyId) {
+  const infoDiv = document.getElementById(`spread-info-${buoyId}`);
+  if (infoDiv) {
+    const isHidden = infoDiv.style.display === 'none';
+    infoDiv.style.display = isHidden ? 'block' : 'none';
   }
 }
 

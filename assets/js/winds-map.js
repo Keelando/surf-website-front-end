@@ -340,6 +340,34 @@ function addBuoyWindMarker(buoy, currentData) {
   windMarkers[buoy.id] = marker;
 }
 
+/**
+ * Focus on a specific station by ID
+ * Centers the map and opens the station's popup
+ */
+function focusStation(stationId) {
+  const marker = windMarkers[stationId];
+  if (!marker) {
+    console.warn(`Station ${stationId} not found on map`);
+    return;
+  }
+
+  // Center map on station
+  windsMap.setView(marker.getLatLng(), 10, {
+    animate: true,
+    duration: 0.5
+  });
+
+  // Open popup after a short delay to allow map animation
+  setTimeout(() => {
+    marker.openPopup();
+  }, 300);
+}
+
+// Export map functions for external use
+window.windsMap = {
+  focusStation: focusStation
+};
+
 // Initialize map when DOM is ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {

@@ -179,6 +179,45 @@
       text-decoration: underline;
     }
 
+    .webcam-conditions {
+      background: #f7fafc;
+      padding: 1rem 1.5rem;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    .condition-row {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .condition-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .condition-label {
+      font-weight: 600;
+      color: #2c5282;
+      min-width: 120px;
+    }
+
+    .condition-value {
+      color: #4a5568;
+      font-weight: 500;
+    }
+
+    .condition-separator {
+      color: #cbd5e0;
+      margin: 0 0.25rem;
+    }
+
+    .webcam-data-stale {
+      opacity: 0.5;
+      font-style: italic;
+    }
+
     .refresh-button {
       display: inline-block;
       padding: 0.5rem 1rem;
@@ -284,7 +323,19 @@
         imageUrl: '/data/wrcam/latest.jpg',
         slideshowUrl: '/data/wrcam/slideshow_manifest.json',
         slideshowPath: '/data/wrcam/',
-        streamDelay: 6  // minutes
+        streamDelay: 6,  // minutes
+        conditions: [
+          {
+            label: 'East Beach Wind',
+            windStation: 'CZBB',  // Boundary Bay Airport
+            fields: ['wind_speed_only']
+          },
+          {
+            label: 'Crescent Pile',
+            buoyStation: 'CRPILE',
+            fields: ['wind', 'waves']
+          }
+        ]
       },
       {
         id: 'boundarybay',
@@ -294,7 +345,19 @@
         imageUrl: '/data/bbcam/latest.jpg',
         slideshowUrl: '/data/bbcam/slideshow_manifest.json',
         slideshowPath: '/data/bbcam/',
-        streamDelay: 20  // minutes
+        streamDelay: 20,  // minutes
+        conditions: [
+          {
+            label: 'East Beach Wind',
+            windStation: 'CZBB',
+            fields: ['wind_speed_only']
+          },
+          {
+            label: 'Crescent Pile',
+            buoyStation: 'CRPILE',
+            fields: ['wind', 'waves']
+          }
+        ]
       }
     ];
 
@@ -314,11 +377,100 @@
       return date.toLocaleString('en-US', options);
     }
 
+    // Fetch marine data (buoy and wind data)
+    let cachedMarineData = null;
+    async function fetchMarineData() {
+      if (cachedMarineData) return cachedMarineData;
+
+      try {
+        const [buoyResponse, windResponse] = await Promise.all([
+          fetch('/data/latest_buoy_v2.json'),
+          fetch('/data/latest_wind.json')
+        ]);
+
+        const buoyData = buoyResponse.ok ? await buoyResponse.json() : {};
+        const windData = windResponse.ok ? await windResponse.json() : {};
+
+        cachedMarineData = { buoy: buoyData, wind: windData };
+        return cachedMarineData;
+      } catch (error) {
+        console.error('Failed to fetch marine data:', error);
+        return { buoy: {}, wind: {} };
+      }
+    }
+
+    // Create conditions display element
+    function createConditionsDisplay(webcam, marineData) {
+      if (!webcam.conditions || !marineData) return null;
+
+      const container = document.createElement('div');
+      container.className = 'webcam-conditions';
+
+      for (const condition of webcam.conditions) {
+        const row = document.createElement('div');
+        row.className = 'condition-row';
+
+        const label = document.createElement('span');
+        label.className = 'condition-label';
+        label.textContent = condition.label + ':';
+        row.appendChild(label);
+
+        const valueSpan = document.createElement('span');
+        valueSpan.className = 'condition-value';
+
+        let valueParts = [];
+
+        // Wind station data
+        if (condition.windStation) {
+          const windStation = marineData.wind[condition.windStation];
+          if (windStation && !windStation.stale) {
+            if (condition.fields.includes('wind_speed_only')) {
+              if (windStation.wind_speed_kt !== null && windStation.wind_speed_kt !== undefined) {
+                valueParts.push(`${windStation.wind_speed_kt.toFixed(1)} kt`);
+              }
+            }
+          }
+        }
+
+        // Buoy station data
+        if (condition.buoyStation) {
+          const buoyStation = marineData.buoy[condition.buoyStation];
+          if (buoyStation && !buoyStation.stale) {
+            if (condition.fields.includes('wind')) {
+              if (buoyStation.wind_speed !== null && buoyStation.wind_speed !== undefined) {
+                let windStr = `${buoyStation.wind_speed.toFixed(1)} kt`;
+                if (buoyStation.wind_direction_cardinal) {
+                  windStr += ` ${buoyStation.wind_direction_cardinal}`;
+                }
+                valueParts.push(windStr);
+              }
+            }
+
+            if (condition.fields.includes('waves')) {
+              if (buoyStation.wave_height_sig !== null && buoyStation.wave_height_sig !== undefined &&
+                  buoyStation.wave_period_avg !== null && buoyStation.wave_period_avg !== undefined) {
+                valueParts.push(`${buoyStation.wave_height_sig.toFixed(2)}m @ ${buoyStation.wave_period_avg.toFixed(1)}s`);
+              }
+            }
+          }
+        }
+
+        if (valueParts.length > 0) {
+          valueSpan.innerHTML = valueParts.join(' <span class="condition-separator">|</span> ');
+          row.appendChild(valueSpan);
+          container.appendChild(row);
+        }
+      }
+
+      // Only return if we have data to show
+      return container.children.length > 0 ? container : null;
+    }
+
     // Slideshow state (per webcam)
     const slideshowState = {};
 
     // Create webcam card
-    function createWebcamCard(webcam, metadata) {
+    async function createWebcamCard(webcam, metadata, buoyData) {
       const card = document.createElement('div');
       card.className = 'webcam-card';
       card.dataset.webcamId = webcam.id;
@@ -389,6 +541,14 @@
       updateNotice.textContent = `Updated every 10 minutes • ~${webcam.streamDelay} min stream delay`;
       info.appendChild(updateNotice);
 
+      // Marine data display (wind/wave conditions)
+      if (buoyData) {
+        const marineDataEl = createMarineDataDisplay(webcam, buoyData);
+        if (marineDataEl) {
+          info.appendChild(marineDataEl);
+        }
+      }
+
       if (metadata) {
         const timestamp = document.createElement('div');
         timestamp.className = 'webcam-timestamp';
@@ -418,7 +578,7 @@
         const refreshBtn = document.createElement('button');
         refreshBtn.className = 'refresh-button';
         refreshBtn.textContent = 'Refresh Image';
-        refreshBtn.onclick = () => {
+        refreshBtn.onclick = async () => {
           image.src = webcam.imageUrl + '?t=' + Date.now();
           loadWebcamMetadata(webcam, card);
 
@@ -427,6 +587,23 @@
           if (state) {
             state.currentIndex = 0;
             updateSlideshowDisplay(webcam.id);
+          }
+
+          // Refresh marine data
+          cachedBuoyData = null;
+          const freshBuoyData = await fetchMarineData();
+          if (freshBuoyData) {
+            const existingDataDisplay = card.querySelector('.webcam-data-display');
+            const newDataDisplay = createMarineDataDisplay(webcam, freshBuoyData);
+
+            if (existingDataDisplay && newDataDisplay) {
+              existingDataDisplay.replaceWith(newDataDisplay);
+            } else if (!existingDataDisplay && newDataDisplay) {
+              const updateNotice = info.querySelector('.webcam-update-notice');
+              if (updateNotice && updateNotice.nextSibling) {
+                info.insertBefore(newDataDisplay, updateNotice.nextSibling);
+              }
+            }
           }
         };
         info.appendChild(refreshBtn);
@@ -468,10 +645,13 @@
 
       container.innerHTML = '';
 
+      // Fetch buoy data once for all webcams
+      const buoyData = await fetchMarineData();
+
       for (const webcam of webcams) {
         try {
           const metadata = await loadWebcamMetadata(webcam);
-          const card = createWebcamCard(webcam, metadata);
+          const card = await createWebcamCard(webcam, metadata, buoyData);
           container.appendChild(card);
         } catch (error) {
           console.error('Failed to load webcam ' + webcam.name + ':', error);
@@ -637,21 +817,42 @@
         refreshCount++;
         console.log(`Auto-refreshing webcam images... (${refreshCount}/6)`);
 
-        // Reload each webcam's latest image and slideshow
-        webcams.forEach(webcam => {
-          const card = document.querySelector(`[data-webcam-id="${webcam.id}"]`);
-          if (!card) return;
+        // Clear marine data cache to force refresh
+        cachedBuoyData = null;
 
-          // Only refresh if viewing the latest image (index 0)
-          const state = slideshowState[webcam.id];
-          if (!state || state.currentIndex === 0) {
-            const image = card.querySelector('.webcam-image');
-            image.src = webcam.imageUrl + '?t=' + Date.now();
-          }
+        // Reload marine data and update all webcam cards
+        fetchMarineData().then(buoyData => {
+          webcams.forEach(webcam => {
+            const card = document.querySelector(`[data-webcam-id="${webcam.id}"]`);
+            if (!card) return;
 
-          // Reload slideshow manifest
-          loadSlideshow(webcam);
-          loadWebcamMetadata(webcam, card);
+            // Only refresh image if viewing the latest (index 0)
+            const state = slideshowState[webcam.id];
+            if (!state || state.currentIndex === 0) {
+              const image = card.querySelector('.webcam-image');
+              image.src = webcam.imageUrl + '?t=' + Date.now();
+            }
+
+            // Update marine data display
+            if (buoyData) {
+              const existingDataDisplay = card.querySelector('.webcam-data-display');
+              const newDataDisplay = createMarineDataDisplay(webcam, buoyData);
+
+              if (existingDataDisplay && newDataDisplay) {
+                existingDataDisplay.replaceWith(newDataDisplay);
+              } else if (!existingDataDisplay && newDataDisplay) {
+                const info = card.querySelector('.webcam-info');
+                const updateNotice = info.querySelector('.webcam-update-notice');
+                if (updateNotice && updateNotice.nextSibling) {
+                  info.insertBefore(newDataDisplay, updateNotice.nextSibling);
+                }
+              }
+            }
+
+            // Reload slideshow manifest
+            loadSlideshow(webcam);
+            loadWebcamMetadata(webcam, card);
+          });
         });
       }, REFRESH_INTERVAL);
     }
