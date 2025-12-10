@@ -133,8 +133,29 @@ function initLightstationMap() {
   // Create layer group for markers
   lightstationMarkersLayer = L.layerGroup().addTo(lightstationMap);
 
+  // Listen to zoom events to show/hide labels based on zoom level
+  lightstationMap.on('zoomend', toggleLightstationLabels);
+
   // Load lightstation stations and add markers
   loadLightstationsAndMarkers();
+}
+
+// Toggle lightstation labels based on zoom level
+function toggleLightstationLabels() {
+  const zoomLevel = lightstationMap.getZoom();
+  const showLabels = zoomLevel >= 8; // Show labels when zoomed in to level 8 or higher
+
+  // Toggle CSS class on all lightstation tooltips
+  const tooltips = document.querySelectorAll('.lightstation-label');
+  tooltips.forEach(tooltip => {
+    if (showLabels) {
+      tooltip.style.opacity = '1';
+      tooltip.style.visibility = 'visible';
+    } else {
+      tooltip.style.opacity = '0';
+      tooltip.style.visibility = 'hidden';
+    }
+  });
 }
 
 // Load stations.json and add lightstation markers
@@ -160,6 +181,11 @@ async function loadLightstationsAndMarkers() {
       Object.values(stations.lightstations).forEach(lightstation => {
         addLightstationMapMarker(lightstation);
       });
+
+      // Set initial label visibility based on current zoom level
+      setTimeout(() => {
+        toggleLightstationLabels();
+      }, 100);
     }
   } catch (error) {
     console.error('Error loading lightstation data:', error);
@@ -217,8 +243,40 @@ function addLightstationMapMarker(lightstation) {
       popupContent += `<div style="margin: 4px 0;"><strong>〰️ Swell:</strong> ${swellText || 'N/A'}</div>`;
     }
 
-    // Report time
-    if (obs.report_time_str) {
+    // Report time (with full date, day of week, and age in 24h format)
+    if (obs.observation_time) {
+      const obsDate = new Date(obs.observation_time);
+      const dateOptions = {
+        timeZone: 'America/Vancouver',
+        weekday: 'long',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      };
+      const formattedDate = obsDate.toLocaleString('en-US', dateOptions).replace(',', '');
+
+      // Calculate age
+      const now = new Date();
+      const ageMs = now - obsDate;
+      const ageDays = Math.floor(ageMs / (1000 * 60 * 60 * 24));
+      const ageHours = Math.floor(ageMs / (1000 * 60 * 60));
+      const ageMinutes = Math.floor((ageMs % (1000 * 60 * 60)) / (1000 * 60));
+
+      let ageText = '';
+      if (ageDays >= 1) {
+        ageText = ageDays === 1 ? ' (1 day ago)' : ` (${ageDays} days ago)`;
+      } else if (ageHours > 0) {
+        ageText = ` (${ageHours}h ago)`;
+      } else if (ageMinutes > 0) {
+        ageText = ` (${ageMinutes}m ago)`;
+      } else {
+        ageText = ' (just now)';
+      }
+
+      popupContent += `<div style="font-size: 0.85em; color: #555; margin-top: 6px; padding-top: 4px; border-top: 1px solid rgba(0,75,124,0.2);">📅 Report: ${formattedDate}${ageText}</div>`;
+    } else if (obs.report_time_str) {
       popupContent += `<div style="font-size: 0.85em; color: #555; margin-top: 6px; padding-top: 4px; border-top: 1px solid rgba(0,75,124,0.2);">📅 Report: ${obs.report_time_str}</div>`;
     }
 
@@ -245,6 +303,15 @@ function addLightstationMapMarker(lightstation) {
   </div>`;
 
   marker.bindPopup(popupContent);
+
+  // Add permanent label (station name) that shows/hides based on zoom
+  marker.bindTooltip(lightstation.name, {
+    permanent: true,
+    direction: 'top',
+    className: 'lightstation-label',
+    offset: [0, -35]
+  });
+
   marker.addTo(lightstationMarkersLayer);
 
   // Store marker reference for later access

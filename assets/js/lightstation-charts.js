@@ -43,16 +43,34 @@ let allLightstations = [];
  */
 async function loadLightstationTimeseries() {
   try {
+    // Load timeseries data (past 24hr only)
     const data = await fetchWithTimeout(`/data/lightstation_timeseries_24hr.json?t=${Date.now()}`);
     lightstationTimeseriesData = data;
+    // Make globally accessible for edge case handling
+    window.lightstationTimeseriesData = data;
+
+    // Load ALL lightstations from stations.json (including those without recent data)
+    const stationsData = await fetchWithTimeout('/data/stations.json');
+    const lightstationsMeta = stationsData.lightstations || {};
 
     const select = document.getElementById("lightstation-station-select");
     const searchInput = document.getElementById("lightstation-station-search");
     if (!select) return;
 
-    // Get all stations
-    allLightstations = Object.entries(lightstationTimeseriesData)
-      .sort((a, b) => a[1].name.localeCompare(b[1].name));
+    // Build combined list: all stations from metadata, with timeseries data if available
+    allLightstations = Object.entries(lightstationsMeta).map(([id, meta]) => {
+      const stationKey = meta.name.toUpperCase();
+      const hasData = lightstationTimeseriesData[stationKey] !== undefined;
+
+      return [
+        stationKey,
+        {
+          name: stationKey,
+          region: meta.region,
+          hasRecentData: hasData
+        }
+      ];
+    }).sort((a, b) => a[1].name.localeCompare(b[1].name));
 
     // Populate dropdown
     populateLightstationDropdown();
@@ -61,7 +79,7 @@ async function loadLightstationTimeseries() {
     if (allLightstations.length > 0) {
       // Try to find Merry Island
       const merryIsland = allLightstations.find(([id, station]) =>
-        station.name.toUpperCase() === 'MERRY ISLAND' || id === 'MERRY ISLAND'
+        station.name === 'MERRY ISLAND' || id === 'MERRY ISLAND'
       );
 
       const defaultStation = merryIsland ? merryIsland[0] : allLightstations[0][0];
@@ -140,7 +158,9 @@ function populateLightstationDropdown() {
     regionGroups[regionName].forEach(([id, station]) => {
       const option = document.createElement('option');
       option.value = id;
-      option.textContent = station.name;
+      // Add indicator if station doesn't have recent data
+      const dataIndicator = station.hasRecentData ? '' : ' (no recent data)';
+      option.textContent = station.name + dataIndicator;
       optgroup.appendChild(option);
     });
 
@@ -152,14 +172,62 @@ function populateLightstationDropdown() {
  * Render both wind and wave charts for selected station
  */
 function renderLightstationCharts(stationName) {
-  if (!lightstationTimeseriesData || !stationName) return;
+  if (!stationName) return;
 
-  const station = lightstationTimeseriesData[stationName];
-  if (!station) return;
+  const station = lightstationTimeseriesData ? lightstationTimeseriesData[stationName] : null;
+
+  // Update 24-hour reports title with station name
+  const title = document.getElementById('lightstation-24hr-title');
+  if (title) {
+    title.textContent = `24-Hour Reports: ${stationName}`;
+  }
+
+  if (!station) {
+    // No recent data - show message
+    showNoDataMessage(stationName);
+    return;
+  }
 
   renderWindSpeedChart(stationName, station);
   renderWaveHeightChart(stationName, station);
   render24HourTable(stationName, station);
+}
+
+/**
+ * Show "no data available" message in charts and table
+ */
+function showNoDataMessage(stationName) {
+  const tbody = document.getElementById('lightstation-24hr-body');
+  if (tbody) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem; color: #e53e3e;">⚠️ No data available from the past 24 hours for this station.<br/><span style="font-size: 0.9rem; color: #718096; margin-top: 0.5rem; display: inline-block;">Most recent observation may be older than 24 hours.</span></td></tr>';
+  }
+
+  // Clear charts
+  if (windSpeedChart) {
+    windSpeedChart.clear();
+    windSpeedChart.setOption({
+      title: {
+        text: `${stationName} - Wind Speed`,
+        subtext: 'No data from the past 24 hours',
+        left: 'center',
+        textStyle: { fontSize: 18, fontWeight: 600, color: '#004b7c' },
+        subtextStyle: { fontSize: 14, color: '#e53e3e' }
+      }
+    });
+  }
+
+  if (waveHeightChart) {
+    waveHeightChart.clear();
+    waveHeightChart.setOption({
+      title: {
+        text: `${stationName} - Sea State`,
+        subtext: 'No data from the past 24 hours',
+        left: 'center',
+        textStyle: { fontSize: 18, fontWeight: 600, color: '#004b7c' },
+        subtextStyle: { fontSize: 14, color: '#e53e3e' }
+      }
+    });
+  }
 }
 
 // Make function globally accessible for card links

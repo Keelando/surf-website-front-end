@@ -21,6 +21,26 @@
     crossorigin=""/>
 
   <style>
+    /* Lightstation map label styling */
+    .lightstation-label {
+      background: rgba(255, 255, 255, 0.95) !important;
+      border: 1px solid #2c5282 !important;
+      border-radius: 4px !important;
+      padding: 2px 6px !important;
+      font-size: 11px !important;
+      font-weight: 600 !important;
+      color: #2c5282 !important;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+      white-space: nowrap !important;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .lightstation-label::before {
+      display: none !important; /* Hide the default Leaflet tooltip arrow */
+    }
+
     .region-section {
       margin: 2rem 0;
     }
@@ -326,7 +346,7 @@
 
     <!-- 24-Hour Data Table for Selected Station -->
     <section id="lightstation-data-table-section" style="max-width: 1200px; margin: 2rem auto; padding: 0 1rem;">
-      <h2>24-Hour Reports</h2>
+      <h2 id="lightstation-24hr-title">24-Hour Reports</h2>
       <div class="data-table" style="overflow-x: auto; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
         <table id="lightstation-24hr-table" style="width: 100%; border-collapse: collapse; background: white;">
           <thead>
@@ -567,8 +587,44 @@
         card.appendChild(createConditionRow('Swell', swellText || 'N/A'));
       }
 
-      // Report time
-      if (station.report_time_str) {
+      // Report time with age
+      if (station.observation_time) {
+        const reportTime = document.createElement('div');
+        reportTime.className = 'report-time';
+
+        const obsDate = new Date(station.observation_time);
+        const dateOptions = {
+          timeZone: 'America/Vancouver',
+          weekday: 'long',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        };
+        const formattedDate = obsDate.toLocaleString('en-US', dateOptions).replace(',', '');
+
+        // Calculate age
+        const now = new Date();
+        const ageMs = now - obsDate;
+        const ageDays = Math.floor(ageMs / (1000 * 60 * 60 * 24));
+        const ageHours = Math.floor(ageMs / (1000 * 60 * 60));
+        const ageMinutes = Math.floor((ageMs % (1000 * 60 * 60)) / (1000 * 60));
+
+        let ageText = '';
+        if (ageDays >= 1) {
+          ageText = ageDays === 1 ? ' (1 day ago)' : ` (${ageDays} days ago)`;
+        } else if (ageHours > 0) {
+          ageText = ` (${ageHours}h ago)`;
+        } else if (ageMinutes > 0) {
+          ageText = ` (${ageMinutes}m ago)`;
+        } else {
+          ageText = ' (just now)';
+        }
+
+        reportTime.textContent = `Report: ${formattedDate}${ageText}`;
+        card.appendChild(reportTime);
+      } else if (station.report_time_str) {
         const reportTime = document.createElement('div');
         reportTime.className = 'report-time';
         reportTime.textContent = `Report: ${station.report_time_str}`;
@@ -720,6 +776,13 @@
     function viewLightstationChart(stationName) {
       const select = document.getElementById('lightstation-station-select');
       if (!select) return;
+
+      // Check if station exists in timeseries data
+      if (!window.lightstationTimeseriesData || !window.lightstationTimeseriesData[stationName]) {
+        // Station doesn't have 24hr data - show alert instead of scrolling
+        alert(`${stationName} does not have data from the past 24 hours.\n\nMost recent observation may be older than 24 hours.`);
+        return;
+      }
 
       // Select the station in dropdown
       select.value = stationName;

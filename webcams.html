@@ -28,6 +28,13 @@
       border-radius: 8px 8px 0 0;
       margin-bottom: 0;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s;
+    }
+
+    .webcam-region-header:hover {
+      background: linear-gradient(to right, #2a4a75, #295fa0);
     }
 
     .webcam-region-header h2 {
@@ -42,12 +49,31 @@
       opacity: 0.95;
     }
 
+    .webcam-region-toggle-btn {
+      display: inline-block;
+      margin-right: 0.5rem;
+      font-size: 0.9em;
+      transition: transform 0.2s;
+    }
+
+    .webcam-region.collapsed .webcam-region-toggle-btn {
+      transform: rotate(-90deg);
+    }
+
     .webcam-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
       gap: 2rem;
       padding: 2rem 0;
       justify-content: center;
+      max-height: 5000px;
+      overflow: hidden;
+      transition: max-height 0.3s ease-out, padding 0.3s;
+    }
+
+    .webcam-region.collapsed .webcam-grid {
+      max-height: 0;
+      padding: 0;
     }
 
     .webcam-card {
@@ -453,8 +479,11 @@
       'salish_sea_south': {
         name: 'Salish Sea - South (White Rock & Boundary Bay)',
         description: 'Webcams covering White Rock East Beach and Boundary Bay area with local marine conditions'
+      },
+      'west_coast_vi': {
+        name: 'West Coast Vancouver Island (Tofino)',
+        description: 'Webcams covering the Pacific Ocean coast near Tofino, including popular surf spots'
       }
-      // Future: 'west_coast_vi': { name: 'West Coast Vancouver Island (Tofino)', description: '...' }
     };
 
     const webcams = [
@@ -503,6 +532,18 @@
             fields: ['wind', 'waves']
           }
         ]
+      },
+      {
+        id: 'coxbay',
+        region: 'west_coast_vi',
+        name: 'Cox Bay',
+        location: 'Tofino, BC',
+        dataUrl: '/data/coxbay/latest.json',
+        imageUrl: '/data/coxbay/latest.jpg',
+        slideshowUrl: '/data/coxbay/slideshow_manifest.json',
+        slideshowPath: '/data/coxbay/',
+        streamDelay: 20,  // minutes
+        conditions: []  // No local marine data available for West Coast yet
       }
     ];
 
@@ -934,10 +975,20 @@
         if (regionInfo) {
           const regionHeader = document.createElement('div');
           regionHeader.className = 'webcam-region-header';
+
+          const webcamCount = regionWebcams.length;
+          const countText = `${webcamCount} webcam${webcamCount !== 1 ? 's' : ''}`;
+
           regionHeader.innerHTML = `
-            <h2>${regionInfo.name}</h2>
+            <h2><span class="webcam-region-toggle-btn">▼</span>${regionInfo.name} <span style="font-size: 0.8em; font-weight: normal; opacity: 0.8;">(${countText})</span></h2>
             <p class="webcam-region-description">${regionInfo.description}</p>
           `;
+
+          // Add click handler to toggle collapse
+          regionHeader.addEventListener('click', () => {
+            regionContainer.classList.toggle('collapsed');
+          });
+
           regionContainer.appendChild(regionHeader);
         }
 

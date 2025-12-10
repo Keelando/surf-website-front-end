@@ -145,6 +145,15 @@ async function loadStationsAndMarkers() {
         addLightstationMarker(lightstation);
       });
     }
+
+    // Add webcam markers
+    if (stations.webcams) {
+      const webcamCount = Object.keys(stations.webcams).length;
+      logger.debug('StationsMap', `Loading ${webcamCount} webcam(s) to map...`);
+      Object.values(stations.webcams).forEach(webcam => {
+        addWebcamMarker(webcam);
+      });
+    }
   } catch (error) {
     logger.error('StationsMap', 'Error loading stations', error);
     // Fallback to inline station data if fetch fails
@@ -190,6 +199,33 @@ function createLighthouseSVG() {
       <!-- Light beacon glow -->
       <circle cx="14" cy="4" r="2" fill="#FFEB3B" opacity="0.6"/>
       <circle cx="14" cy="4" r="1.5" fill="#FFF9C4"/>
+    </svg>
+  `;
+}
+
+/**
+ * Create custom webcam SVG icon
+ * Modern camera icon for webcam markers
+ * @returns {string} SVG string
+ */
+function createWebcamSVG() {
+  return `
+    <svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+      <!-- Camera body -->
+      <rect x="4" y="9" width="20" height="14" rx="2" fill="#2c5282" stroke="#1a365d" stroke-width="1"/>
+
+      <!-- Lens -->
+      <circle cx="14" cy="16" r="5" fill="#4a5568" stroke="#2d3748" stroke-width="1"/>
+      <circle cx="14" cy="16" r="3.5" fill="#718096"/>
+      <circle cx="14" cy="16" r="2" fill="#2d3748"/>
+      <circle cx="15" cy="15" r="0.8" fill="#e2e8f0" opacity="0.6"/>
+
+      <!-- Viewfinder -->
+      <rect x="20" y="11" width="2" height="2" rx="0.5" fill="#e53e3e"/>
+
+      <!-- Stand/mount -->
+      <rect x="12" y="23" width="4" height="3" rx="0.5" fill="#4a5568"/>
+      <path d="M10 26 L18 26" stroke="#2d3748" stroke-width="2" stroke-linecap="round"/>
     </svg>
   `;
 }
@@ -722,6 +758,48 @@ function addLightstationMarker(lightstation) {
 
   // Store marker reference for later access
   lightstationMarkers[lightstation.id] = marker;
+}
+
+// Add webcam marker to map
+function addWebcamMarker(webcam) {
+  const icon = L.divIcon({
+    className: 'station-marker webcam-marker',
+    html: createWebcamSVG(),
+    iconSize: [28, 28],
+    iconAnchor: [14, 28],
+    popupAnchor: [0, -28]
+  });
+
+  const marker = L.marker([webcam.lat, webcam.lon], { icon: icon });
+
+  // Build popup
+  let popupContent = `<div class="station-popup">`;
+  popupContent += `<h3>📹 ${webcam.name}</h3>`;
+
+  // Webcam info
+  popupContent += `<div style="background: #f0f8ff; padding: 8px; margin: 8px 0; border-radius: 4px; border-left: 3px solid #2c5282;">`;
+  popupContent += `<div style="font-weight: 600; margin-bottom: 6px;">Webcam Details:</div>`;
+  popupContent += `<div><strong>📍 Location:</strong> ${webcam.location}</div>`;
+  popupContent += `<div><strong>🔄 Updates:</strong> Every ${webcam.update_frequency_minutes} minutes</div>`;
+  popupContent += `<div><strong>⏱️ Stream Delay:</strong> ~${webcam.stream_delay_minutes} min</div>`;
+  popupContent += `<div><strong>📡 Source:</strong> ${webcam.source}</div>`;
+  popupContent += `</div>`;
+
+  // Station details
+  popupContent += `
+    <div style="font-size: 0.9em; line-height: 1.4; margin-top: 8px;">
+      <div><strong>ID:</strong> ${webcam.id}</div>
+      <div><strong>Type:</strong> Webcam</div>
+    </div>
+    <a href="${webcam.page_url}" class="view-data-btn" style="display: inline-block; margin-top: 8px; padding: 6px 12px; background: #2c5282; color: white; text-decoration: none; border-radius: 4px; font-size: 0.9em;">View Webcam →</a>
+  </div>`;
+
+  marker.bindPopup(popupContent);
+  marker.addTo(markersLayer);
+
+  // Store marker reference for later access
+  if (!window.webcamMarkers) window.webcamMarkers = {};
+  window.webcamMarkers[webcam.id] = marker;
 }
 
 // Fallback station data if fetch fails

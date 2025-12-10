@@ -648,8 +648,23 @@ function renderStandardWaveChart(waveChart, buoy, buoyId, ts) {
       splitLine: { show: true, lineStyle: { color: "#eee" } },
     },
     yAxis: [
-      { type: "value", name: "Height (m)", position: "left", min: 0, max: yAxisMax, scale: true },
-      { type: "value", name: "Period (s)", position: "right" },
+      {
+        type: "value",
+        name: "Height (m)",
+        position: "left",
+        min: 0,
+        max: yAxisMax,
+        scale: true,
+        nameTextStyle: { color: "#1e88e5" },
+        axisLine: { lineStyle: { color: "#1e88e5" } }
+      },
+      {
+        type: "value",
+        name: "Period (s)",
+        position: "right",
+        nameTextStyle: { color: "#43a047" },
+        axisLine: { lineStyle: { color: "#43a047" } }
+      },
     ],
     series: series
   }, true);
