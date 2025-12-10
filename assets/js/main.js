@@ -397,15 +397,17 @@ async function loadBuoyData() {
 
             // Add collapsible explanatory footnote (hidden by default)
             if (peakSpread != null && avgSpread != null) {
-              const gap = avgSpread - peakSpread;
               cardContent += `
-                <div id="spread-info-${id}" style="display: none; font-size: 0.8em; color: #666; font-style: italic; margin-top: 0.5rem; padding: 0.5rem; background: #f0f8ff; border-left: 3px solid #0077be; border-radius: 4px; line-height: 1.4;">
-                  <strong>What does this mean?</strong><br>
-                  • <strong>Peak Spread:</strong> Organization of the dominant swell (~20° = clean swell)<br>
-                  • <strong>Average Spread:</strong> Entire surface including wind chop<br>
-                  • <strong>Gap:</strong> ${gap}° difference shows how much chop is obscuring the swell<br>
+                <div id="spread-info-${id}" style="display: none; font-size: 0.85em; color: #555; margin-top: 0.5rem; padding: 0.75rem; background: #f0f8ff; border-left: 3px solid #0077be; border-radius: 4px; line-height: 1.5;">
+                  <strong style="color: #2c5282;">Angular Spread</strong> measures how organized the waves are:<br>
                   <br>
-                  <span style="font-size: 0.95em; color: #f57c00;">⚠️ <strong>Note:</strong> These interpretations are experimental estimates. Conditions may differ significantly closer to shore, especially at the beach, due to bathymetry, fetch, and local wind effects.</span>
+                  <strong>Lower numbers</strong> = waves coming from one direction (clean swell)<br>
+                  <strong>Higher numbers</strong> = waves from multiple directions (choppy/messy)<br>
+                  <br>
+                  • <strong>Peak:</strong> The main swell direction<br>
+                  • <strong>Average:</strong> Overall surface (includes wind chop)<br>
+                  <br>
+                  <span style="font-size: 0.9em; color: #718096;">Beach conditions may differ from open-ocean buoy readings.</span>
                 </div>
               `;
             }

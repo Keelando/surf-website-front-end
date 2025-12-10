@@ -6,8 +6,8 @@
 
   <title>Coastal Webcams | Salish Sea Live Views</title>
 
-  <meta name="description" content="Live webcam views from coastal locations around the Salish Sea, including White Rock Pier and Boundary Bay." />
-  <meta name="keywords" content="Salish Sea webcams, White Rock Pier camera, coastal webcams, BC beach webcams, live ocean views, marine webcams, Boundary Bay" />
+  <meta name="description" content="Live webcam views from coastal locations around the Salish Sea, including White Rock East Beach and Boundary Bay." />
+  <meta name="keywords" content="Salish Sea webcams, White Rock East Beach camera, coastal webcams, BC beach webcams, live ocean views, marine webcams, Boundary Bay" />
 
   <link rel="canonical" href="https://halibutbank.ca/webcams.html" />
   <link rel="stylesheet" href="/assets/css/style-v4.css?v=20251112" />
@@ -15,13 +15,38 @@
   <link rel="stylesheet" href="/assets/css/warning-banner-v4.css" />
 
   <style>
+    .webcam-region {
+      margin: 2rem auto;
+      max-width: 1200px;
+      padding: 0 1rem;
+    }
+
+    .webcam-region-header {
+      background: linear-gradient(to right, #2c5282, #2b6cb0);
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: 8px 8px 0 0;
+      margin-bottom: 0;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .webcam-region-header h2 {
+      margin: 0;
+      font-size: 1.4rem;
+      font-weight: 600;
+    }
+
+    .webcam-region-description {
+      font-size: 0.9rem;
+      margin: 0.5rem 0 0 0;
+      opacity: 0.95;
+    }
+
     .webcam-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
       gap: 2rem;
-      margin: 2rem auto;
-      max-width: 1200px;
-      padding: 0 1rem;
+      padding: 2rem 0;
       justify-content: center;
     }
 
@@ -408,8 +433,8 @@
       </p>
     </section>
 
-    <div id="webcams-container" class="webcam-grid">
-      <!-- Webcams will be loaded here -->
+    <div id="webcams-container">
+      <!-- Webcam regions will be loaded here -->
     </div>
   </div>
 
@@ -423,11 +448,20 @@
 
   <script src="/assets/js/warning-banner.js"></script>
   <script>
-    // Webcam configuration
+    // Webcam configuration with regional grouping
+    const webcamRegions = {
+      'salish_sea_south': {
+        name: 'Salish Sea - South (White Rock & Boundary Bay)',
+        description: 'Webcams covering White Rock East Beach and Boundary Bay area with local marine conditions'
+      }
+      // Future: 'west_coast_vi': { name: 'West Coast Vancouver Island (Tofino)', description: '...' }
+    };
+
     const webcams = [
       {
         id: 'whiterock',
-        name: 'White Rock Pier',
+        region: 'salish_sea_south',
+        name: 'White Rock East Beach',
         location: 'White Rock, BC',
         dataUrl: '/data/wrcam/latest.json',
         imageUrl: '/data/wrcam/latest.jpg',
@@ -449,6 +483,7 @@
       },
       {
         id: 'boundarybay',
+        region: 'salish_sea_south',
         name: 'Boundary Bay',
         location: 'Boundary Bay, BC',
         dataUrl: '/data/bbcam/latest.json',
@@ -855,7 +890,7 @@
       }
     }
 
-    // Load all webcams
+    // Load all webcams grouped by region
     async function loadWebcams() {
       const container = document.getElementById('webcams-container');
 
@@ -869,7 +904,17 @@
       // Fetch marine data once
       const marineData = await fetchMarineData();
 
-      // Create and insert conditions banner before webcam grid
+      // Group webcams by region
+      const groupedWebcams = {};
+      webcams.forEach(webcam => {
+        const region = webcam.region || 'other';
+        if (!groupedWebcams[region]) {
+          groupedWebcams[region] = [];
+        }
+        groupedWebcams[region].push(webcam);
+      });
+
+      // Create and insert conditions banner before webcam regions
       if (marineData) {
         const banner = createConditionsBanner(marineData);
         if (banner) {
@@ -877,27 +922,54 @@
         }
       }
 
-      for (const webcam of webcams) {
-        try {
-          const metadata = await loadWebcamMetadata(webcam);
-          const card = await createWebcamCard(webcam, metadata);
-          container.appendChild(card);
-        } catch (error) {
-          console.error('Failed to load webcam ' + webcam.name + ':', error);
+      // Render each region
+      for (const [regionKey, regionWebcams] of Object.entries(groupedWebcams)) {
+        const regionInfo = webcamRegions[regionKey];
 
-          const errorCard = document.createElement('div');
-          errorCard.className = 'webcam-card';
-          errorCard.innerHTML = `
-            <div class="webcam-header">
-              <h3>${webcam.name}</h3>
-              <p class="webcam-location">${webcam.location}</p>
-            </div>
-            <div class="webcam-error">
-              Failed to load webcam data. Please try again later.
-            </div>
+        // Create region container
+        const regionContainer = document.createElement('div');
+        regionContainer.className = 'webcam-region';
+
+        // Region header
+        if (regionInfo) {
+          const regionHeader = document.createElement('div');
+          regionHeader.className = 'webcam-region-header';
+          regionHeader.innerHTML = `
+            <h2>${regionInfo.name}</h2>
+            <p class="webcam-region-description">${regionInfo.description}</p>
           `;
-          container.appendChild(errorCard);
+          regionContainer.appendChild(regionHeader);
         }
+
+        // Webcam grid for this region
+        const grid = document.createElement('div');
+        grid.className = 'webcam-grid';
+
+        for (const webcam of regionWebcams) {
+          try {
+            const metadata = await loadWebcamMetadata(webcam);
+            const card = await createWebcamCard(webcam, metadata);
+            grid.appendChild(card);
+          } catch (error) {
+            console.error('Failed to load webcam ' + webcam.name + ':', error);
+
+            const errorCard = document.createElement('div');
+            errorCard.className = 'webcam-card';
+            errorCard.innerHTML = `
+              <div class="webcam-header">
+                <h3>${webcam.name}</h3>
+                <p class="webcam-location">${webcam.location}</p>
+              </div>
+              <div class="webcam-error">
+                Failed to load webcam data. Please try again later.
+              </div>
+            `;
+            grid.appendChild(errorCard);
+          }
+        }
+
+        regionContainer.appendChild(grid);
+        container.appendChild(regionContainer);
       }
     }
 
