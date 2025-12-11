@@ -501,15 +501,15 @@
     <section style="background: #edf2f7; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
       <h2 style="margin-top: 0; color: #2c5282; font-size: 1.3rem;">About Coastal Webcams</h2>
       <p style="margin-bottom: 0.5rem;">
-        Live and near-live views from coastal webcams around the Salish Sea.
+        Recent views from coastal webcams around the Salish Sea.
         Images are updated every 10 minutes to provide current visual conditions for beaches, piers, and marine areas.
       </p>
       <p style="margin-bottom: 0.5rem;">
-        <strong>Important:</strong> Due to YouTube livestream latency, still images are delayed by 6-20 minutes from real-time.
-        For current conditions, click "View Source" to watch the live stream directly.
+        <strong>Important:</strong> Screen grabs are delayed due to livestream latency.
+        For real-time conditions, click "View Source" to watch the live stream directly.
       </p>
       <p style="margin: 0;">
-        <strong>Note:</strong> Check the timestamp on each image for exact capture time.
+        <strong>Note:</strong> Check the timestamp on each image for precise capture time.
       </p>
     </section>
 
@@ -1105,9 +1105,6 @@
       controlsContainer.appendChild(nextBtn);
       card.appendChild(controlsContainer);
 
-      // Load slideshow data
-      loadSlideshow(webcam);
-
       // Info section
       const info = document.createElement('div');
       info.className = 'webcam-info';
@@ -1269,11 +1266,17 @@
         const grid = document.createElement('div');
         grid.className = 'webcam-grid';
 
+        // Track webcams that need slideshow loading (after DOM insertion)
+        const webcamsToLoadSlideshow = [];
+
         for (const webcam of regionWebcams) {
           try {
             const metadata = await loadWebcamMetadata(webcam);
             const card = await createWebcamCard(webcam, metadata);
             grid.appendChild(card);
+
+            // Queue slideshow loading for after DOM insertion
+            webcamsToLoadSlideshow.push(webcam);
           } catch (error) {
             console.error('Failed to load webcam ' + webcam.name + ':', error);
 
@@ -1295,6 +1298,9 @@
         contentWrapper.appendChild(grid);
         regionContainer.appendChild(contentWrapper);
         container.appendChild(regionContainer);
+
+        // Now that cards are in DOM, load slideshows
+        webcamsToLoadSlideshow.forEach(webcam => loadSlideshow(webcam));
       }
     }
 

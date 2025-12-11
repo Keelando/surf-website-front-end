@@ -205,27 +205,26 @@ function createLighthouseSVG() {
 
 /**
  * Create custom webcam SVG icon
- * Modern camera icon for webcam markers
+ * Rounded camera icon for webcam markers
  * @returns {string} SVG string
  */
 function createWebcamSVG() {
   return `
     <svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+      <!-- Background circle -->
+      <circle cx="14" cy="14" r="13" fill="#2c5282" stroke="#1a365d" stroke-width="1.5"/>
+
       <!-- Camera body -->
-      <rect x="4" y="9" width="20" height="14" rx="2" fill="#2c5282" stroke="#1a365d" stroke-width="1"/>
+      <rect x="6" y="10" width="16" height="11" rx="1.5" fill="#ffffff" stroke="#1a365d" stroke-width="0.8"/>
 
       <!-- Lens -->
-      <circle cx="14" cy="16" r="5" fill="#4a5568" stroke="#2d3748" stroke-width="1"/>
-      <circle cx="14" cy="16" r="3.5" fill="#718096"/>
-      <circle cx="14" cy="16" r="2" fill="#2d3748"/>
-      <circle cx="15" cy="15" r="0.8" fill="#e2e8f0" opacity="0.6"/>
+      <circle cx="14" cy="15.5" r="4" fill="#4a5568" stroke="#2d3748" stroke-width="0.8"/>
+      <circle cx="14" cy="15.5" r="2.5" fill="#718096"/>
+      <circle cx="14" cy="15.5" r="1.3" fill="#2d3748"/>
+      <circle cx="14.8" cy="14.7" r="0.6" fill="#e2e8f0" opacity="0.7"/>
 
       <!-- Viewfinder -->
-      <rect x="20" y="11" width="2" height="2" rx="0.5" fill="#e53e3e"/>
-
-      <!-- Stand/mount -->
-      <rect x="12" y="23" width="4" height="3" rx="0.5" fill="#4a5568"/>
-      <path d="M10 26 L18 26" stroke="#2d3748" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="18.5" cy="12" r="1" fill="#e53e3e"/>
     </svg>
   `;
 }

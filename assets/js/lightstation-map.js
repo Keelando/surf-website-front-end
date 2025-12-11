@@ -165,7 +165,6 @@ async function loadLightstationsAndMarkers() {
     try {
       const obsResponse = await fetch('/data/latest_lightstation.json');
       latestLightstationData = await obsResponse.json();
-      console.log('Loaded latest lightstation observations');
     } catch (err) {
       console.warn('Could not fetch latest lightstation data:', err);
     }
@@ -176,8 +175,6 @@ async function loadLightstationsAndMarkers() {
 
     // Add lighthouse station markers
     if (stations.lightstations) {
-      const lightstationCount = Object.keys(stations.lightstations).length;
-      console.log(`Loading ${lightstationCount} lighthouse stations to map...`);
       Object.values(stations.lightstations).forEach(lightstation => {
         addLightstationMapMarker(lightstation);
       });
@@ -323,7 +320,6 @@ function centerMapOnLightstation(lightstationId, retryCount = 0) {
   if (!lightstationMap || !lightstationMapMarkers[lightstationId]) {
     // Retry up to 5 times with 500ms delay
     if (retryCount < 5) {
-      console.log(`Waiting for lightstation marker ${lightstationId}... (attempt ${retryCount + 1}/5)`);
       setTimeout(() => centerMapOnLightstation(lightstationId, retryCount + 1), 500);
       return;
     }

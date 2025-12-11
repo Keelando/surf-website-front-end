@@ -291,15 +291,19 @@ async function loadWindTable() {
         '4600304': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06400&stationID=46304',
         '4600303': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46303',
         '4600131': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06400&stationID=46131',
-        '4600206': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=04&siteID=06400&stationID=46206',
+        '4600206': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06400&stationID=46206',
         // NOAA Buoys and Stations
         '46087': 'https://www.ndbc.noaa.gov/station_page.php?station=46087',
         '46088': 'https://www.ndbc.noaa.gov/station_page.php?station=46088',
         '46267': 'https://www.ndbc.noaa.gov/station_page.php?station=46267',
         'CPMW1': 'https://www.ndbc.noaa.gov/station_page.php?station=cpmw1',
         'SISW1': 'https://www.ndbc.noaa.gov/station_page.php?station=sisw1',
+        // NOAA NWS Airports
+        'KBLI': 'https://www.weather.gov/wrh/timeseries?site=KBLI',
+        'KORS': 'https://www.weather.gov/wrh/timeseries?site=KORS',
         // Municipal/Other
-        'whiterock_pier': 'https://www.whiterockcity.ca/1000/Weather-Station'
+        'whiterock_pier': 'https://www.whiterockcity.ca/1000/Weather-Station',
+        'JERICHO': 'https://jsca.bc.ca/services/weather/'
       };
 
       // Determine source badge and link
@@ -311,12 +315,18 @@ async function loadWindTable() {
         } else if (id.startsWith('46') || id === 'CPMW1' || id === 'SISW1') {
           // NOAA buoys/stations (46xxx but not 4600xxx)
           sourceBadge = `<br><a href="${sourceLinks[id]}" target="_blank" rel="noopener" style="font-size: 0.75em; color: #003087; text-decoration: none;">🇺🇸 NOAA 🔗</a>`;
+        } else if (id.startsWith('K')) {
+          // NOAA NWS airports (KXXX)
+          sourceBadge = `<br><a href="${sourceLinks[id]}" target="_blank" rel="noopener" style="font-size: 0.75em; color: #003087; text-decoration: none;">🇺🇸 NOAA 🔗</a>`;
         } else if (id === 'CRPILE' || id === 'CRCHAN' || id === 'COLEB') {
           // Surrey FlowWorks (no public link)
           sourceBadge = '<br><span style="font-size: 0.75em; color: #006837;">🏛️ Surrey</span>';
         } else if (id === 'whiterock_pier') {
           // White Rock City
           sourceBadge = `<br><a href="${sourceLinks[id]}" target="_blank" rel="noopener" style="font-size: 0.75em; color: #0066cc; text-decoration: none;">🏛️ White Rock 🔗</a>`;
+        } else if (id === 'JERICHO') {
+          // Jericho Sailing Centre
+          sourceBadge = `<br><a href="${sourceLinks[id]}" target="_blank" rel="noopener" style="font-size: 0.75em; color: #2563eb; text-decoration: none;">⛵ JSCA 🔗</a>`;
         } else if (id.startsWith('C')) {
           // Environment Canada weather stations
           sourceBadge = `<br><a href="${sourceLinks[id]}" target="_blank" rel="noopener" style="font-size: 0.75em; color: #006400; text-decoration: none;">🇨🇦 Env Canada 🔗</a>`;
