@@ -6,8 +6,8 @@
 
   <title>Coastal Webcams | Salish Sea Live Views</title>
 
-  <meta name="description" content="Live webcam views from coastal locations around the Salish Sea, including White Rock East Beach and Boundary Bay." />
-  <meta name="keywords" content="Salish Sea webcams, White Rock East Beach camera, coastal webcams, BC beach webcams, live ocean views, marine webcams, Boundary Bay" />
+  <meta name="description" content="Live webcam views from coastal locations around the Salish Sea, including White Rock Pier Cam and White Rock East Beach." />
+  <meta name="keywords" content="Salish Sea webcams, White Rock Pier camera, White Rock East Beach camera, White Rock pier cam, coastal webcams, BC beach webcams, live ocean views, marine webcams" />
 
   <link rel="canonical" href="https://halibutbank.ca/webcams.html" />
   <link rel="stylesheet" href="/assets/css/style-v4.css?v=20251112" />
@@ -43,12 +43,6 @@
       font-weight: 600;
     }
 
-    .webcam-region-description {
-      font-size: 0.9rem;
-      margin: 0.5rem 0 0 0;
-      opacity: 0.95;
-    }
-
     .webcam-region-toggle-btn {
       display: inline-block;
       margin-right: 0.5rem;
@@ -60,20 +54,22 @@
       transform: rotate(-90deg);
     }
 
+    .webcam-region-content {
+      max-height: 5000px;
+      overflow: hidden;
+      transition: max-height 0.3s ease-out;
+    }
+
+    .webcam-region.collapsed .webcam-region-content {
+      max-height: 0;
+    }
+
     .webcam-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
       gap: 2rem;
       padding: 2rem 0;
       justify-content: center;
-      max-height: 5000px;
-      overflow: hidden;
-      transition: max-height 0.3s ease-out, padding 0.3s;
-    }
-
-    .webcam-region.collapsed .webcam-grid {
-      max-height: 0;
-      padding: 0;
     }
 
     .webcam-card {
@@ -275,10 +271,24 @@
 
     .condition-data {
       display: flex;
-      align-items: center;
-      gap: 1rem;
+      align-items: flex-start;
+      gap: 1.5rem;
       flex-wrap: wrap;
       flex: 1;
+    }
+
+    .condition-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .condition-section-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #718096;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
     .condition-timestamp {
@@ -365,6 +375,50 @@
 
     .wave-period {
       color: #718096;
+    }
+
+    .wave-details-extended {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    .wave-icon-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .wave-arrow-container {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+    }
+
+    .wave-data-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .wave-metric {
+      display: flex;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .wave-label {
+      font-weight: 600;
+      color: #4a5568;
+      min-width: 48px;
+    }
+
+    .wave-value {
+      color: #2c5282;
+      font-weight: 500;
     }
 
     @media (max-width: 768px) {
@@ -477,12 +531,10 @@
     // Webcam configuration with regional grouping
     const webcamRegions = {
       'salish_sea_south': {
-        name: 'Salish Sea - South (White Rock & Boundary Bay)',
-        description: 'Webcams covering White Rock East Beach and Boundary Bay area with local marine conditions'
+        name: 'Salish Sea - Boundary Bay - White Rock'
       },
       'west_coast_vi': {
-        name: 'West Coast Vancouver Island (Tofino)',
-        description: 'Webcams covering the Pacific Ocean coast near Tofino, including popular surf spots'
+        name: 'West Coast Vancouver Island (Tofino)'
       }
     };
 
@@ -490,7 +542,7 @@
       {
         id: 'whiterock',
         region: 'salish_sea_south',
-        name: 'White Rock East Beach',
+        name: 'White Rock Pier Cam',
         location: 'White Rock, BC',
         dataUrl: '/data/wrcam/latest.json',
         imageUrl: '/data/wrcam/latest.jpg',
@@ -513,8 +565,8 @@
       {
         id: 'boundarybay',
         region: 'salish_sea_south',
-        name: 'Boundary Bay',
-        location: 'Boundary Bay, BC',
+        name: 'White Rock East Beach',
+        location: 'White Rock, BC',
         dataUrl: '/data/bbcam/latest.json',
         imageUrl: '/data/bbcam/latest.jpg',
         slideshowUrl: '/data/bbcam/slideshow_manifest.json',
@@ -543,7 +595,13 @@
         slideshowUrl: '/data/coxbay/slideshow_manifest.json',
         slideshowPath: '/data/coxbay/',
         streamDelay: 20,  // minutes
-        conditions: []  // No local marine data available for West Coast yet
+        conditions: [
+          {
+            label: 'La Perouse Bank',
+            buoyStation: '4600206',
+            fields: ['wind', 'waves_detailed']
+          }
+        ]
       }
     ];
 
@@ -620,6 +678,25 @@
       path.setAttribute('d', 'M0,12 L-5,-8 L0,-5 L5,-8 Z');
       path.setAttribute('fill', '#dc2626');
       path.setAttribute('stroke', '#dc2626');
+      path.setAttribute('stroke-width', '1.5');
+
+      svg.appendChild(path);
+      return svg;
+    }
+
+    // Create wave direction arrow SVG (different color from wind)
+    function createWaveArrow(degrees) {
+      // Arrow points where waves are coming FROM (oceanographic convention)
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('width', '20');
+      svg.setAttribute('height', '20');
+      svg.setAttribute('viewBox', '-6 -10 12 24');
+      svg.style.transform = `rotate(${degrees}deg)`;
+
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', 'M0,12 L-5,-8 L0,-5 L5,-8 Z');
+      path.setAttribute('fill', '#2563eb');
+      path.setAttribute('stroke', '#2563eb');
       path.setAttribute('stroke-width', '1.5');
 
       svg.appendChild(path);
@@ -771,6 +848,199 @@
 
       // Only return if we have any rows
       return stack.children.length > 0 ? banner : null;
+    }
+
+    // Create regional marine conditions section
+    function createRegionConditions(regionWebcams, marineData) {
+      if (!marineData) return null;
+
+      // Collect all unique condition sources from this region's webcams
+      const conditionSources = new Map();
+
+      regionWebcams.forEach(webcam => {
+        if (webcam.conditions) {
+          webcam.conditions.forEach(condition => {
+            const key = condition.buoyStation || condition.customStation;
+            if (key && !conditionSources.has(key)) {
+              conditionSources.set(key, condition);
+            }
+          });
+        }
+      });
+
+      if (conditionSources.size === 0) return null;
+
+      const conditionsSection = document.createElement('div');
+      conditionsSection.className = 'marine-conditions-banner';
+      conditionsSection.style.margin = '0 0 1.5rem 0';
+
+      const title = document.createElement('h3');
+      title.textContent = 'Current Marine Conditions';
+      title.style.fontSize = '1.1rem';
+      conditionsSection.appendChild(title);
+
+      const stack = document.createElement('div');
+      stack.className = 'conditions-stack';
+
+      conditionSources.forEach((condition, key) => {
+        let data = null;
+
+        if (condition.buoyStation) {
+          data = marineData.buoy?.[condition.buoyStation];
+        } else if (condition.customStation) {
+          data = marineData.custom?.[condition.customStation];
+        }
+
+        if (!data || data.stale) return;
+
+        const row = document.createElement('div');
+        row.className = 'condition-row';
+
+        const stationName = document.createElement('div');
+        stationName.className = 'condition-station-name';
+        stationName.textContent = condition.label;
+        row.appendChild(stationName);
+
+        const dataDiv = document.createElement('div');
+        dataDiv.className = 'condition-data';
+
+        // Wind section
+        if (data.wind_speed !== null && data.wind_direction !== null) {
+          const windSection = document.createElement('div');
+          windSection.className = 'condition-section';
+
+          const windLabel = document.createElement('div');
+          windLabel.className = 'condition-section-label';
+          windLabel.textContent = 'Wind:';
+          windSection.appendChild(windLabel);
+
+          const windDiv = document.createElement('div');
+          windDiv.className = 'condition-wind';
+
+          const arrow = document.createElement('span');
+          arrow.className = 'condition-wind-arrow';
+          arrow.appendChild(createWindArrow(data.wind_direction));
+          windDiv.appendChild(arrow);
+
+          const windDetails = document.createElement('div');
+          windDetails.className = 'condition-wind-details';
+          windDetails.innerHTML = `
+            <span class="wind-cardinal">${data.wind_direction_cardinal || ''}</span>
+            <span class="wind-degrees">(${Math.round(data.wind_direction)}°)</span>
+            <span class="wind-speed">${data.wind_speed.toFixed(0)}</span>
+            ${data.wind_gust ? `<span class="wind-gust">G ${data.wind_gust.toFixed(0)}</span>` : ''}
+            <span class="wind-gust">kt</span>
+          `;
+          windDiv.appendChild(windDetails);
+          windSection.appendChild(windDiv);
+          dataDiv.appendChild(windSection);
+        }
+
+        // Waves section (if available) - check if detailed wave data is requested
+        const showDetailedWaves = condition.fields?.includes('waves_detailed');
+
+        if (data.wave_height_sig !== null && data.wave_height_sig !== undefined) {
+          const waveSection = document.createElement('div');
+          waveSection.className = 'condition-section';
+
+          const waveLabel = document.createElement('div');
+          waveLabel.className = 'condition-section-label';
+          waveLabel.textContent = 'Waves:';
+          waveSection.appendChild(waveLabel);
+
+          const waveDiv = document.createElement('div');
+          waveDiv.className = 'condition-waves';
+
+          if (showDetailedWaves) {
+            // Detailed wave display for Environment Canada buoys
+            const waveDetails = document.createElement('div');
+            waveDetails.className = 'wave-details-extended';
+
+            // Wave icon and arrow for direction
+            const iconSection = document.createElement('div');
+            iconSection.className = 'wave-icon-section';
+            iconSection.innerHTML = '<span class="wave-icon">🌊</span>';
+
+            if (data.wave_direction_peak !== null && data.wave_direction_peak !== undefined) {
+              const arrowContainer = document.createElement('span');
+              arrowContainer.className = 'wave-arrow-container';
+              arrowContainer.appendChild(createWaveArrow(data.wave_direction_peak));
+              iconSection.appendChild(arrowContainer);
+            }
+
+            waveDetails.appendChild(iconSection);
+
+            // Wave data grid
+            const dataGrid = document.createElement('div');
+            dataGrid.className = 'wave-data-grid';
+
+            // Significant wave height and period
+            const sigMetric = document.createElement('div');
+            sigMetric.className = 'wave-metric';
+            sigMetric.innerHTML = `<span class="wave-label">Sig:</span> <span class="wave-value">${data.wave_height_sig.toFixed(1)}m @ ${data.wave_period_sig ? data.wave_period_sig.toFixed(1) + 's' : 'N/A'}</span>`;
+            dataGrid.appendChild(sigMetric);
+
+            // Peak wave height and period
+            if (data.wave_height_max !== null && data.wave_height_max !== undefined) {
+              const peakMetric = document.createElement('div');
+              peakMetric.className = 'wave-metric';
+              peakMetric.innerHTML = `<span class="wave-label">Peak:</span> <span class="wave-value">${data.wave_height_max.toFixed(1)}m @ ${data.wave_period_peak ? data.wave_period_peak.toFixed(1) + 's' : 'N/A'}</span>`;
+              dataGrid.appendChild(peakMetric);
+            }
+
+            // Wave direction with spread
+            if (data.wave_direction_peak !== null && data.wave_direction_peak !== undefined) {
+              const dirMetric = document.createElement('div');
+              dirMetric.className = 'wave-metric';
+              const dirCardinal = data.wave_direction_peak_cardinal || '';
+              dirMetric.innerHTML = `<span class="wave-label">Dir:</span> <span class="wave-value">${dirCardinal} (${Math.round(data.wave_direction_peak)}°)</span>`;
+              dataGrid.appendChild(dirMetric);
+
+              // Wave spread - show both peak and average
+              if (data.wave_direction_spread_peak !== null && data.wave_direction_spread_peak !== undefined) {
+                const spreadMetric = document.createElement('div');
+                spreadMetric.className = 'wave-metric';
+                const avgSpread = data.wave_direction_spread_avg ? ` (avg ±${Math.round(data.wave_direction_spread_avg)}°)` : '';
+                spreadMetric.innerHTML = `<span class="wave-label">Spread:</span> <span class="wave-value">±${Math.round(data.wave_direction_spread_peak)}°${avgSpread}</span>`;
+                dataGrid.appendChild(spreadMetric);
+              }
+            }
+
+            waveDetails.appendChild(dataGrid);
+            waveDiv.appendChild(waveDetails);
+          } else {
+            // Simple wave display
+            const waveDetails = document.createElement('div');
+            waveDetails.className = 'wave-details';
+            waveDetails.innerHTML = `
+              <span class="wave-height">${data.wave_height_sig.toFixed(1)}m</span>
+              ${data.wave_period_avg ? `<span class="wave-period">@ ${data.wave_period_avg.toFixed(1)}s</span>` : ''}
+            `;
+            waveDiv.appendChild(waveDetails);
+          }
+
+          waveSection.appendChild(waveDiv);
+          dataDiv.appendChild(waveSection);
+        }
+
+        // Timestamp
+        if (data.observation_time) {
+          const timestamp = document.createElement('div');
+          timestamp.className = 'condition-timestamp';
+          timestamp.textContent = formatShortTimestamp(data.observation_time);
+          dataDiv.appendChild(timestamp);
+        }
+
+        row.appendChild(dataDiv);
+        stack.appendChild(row);
+      });
+
+      if (stack.children.length > 0) {
+        conditionsSection.appendChild(stack);
+        return conditionsSection;
+      }
+
+      return null;
     }
 
     // Slideshow state (per webcam)
@@ -955,14 +1225,6 @@
         groupedWebcams[region].push(webcam);
       });
 
-      // Create and insert conditions banner before webcam regions
-      if (marineData) {
-        const banner = createConditionsBanner(marineData);
-        if (banner) {
-          container.parentNode.insertBefore(banner, container);
-        }
-      }
-
       // Render each region
       for (const [regionKey, regionWebcams] of Object.entries(groupedWebcams)) {
         const regionInfo = webcamRegions[regionKey];
@@ -981,7 +1243,6 @@
 
           regionHeader.innerHTML = `
             <h2><span class="webcam-region-toggle-btn">▼</span>${regionInfo.name} <span style="font-size: 0.8em; font-weight: normal; opacity: 0.8;">(${countText})</span></h2>
-            <p class="webcam-region-description">${regionInfo.description}</p>
           `;
 
           // Add click handler to toggle collapse
@@ -990,6 +1251,18 @@
           });
 
           regionContainer.appendChild(regionHeader);
+        }
+
+        // Create content wrapper for collapsible content
+        const contentWrapper = document.createElement('div');
+        contentWrapper.className = 'webcam-region-content';
+
+        // Add regional marine conditions section inside content wrapper
+        if (marineData && regionWebcams.length > 0) {
+          const regionConditions = createRegionConditions(regionWebcams, marineData);
+          if (regionConditions) {
+            contentWrapper.appendChild(regionConditions);
+          }
         }
 
         // Webcam grid for this region
@@ -1019,7 +1292,8 @@
           }
         }
 
-        regionContainer.appendChild(grid);
+        contentWrapper.appendChild(grid);
+        regionContainer.appendChild(contentWrapper);
         container.appendChild(regionContainer);
       }
     }
