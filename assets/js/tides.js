@@ -18,6 +18,8 @@ const STATION_DISPLAY_NAMES = {
   'tsawwassen': 'Tsawwassen',
   'whiterock': 'White Rock',
   'crescent_pile': 'Crescent Beach',
+  'crescent_beach_ocean': 'Crescent Beach Ocean (Geodetic)',
+  'crescent_channel_ocean': 'Crescent Channel Ocean (Geodetic)',
   'nanaimo': 'Nanoose Bay (Nanaimo)',
   'new_westminster': 'New Westminster',
   'campbell_river': 'Campbell River',
@@ -83,24 +85,55 @@ function populateStationDropdown() {
     return;
   }
 
-  // Sort stations alphabetically by display name
-  stations.sort((a, b) => {
+  // Separate stations into regular and geodetic
+  const regularStations = [];
+  const geodeticStations = [];
+
+  stations.forEach(stationKey => {
+    const metadata = stationsMetadata?.tides?.[stationKey];
+    const isGeodetic = metadata?.type === 'SURREY_FLOWWORKS';
+
+    if (isGeodetic) {
+      geodeticStations.push(stationKey);
+    } else {
+      regularStations.push(stationKey);
+    }
+  });
+
+  // Sort each group alphabetically
+  const sortByName = (a, b) => {
     const nameA = STATION_DISPLAY_NAMES[a] || a;
     const nameB = STATION_DISPLAY_NAMES[b] || b;
     return nameA.localeCompare(nameB);
-  });
+  };
+  regularStations.sort(sortByName);
+  geodeticStations.sort(sortByName);
 
-  // Build options HTML
+  // Build options HTML with optgroups
   let optionsHTML = '<option value="">-- Select a Station --</option>';
-  stations.forEach(stationKey => {
-    // Check if station has observations
-    const metadata = stationsMetadata?.[stationKey];
-    const hasObservations = metadata?.series && metadata.series.includes('wlo');
-    const indicator = hasObservations ? ' 📡' : '';
-    const displayName = (STATION_DISPLAY_NAMES[stationKey] || stationKey) + indicator;
 
-    optionsHTML += `<option value="${stationKey}">${displayName}</option>`;
-  });
+  // Regular chart datum stations
+  if (regularStations.length > 0) {
+    optionsHTML += '<optgroup label="Chart Datum Stations">';
+    regularStations.forEach(stationKey => {
+      const metadata = stationsMetadata?.tides?.[stationKey];
+      const hasObservations = metadata?.series && metadata.series.includes('wlo');
+      const indicator = hasObservations ? ' 📡' : '';
+      const displayName = (STATION_DISPLAY_NAMES[stationKey] || stationKey) + indicator;
+      optionsHTML += `<option value="${stationKey}">${displayName}</option>`;
+    });
+    optionsHTML += '</optgroup>';
+  }
+
+  // Geodetic stations
+  if (geodeticStations.length > 0) {
+    optionsHTML += '<optgroup label="Geodetic Stations (CGVD28)">';
+    geodeticStations.forEach(stationKey => {
+      const displayName = (STATION_DISPLAY_NAMES[stationKey] || stationKey) + ' 📊';
+      optionsHTML += `<option value="${stationKey}" class="geodetic-station">${displayName}</option>`;
+    });
+    optionsHTML += '</optgroup>';
+  }
 
   // Populate both dropdowns
   select.innerHTML = optionsHTML;
@@ -421,8 +454,36 @@ function displayCurrentPrediction(station) {
 function displayStormSurge(station) {
   const container = document.getElementById('storm-surge');
 
+  // Check if we have tide_offset (observed - predicted for Surrey stations)
+  if (station && station.tide_offset && station.tide_offset.value !== null) {
+    const offset = station.tide_offset.value;
+    const offsetStr = offset >= 0 ? `+${offset.toFixed(2)}` : offset.toFixed(2);
+    const color = Math.abs(offset) > 0.3 ? '#e53935' : (Math.abs(offset) > 0.15 ? '#ff9800' : '#43a047');
+
+    // Format the calculation time
+    const calcTime = new Date(station.tide_offset.observation_time);
+    const calcTimeStr = formatTime(calcTime);
+
+    container.innerHTML = `
+      <div style="font-size: 1.5rem; font-weight: bold; color: ${color};">
+        ${offsetStr} m
+      </div>
+      <div style="color: #666; margin-top: 0.25rem; font-size: 0.9rem;">
+        Observed - Predicted
+      </div>
+      <div style="color: #999; margin-top: 0.25rem; font-size: 0.85rem;">
+        Calculated at ${calcTimeStr}
+      </div>
+      <div style="color: #999; margin-top: 0.25rem; font-size: 0.8rem;">
+        ${station.tide_offset.description}
+      </div>
+    `;
+    return;
+  }
+
+  // Fall back to storm surge forecast (for non-Surrey stations)
   if (!station || !station.prediction_now || !station.prediction_now.surge) {
-    container.innerHTML = '<p style="color: #999;">No storm surge forecast available</p>';
+    container.innerHTML = '<p style="color: #999;">No storm surge data available</p>';
     return;
   }
 
@@ -728,6 +789,42 @@ function displayTideChart(stationKey, dayOffset = 0) {
   const obsTimes = observations.map(o => new Date(o.time));
   const obsValues = observations.map(o => o.value);
 
+  // Calculate residuals for geodetic stations (observed - predicted)
+  let residuals = [];
+  const metadata = stationsMetadata?.tides?.[stationKey];
+  const isGeodetic = metadata?.type === 'SURREY_FLOWWORKS';
+
+  if (isGeodetic && observations.length > 0 && predictions.length > 0) {
+    // Create a map of predictions by timestamp for quick lookup
+    const predictionMap = new Map();
+    predictions.forEach(p => {
+      predictionMap.set(new Date(p.time).getTime(), p.value);
+    });
+
+    // Calculate residuals for each observation
+    observations.forEach(obs => {
+      const obsTime = new Date(obs.time);
+      const obsTimeMs = obsTime.getTime();
+
+      // Find closest prediction (within 15 minutes)
+      let closestPred = null;
+      let minDiff = Infinity;
+
+      for (const [predTimeMs, predValue] of predictionMap.entries()) {
+        const diff = Math.abs(predTimeMs - obsTimeMs);
+        if (diff < minDiff && diff <= 15 * 60 * 1000) { // Within 15 minutes
+          minDiff = diff;
+          closestPred = predValue;
+        }
+      }
+
+      if (closestPred !== null) {
+        const residual = obs.value - closestPred;
+        residuals.push([obsTime, residual]);
+      }
+    });
+  }
+
   // Get combined water level data if available (for all days including today)
   let combinedData = [];
   let surgeData = [];
@@ -902,6 +999,42 @@ function displayTideChart(stationKey, dayOffset = 0) {
     });
   }
 
+  // Add residuals series for geodetic stations
+  if (residuals.length > 0 && dayOffset === 0) {
+    option.series.push({
+      name: 'Residual (Obs - Pred)',
+      type: 'line',
+      data: residuals,
+      smooth: false,
+      lineStyle: {
+        color: '#e53935',
+        width: 2,
+        type: 'dashed'
+      },
+      itemStyle: {
+        color: '#e53935'
+      },
+      showSymbol: true,
+      symbolSize: 4,
+      z: 8
+    });
+
+    // Add a zero reference line for residuals
+    option.series.push({
+      name: 'Zero Reference',
+      type: 'line',
+      data: [[times[0], 0], [times[times.length - 1], 0]],
+      lineStyle: {
+        color: '#999',
+        width: 1,
+        type: 'dotted'
+      },
+      showSymbol: false,
+      silent: true,
+      z: 1
+    });
+  }
+
   // Add storm surge and combined water level series
   if (hasCombinedData) {
     // Storm surge series (small but useful to see the component)
@@ -1012,8 +1145,19 @@ function showSelectedTideOnMap() {
 
   const stationKey = select.value;
 
-  // Navigate to index.html with tide station in hash
-  window.location.href = `/#tide-${stationKey}`;
+  // Map geodetic tide stations to their wave station IDs
+  const geodeticToWaveMap = {
+    'crescent_beach_ocean': 'CRPILE',
+    'crescent_channel_ocean': 'CRCHAN'
+  };
+
+  // If it's a geodetic station, show the wave station marker instead
+  if (geodeticToWaveMap[stationKey]) {
+    window.location.href = `/#${geodeticToWaveMap[stationKey]}`;
+  } else {
+    // Regular tide station
+    window.location.href = `/#tide-${stationKey}`;
+  }
 }
 
 // Make function globally accessible
