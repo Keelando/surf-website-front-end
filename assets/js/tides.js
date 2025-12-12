@@ -454,7 +454,7 @@ function displayCurrentPrediction(station) {
 function displayStormSurge(station) {
   const container = document.getElementById('storm-surge');
 
-  // Check if we have tide_offset (observed - predicted for Surrey stations)
+  // Check if we have tide_offset (actual observed residual with matched timestamps)
   if (station && station.tide_offset && station.tide_offset.value !== null) {
     const offset = station.tide_offset.value;
     const offsetStr = offset >= 0 ? `+${offset.toFixed(2)}` : offset.toFixed(2);
@@ -463,6 +463,18 @@ function displayStormSurge(station) {
     // Format the calculation time
     const calcTime = new Date(station.tide_offset.observation_time);
     const calcTimeStr = formatTime(calcTime);
+
+    // Check if we also have ECCC forecast surge for comparison
+    const forecastSurge = station.observation?.surge || station.prediction_now?.surge;
+    let forecastHtml = '';
+    if (forecastSurge !== null && forecastSurge !== undefined) {
+      const forecastStr = forecastSurge >= 0 ? `+${forecastSurge.toFixed(3)}` : forecastSurge.toFixed(3);
+      forecastHtml = `
+        <div style="color: #666; margin-top: 0.5rem; font-size: 0.85rem;">
+          ECCC Forecast: <strong style="color: #ff9800;">${forecastStr} m</strong>
+        </div>
+      `;
+    }
 
     container.innerHTML = `
       <div style="font-size: 1.5rem; font-weight: bold; color: ${color};">
@@ -474,6 +486,7 @@ function displayStormSurge(station) {
       <div style="color: #999; margin-top: 0.25rem; font-size: 0.85rem;">
         Calculated at ${calcTimeStr}
       </div>
+      ${forecastHtml}
       <div style="color: #999; margin-top: 0.25rem; font-size: 0.8rem;">
         ${station.tide_offset.description}
       </div>
@@ -481,15 +494,48 @@ function displayStormSurge(station) {
     return;
   }
 
-  // Fall back to storm surge forecast (for non-Surrey stations)
-  if (!station || !station.prediction_now || !station.prediction_now.surge) {
+  // Fall back to storm surge forecast from combined water level data
+  // (used for geodetic stations and others without tide_offset)
+  let surge = null;
+  let surgeTime = null;
+
+  // First try to get current surge from combined water level data
+  if (combinedWaterLevelData && combinedWaterLevelData.stations && combinedWaterLevelData.stations[currentStationKey]) {
+    const stationData = combinedWaterLevelData.stations[currentStationKey];
+    const forecast = stationData.forecast || [];
+
+    // Find forecast closest to now
+    const now = new Date();
+    let closestForecast = null;
+    let minDiff = Infinity;
+
+    for (const point of forecast) {
+      const pointTime = new Date(point.time);
+      const diff = Math.abs(pointTime - now);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestForecast = point;
+      }
+    }
+
+    if (closestForecast && closestForecast.storm_surge_m !== null && closestForecast.storm_surge_m !== undefined) {
+      surge = closestForecast.storm_surge_m;
+      surgeTime = new Date(closestForecast.time);
+    }
+  }
+
+  // Fall back to prediction_now.surge if available
+  if (!surge && station && station.prediction_now && station.prediction_now.surge !== null && station.prediction_now.surge !== undefined) {
+    surge = station.prediction_now.surge;
+    surgeTime = new Date(station.prediction_now.time);
+  }
+
+  if (surge === null) {
     container.innerHTML = '<p style="color: #999;">No storm surge data available</p>';
     return;
   }
 
-  const surge = station.prediction_now.surge;
-  const predTime = new Date(station.prediction_now.time);
-  const timeStr = formatTime(predTime);
+  const timeStr = formatTime(surgeTime);
 
   // Calculate today's peak from forecast data
   let peakHtml = '';
@@ -764,6 +810,10 @@ function displayTideChart(stationKey, dayOffset = 0) {
   const stationData = tideTimeseriesData?.stations?.[stationKey];
 
   if (!stationData) {
+    if (tideChart) {
+      tideChart.dispose();
+      tideChart = null;
+    }
     chartContainer.innerHTML = '<p style="text-align: center; color: #999; padding: 2rem;">No tide data available for this station</p>';
     return;
   }
@@ -778,7 +828,8 @@ function displayTideChart(stationKey, dayOffset = 0) {
 
   if (predictions.length === 0) {
     if (tideChart) {
-      tideChart.clear();
+      tideChart.dispose();
+      tideChart = null;
     }
     chartContainer.innerHTML = '<p style="text-align: center; color: #999; padding: 2rem;">No prediction data available for this day</p>';
     return;
@@ -789,40 +840,14 @@ function displayTideChart(stationKey, dayOffset = 0) {
   const obsTimes = observations.map(o => new Date(o.time));
   const obsValues = observations.map(o => o.value);
 
-  // Calculate residuals for geodetic stations (observed - predicted)
+  // Get residuals from timeseries data (pre-calculated for geodetic stations)
   let residuals = [];
-  const metadata = stationsMetadata?.tides?.[stationKey];
-  const isGeodetic = metadata?.type === 'SURREY_FLOWWORKS';
-
-  if (isGeodetic && observations.length > 0 && predictions.length > 0) {
-    // Create a map of predictions by timestamp for quick lookup
-    const predictionMap = new Map();
-    predictions.forEach(p => {
-      predictionMap.set(new Date(p.time).getTime(), p.value);
-    });
-
-    // Calculate residuals for each observation
-    observations.forEach(obs => {
-      const obsTime = new Date(obs.time);
-      const obsTimeMs = obsTime.getTime();
-
-      // Find closest prediction (within 15 minutes)
-      let closestPred = null;
-      let minDiff = Infinity;
-
-      for (const [predTimeMs, predValue] of predictionMap.entries()) {
-        const diff = Math.abs(predTimeMs - obsTimeMs);
-        if (diff < minDiff && diff <= 15 * 60 * 1000) { // Within 15 minutes
-          minDiff = diff;
-          closestPred = predValue;
-        }
-      }
-
-      if (closestPred !== null) {
-        const residual = obs.value - closestPred;
-        residuals.push([obsTime, residual]);
-      }
-    });
+  if (stationData.residuals && stationData.residuals.length > 0 && dayOffset === 0) {
+    // Filter residuals for the target day
+    residuals = filterByDay(stationData.residuals, 'time').map(r => [
+      new Date(r.time),
+      r.value
+    ]);
   }
 
   // Get combined water level data if available (for all days including today)
@@ -914,9 +939,16 @@ function displayTideChart(stationKey, dayOffset = 0) {
       }
     },
     legend: {
-      data: hasCombinedData
-        ? ['Astronomical Tide', 'Observation', 'Storm Surge (Forecast)', 'Total Water Level (Forecast)']
-        : ['Astronomical Tide', 'Observation'],
+      data: (() => {
+        let legendItems = ['Astronomical Tide', 'Observation'];
+        if (residuals.length > 0) {
+          legendItems.push('Residual (Obs - Pred)');
+        }
+        if (hasCombinedData) {
+          legendItems.push('Storm Surge (Forecast)', 'Total Water Level (Forecast)');
+        }
+        return legendItems;
+      })(),
       bottom: getResponsiveLegendBottom(),
       textStyle: { fontSize: 10 }
     },
