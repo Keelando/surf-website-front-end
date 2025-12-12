@@ -9,8 +9,10 @@ data/bbcam/latest.jpg
 data/bbcam/latest.json
 data/wrcam/slideshow/*.jpg
 data/bbcam/slideshow/*.jpg
+data/coxbay/slideshow/*.jpg
 data/wrcam/slideshow_manifest.json
 data/bbcam/slideshow_manifest.json
+data/coxbay/slideshow_manifest.json
 
 # Logs
 *.log
