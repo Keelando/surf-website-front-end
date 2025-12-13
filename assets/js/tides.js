@@ -851,9 +851,13 @@ function displayTideChart(stationKey, dayOffset = 0) {
   }
 
   // Get combined water level data if available (for all days including today)
+  // Skip total water level for geodetic stations (CGVD28 datum makes it not useful)
   let combinedData = [];
   let surgeData = [];
   let hasCombinedData = false;
+
+  // Detect geodetic stations by station_id prefix (Surrey stations start with "surrey_")
+  const isGeodetic = stationData.station_id?.startsWith('surrey_');
 
   if (combinedWaterLevelData && combinedWaterLevelData.stations && combinedWaterLevelData.stations[stationKey]) {
     const stationCombined = combinedWaterLevelData.stations[stationKey];
@@ -865,18 +869,22 @@ function displayTideChart(stationKey, dayOffset = 0) {
       return itemDate >= dayStart && itemDate <= dayEnd;
     });
 
-    // Extract combined water level (tide + surge) and storm surge
-    combinedData = filteredCombined.map(item => [
-      new Date(item.time),
-      item.total_water_level_m
-    ]);
+    // Only show total water level for DFO stations (Chart Datum)
+    // Geodetic stations (CGVD28) - total water level is not meaningful due to datum mismatch
+    if (!isGeodetic) {
+      combinedData = filteredCombined.map(item => [
+        new Date(item.time),
+        item.total_water_level_m
+      ]);
+    }
 
+    // Show storm surge for all stations
     surgeData = filteredCombined.map(item => [
       new Date(item.time),
       item.storm_surge_m
     ]);
 
-    hasCombinedData = combinedData.length > 0;
+    hasCombinedData = combinedData.length > 0 || surgeData.length > 0;
   }
 
   // Chart options
