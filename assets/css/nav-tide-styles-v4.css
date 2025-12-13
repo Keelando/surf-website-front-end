@@ -352,6 +352,37 @@
     padding: 0.4rem 0.8rem;
     font-size: 1.1rem;
   }
+
+  /* Fix tide selector overflow on mobile */
+  .tide-selector-section {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    padding: 1rem 0.5rem;
+  }
+
+  .tide-selector-section label {
+    font-size: 1rem !important;
+    margin-right: 0 !important;
+    text-align: center;
+  }
+
+  .tide-selector-section select {
+    min-width: 0 !important;
+    width: 100%;
+    max-width: 100%;
+    font-size: 0.9rem !important;
+    padding: 0.6rem !important;
+  }
+
+  .tide-selector-section a {
+    margin-left: 0 !important;
+    width: 100%;
+    text-align: center;
+    padding: 0.6rem 1rem !important;
+    font-size: 0.85rem !important;
+  }
 }
 
 /* =====================================================
