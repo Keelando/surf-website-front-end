@@ -22,3 +22,8 @@ data/coxbay/slideshow_manifest.json
 *~
 *.log
 git_backup.log
+
+# Analytics (contains sensitive visitor data)
+analytics.html
+analytics-weekly.html
+data/analytics/*
