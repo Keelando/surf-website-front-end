@@ -272,28 +272,28 @@ function createDirectionalMarker(direction, height, type) {
     if (isWind) {
       // Wind speed in knots (rounded to nearest integer)
       valueLabel = `<div style="
-        background: ${arrowColor};
-        color: white;
+        background: transparent;
+        color: #2c3e50;
         padding: 2px 5px;
         border-radius: 3px;
-        font-size: 10px;
+        font-size: 11px;
         font-weight: bold;
         white-space: nowrap;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.3);
-        margin-bottom: 2px;
+        text-shadow: 1px 1px 2px rgba(255,255,255,0.9), -1px -1px 2px rgba(255,255,255,0.9), 1px -1px 2px rgba(255,255,255,0.9), -1px 1px 2px rgba(255,255,255,0.9);
+        margin-bottom: 0px;
       ">${Math.round(height)}kt</div>`;
     } else {
       // Wave height in meters
       valueLabel = `<div style="
-        background: ${arrowColor};
-        color: white;
+        background: transparent;
+        color: #2c3e50;
         padding: 2px 5px;
         border-radius: 3px;
-        font-size: 10px;
+        font-size: 11px;
         font-weight: bold;
         white-space: nowrap;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.3);
-        margin-bottom: 2px;
+        text-shadow: 1px 1px 2px rgba(255,255,255,0.9), -1px -1px 2px rgba(255,255,255,0.9), 1px -1px 2px rgba(255,255,255,0.9), -1px 1px 2px rgba(255,255,255,0.9);
+        margin-bottom: 0px;
       ">${height.toFixed(1)}m</div>`;
     }
   }
@@ -351,30 +351,23 @@ function addBuoyMarker(buoy) {
   let iconAnchor = [15, 15];
 
   try {
-    // TODO: REFACTOR - Data source unification needed
-    // ISSUE: Wind stations are split across two data sources:
-    //   - EC wind stations: latest_wind.json (CWVF, CWGT, etc.)
-    //   - NOAA land/C-MAN: latest_buoy_v2.json (CPMW1, SISW1, COLEB)
-    // This creates confusion because:
-    //   1. Station type (wind_monitoring_station, land_station, c_man_station) doesn't indicate data source
-    //   2. Must check both JSON files for wind station data
-    //   3. Field names differ between sources (wind_direction vs wind_direction_deg)
-    // SOLUTION: Unify all wind stations into a single latest_wind.json OR clearly separate
-    //           station collections (buoys vs wind_stations) in stations.json
+    // Get data from appropriate source
+    // Wave stations (buoys) → latest_buoy_v2.json
+    // Wind stations (land-based) → latest_wind.json
     let data = null;
     if (isWaveStation) {
       data = latestBuoyData ? latestBuoyData[buoy.id] : null;
     } else {
-      // For wind stations, check both sources (prefer wind data, fall back to buoy data)
-      data = (latestWindData && latestWindData[buoy.id]) || (latestBuoyData && latestBuoyData[buoy.id]);
+      // All non-buoy wind stations are now in latest_wind.json
+      data = latestWindData ? latestWindData[buoy.id] : null;
     }
 
     if (data) {
       // Try multiple possible field names for wave direction
       const waveDirection = data.wave_direction_avg || data.wave_direction_peak || data.wave_direction;
       const waveHeight = data.wave_height_sig;
-      // Wind data format differs: wind stations use wind_direction_deg
-      const windDirection = data.wind_direction_deg !== undefined ? data.wind_direction_deg : data.wind_direction;
+      // Wind direction: buoys use wind_direction, wind stations use wind_direction_deg
+      const windDirection = data.wind_direction_deg || data.wind_direction;
 
       // For wave stations with wave direction data
       if (isWaveStation && waveDirection !== null && waveDirection !== undefined) {
