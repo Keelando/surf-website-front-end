@@ -61,15 +61,15 @@ function createDirectionalMarker(direction, speed) {
   // Build speed label if available
   const speedLabel = (speed !== null && speed !== undefined)
     ? `<div style="
-        background: ${arrowColor};
-        color: white;
+        background: transparent;
+        color: #2c3e50;
         padding: 2px 5px;
         border-radius: 3px;
-        font-size: 10px;
+        font-size: 11px;
         font-weight: bold;
         white-space: nowrap;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.3);
-        margin-bottom: 2px;
+        text-shadow: 1px 1px 2px rgba(255,255,255,0.9), -1px -1px 2px rgba(255,255,255,0.9), 1px -1px 2px rgba(255,255,255,0.9), -1px 1px 2px rgba(255,255,255,0.9);
+        margin-bottom: 0px;
       ">${Math.round(speed)}kt</div>`
     : '';
 

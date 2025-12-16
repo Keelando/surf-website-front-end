@@ -47,10 +47,6 @@
 
   <div hx-get="/components/tagline-buoys.html?v=1" hx-trigger="load" hx-swap="outerHTML swap:0ms settle:0ms" style="min-height: 40px;"></div>
 
-  <main id="buoy-container" aria-live="polite" aria-label="Buoy data cards">
-    <p>Loading latest buoy data…</p>
-  </main>
-
   <!-- Stations Map Section -->
   <section id="map-section">
     <h2>Monitoring Stations</h2>
@@ -123,6 +119,10 @@
     </div>
     <div id="stations-map"></div>
   </section>
+
+  <main id="buoy-container" aria-live="polite" aria-label="Buoy data cards">
+    <p>Loading latest buoy data…</p>
+  </main>
 
   <section id="charts-section">
     <h2>24-Hour Trends</h2>

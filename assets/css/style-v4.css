@@ -642,6 +642,13 @@ header {
   align-items: center;
 }
 
+/* Disable parallax on mobile for better performance and compatibility */
+@media (max-width: 768px) {
+  header {
+    background-attachment: scroll;
+  }
+}
+
 header h1 {
   color: white;
   font-size: 2.5rem;
