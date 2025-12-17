@@ -172,7 +172,7 @@ async function loadWindTable() {
           name: station.name + ' 💨',
           wind_speed_kt: station.wind_speed_kt != null ? Math.round(station.wind_speed_kt) : null,
           wind_gust_kt: station.wind_gust_kt != null ? Math.round(station.wind_gust_kt) : null,
-          wind_direction_deg: station.wind_direction_deg,
+          wind_direction: station.wind_direction,
           wind_direction_cardinal: station.wind_direction_cardinal,
           air_temp_c: station.air_temp_c,
           pressure_hpa: station.pressure_hpa,
@@ -220,7 +220,7 @@ async function loadWindTable() {
             name: buoy.name + icon,
             wind_speed_kt: buoy.wind_speed != null ? Math.round(buoy.wind_speed) : null,
             wind_gust_kt: buoy.wind_gust != null ? Math.round(buoy.wind_gust) : null,
-            wind_direction_deg: buoy.wind_direction,
+            wind_direction: buoy.wind_direction,
             wind_direction_cardinal: buoy.wind_direction_cardinal,
             air_temp_c: buoy.air_temp,
             pressure_hpa: buoy.pressure,
@@ -248,7 +248,7 @@ async function loadWindTable() {
       <thead>
         <tr>
           <th class="sortable" data-column="name" data-type="string">Station <span class="sort-indicator"></span></th>
-          <th class="sortable" data-column="wind_direction_deg" data-type="number">Direction <span class="sort-indicator"></span></th>
+          <th class="sortable" data-column="wind_direction" data-type="number">Direction <span class="sort-indicator"></span></th>
           <th class="sortable" data-column="wind_speed_kt" data-type="number">Speed (kt) <span class="sort-indicator"></span></th>
           <th class="sortable" data-column="wind_gust_kt" data-type="number">Gust (kt) <span class="sort-indicator"></span></th>
           <th class="sortable" data-column="air_temp_c" data-type="number">Temp (°C) <span class="sort-indicator"></span></th>
@@ -266,8 +266,8 @@ async function loadWindTable() {
       const windSpeed = station.wind_speed_kt != null ? Math.round(station.wind_speed_kt) : '—';
       const windGust = station.wind_gust_kt != null ? Math.round(station.wind_gust_kt) : '—';
       // Show arrow, cardinal direction, and degrees
-      const direction = station.wind_direction_deg != null
-        ? `${station.wind_direction_cardinal || degreesToCardinal(station.wind_direction_deg)} (${station.wind_direction_deg}°) ${getDirectionalArrow(station.wind_direction_deg)}`
+      const direction = station.wind_direction != null
+        ? `${station.wind_direction_cardinal || degreesToCardinal(station.wind_direction)} (${station.wind_direction}°) ${getDirectionalArrow(station.wind_direction)}`
         : '—';
       const temp = station.air_temp_c != null ? station.air_temp_c.toFixed(1) : '—';
       const pressure = station.pressure_hpa != null ? station.pressure_hpa.toFixed(1) : '—';
@@ -338,7 +338,7 @@ async function loadWindTable() {
             data-name="${station.name}"
             data-wind_speed_kt="${station.wind_speed_kt || ''}"
             data-wind_gust_kt="${station.wind_gust_kt || ''}"
-            data-wind_direction_deg="${station.wind_direction_deg || ''}"
+            data-wind_direction="${station.wind_direction || ''}"
             data-air_temp_c="${station.air_temp_c || ''}"
             data-pressure_hpa="${station.pressure_hpa || ''}"
             data-observation_time="${station.observation_time}">

@@ -136,7 +136,7 @@ async function loadWindStationsAndMarkers() {
           const windFormatData = {
             wind_speed_kt: currentData.wind_speed,
             wind_gust_kt: currentData.wind_gust,
-            wind_direction_deg: currentData.wind_direction,
+            wind_direction: currentData.wind_direction,
             wind_direction_cardinal: currentData.wind_direction_cardinal,
             air_temp_c: currentData.air_temp,
             observation_time: currentData.observation_time,
@@ -159,9 +159,9 @@ function addWindStationMarker(station, currentData) {
   let iconSize = [30, 30];
   let iconAnchor = [15, 15];
 
-  if (currentData && !currentData.stale && currentData.wind_direction_deg !== null && currentData.wind_direction_deg !== undefined) {
+  if (currentData && !currentData.stale && currentData.wind_direction !== null && currentData.wind_direction !== undefined) {
     const windSpeed = currentData.wind_speed_kt;
-    iconHtml = createDirectionalMarker(currentData.wind_direction_deg, windSpeed);
+    iconHtml = createDirectionalMarker(currentData.wind_direction, windSpeed);
     iconSize = [26, windSpeed ? 48 : 30];
     iconAnchor = [13, windSpeed ? 38 : 15];
   }
@@ -196,10 +196,10 @@ function addWindStationMarker(station, currentData) {
     }
 
     // Wind direction
-    if (currentData.wind_direction_deg != null) {
-      const arrow = getDirectionalArrow(currentData.wind_direction_deg);
-      const cardinal = currentData.wind_direction_cardinal || degreesToCardinal(currentData.wind_direction_deg);
-      popupContent += `<div><strong>Direction:</strong> ${cardinal} (${currentData.wind_direction_deg}°) ${arrow}</div>`;
+    if (currentData.wind_direction != null) {
+      const arrow = getDirectionalArrow(currentData.wind_direction);
+      const cardinal = currentData.wind_direction_cardinal || degreesToCardinal(currentData.wind_direction);
+      popupContent += `<div><strong>Direction:</strong> ${cardinal} (${currentData.wind_direction}°) ${arrow}</div>`;
     }
 
     // Temperature
@@ -251,9 +251,9 @@ function addBuoyWindMarker(buoy, currentData) {
   let iconSize = [30, 30];
   let iconAnchor = [15, 15];
 
-  if (currentData && !currentData.stale && currentData.wind_direction_deg !== null && currentData.wind_direction_deg !== undefined) {
+  if (currentData && !currentData.stale && currentData.wind_direction !== null && currentData.wind_direction !== undefined) {
     const windSpeed = currentData.wind_speed_kt;
-    iconHtml = createDirectionalMarker(currentData.wind_direction_deg, windSpeed);
+    iconHtml = createDirectionalMarker(currentData.wind_direction, windSpeed);
     iconSize = [26, windSpeed ? 48 : 30];
     iconAnchor = [13, windSpeed ? 38 : 15];
   }
@@ -288,10 +288,10 @@ function addBuoyWindMarker(buoy, currentData) {
     }
 
     // Wind direction
-    if (currentData.wind_direction_deg != null) {
-      const arrow = getDirectionalArrow(currentData.wind_direction_deg);
-      const cardinal = currentData.wind_direction_cardinal || degreesToCardinal(currentData.wind_direction_deg);
-      popupContent += `<div><strong>Direction:</strong> ${cardinal} (${currentData.wind_direction_deg}°) ${arrow}</div>`;
+    if (currentData.wind_direction != null) {
+      const arrow = getDirectionalArrow(currentData.wind_direction);
+      const cardinal = currentData.wind_direction_cardinal || degreesToCardinal(currentData.wind_direction);
+      popupContent += `<div><strong>Direction:</strong> ${cardinal} (${currentData.wind_direction}°) ${arrow}</div>`;
     }
 
     // Temperature
