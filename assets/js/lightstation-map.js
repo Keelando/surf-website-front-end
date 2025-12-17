@@ -351,18 +351,19 @@ function viewLightstationData(lightstationId) {
   const select = document.getElementById('lightstation-station-select');
   if (!select) return;
 
-  // Map ID to station name (IDs are uppercase with underscores)
-  const stationName = lightstationId.split('_').map(word =>
-    word.charAt(0) + word.slice(1).toLowerCase()
-  ).join(' ');
+  // Convert ID to match dropdown value format (uppercase with spaces)
+  // e.g., "CHROME_ISLAND" → "CHROME ISLAND"
+  const stationName = lightstationId.replace(/_/g, ' ');
 
-  // Select the station in dropdown
-  for (let i = 0; i < select.options.length; i++) {
-    if (select.options[i].text === stationName) {
-      select.value = select.options[i].value;
-      break;
-    }
+  // Check if station exists in timeseries data
+  if (!window.lightstationTimeseriesData || !window.lightstationTimeseriesData[stationName]) {
+    // Station doesn't have 24hr data - show alert instead of scrolling
+    alert(`${stationName} does not have data from the past 24 hours.\n\nMost recent observation may be older than 24 hours.`);
+    return;
   }
+
+  // Select the station in dropdown (value matches the uppercase format)
+  select.value = stationName;
 
   // Trigger chart render if the function exists
   if (typeof window.renderLightstationCharts === 'function') {
