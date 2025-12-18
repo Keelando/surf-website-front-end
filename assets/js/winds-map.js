@@ -131,12 +131,13 @@ async function loadWindStationsAndMarkers() {
       Object.values(stations.buoys).forEach(buoy => {
         // Check if this buoy has wind data in buoyData
         const currentData = buoyData[buoy.id];
-        if (currentData && (currentData.wind_speed != null || currentData.wind_direction != null)) {
+        const windDir = currentData ? (currentData.wind_direction_deg || currentData.wind_direction) : null;
+        if (currentData && (currentData.wind_speed != null || windDir != null)) {
           // Convert buoy data format to match wind data format
           const windFormatData = {
             wind_speed_kt: currentData.wind_speed,
             wind_gust_kt: currentData.wind_gust,
-            wind_direction: currentData.wind_direction,
+            wind_direction_deg: windDir,
             wind_direction_cardinal: currentData.wind_direction_cardinal,
             air_temp_c: currentData.air_temp,
             observation_time: currentData.observation_time,
@@ -159,9 +160,10 @@ function addWindStationMarker(station, currentData) {
   let iconSize = [30, 30];
   let iconAnchor = [15, 15];
 
-  if (currentData && !currentData.stale && currentData.wind_direction !== null && currentData.wind_direction !== undefined) {
+  const windDir = currentData ? (currentData.wind_direction_deg || currentData.wind_direction) : null;
+  if (currentData && !currentData.stale && windDir !== null && windDir !== undefined) {
     const windSpeed = currentData.wind_speed_kt;
-    iconHtml = createDirectionalMarker(currentData.wind_direction, windSpeed);
+    iconHtml = createDirectionalMarker(windDir, windSpeed);
     iconSize = [26, windSpeed ? 48 : 30];
     iconAnchor = [13, windSpeed ? 38 : 15];
   }
@@ -196,10 +198,11 @@ function addWindStationMarker(station, currentData) {
     }
 
     // Wind direction
-    if (currentData.wind_direction != null) {
-      const arrow = getDirectionalArrow(currentData.wind_direction);
-      const cardinal = currentData.wind_direction_cardinal || degreesToCardinal(currentData.wind_direction);
-      popupContent += `<div><strong>Direction:</strong> ${cardinal} (${currentData.wind_direction}°) ${arrow}</div>`;
+    const windDir = currentData.wind_direction_deg || currentData.wind_direction;
+    if (windDir != null) {
+      const arrow = getDirectionalArrow(windDir);
+      const cardinal = currentData.wind_direction_cardinal || degreesToCardinal(windDir);
+      popupContent += `<div><strong>Direction:</strong> ${cardinal} (${windDir}°) ${arrow}</div>`;
     }
 
     // Temperature
@@ -251,9 +254,10 @@ function addBuoyWindMarker(buoy, currentData) {
   let iconSize = [30, 30];
   let iconAnchor = [15, 15];
 
-  if (currentData && !currentData.stale && currentData.wind_direction !== null && currentData.wind_direction !== undefined) {
+  const windDir = currentData ? (currentData.wind_direction_deg || currentData.wind_direction) : null;
+  if (currentData && !currentData.stale && windDir !== null && windDir !== undefined) {
     const windSpeed = currentData.wind_speed_kt;
-    iconHtml = createDirectionalMarker(currentData.wind_direction, windSpeed);
+    iconHtml = createDirectionalMarker(windDir, windSpeed);
     iconSize = [26, windSpeed ? 48 : 30];
     iconAnchor = [13, windSpeed ? 38 : 15];
   }
@@ -288,10 +292,11 @@ function addBuoyWindMarker(buoy, currentData) {
     }
 
     // Wind direction
-    if (currentData.wind_direction != null) {
-      const arrow = getDirectionalArrow(currentData.wind_direction);
-      const cardinal = currentData.wind_direction_cardinal || degreesToCardinal(currentData.wind_direction);
-      popupContent += `<div><strong>Direction:</strong> ${cardinal} (${currentData.wind_direction}°) ${arrow}</div>`;
+    const windDir = currentData.wind_direction_deg || currentData.wind_direction;
+    if (windDir != null) {
+      const arrow = getDirectionalArrow(windDir);
+      const cardinal = currentData.wind_direction_cardinal || degreesToCardinal(windDir);
+      popupContent += `<div><strong>Direction:</strong> ${cardinal} (${windDir}°) ${arrow}</div>`;
     }
 
     // Temperature

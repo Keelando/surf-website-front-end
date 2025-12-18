@@ -193,9 +193,10 @@ async function loadBuoyData() {
       let windDisplay = "No data";
       if (windSpeed !== "—") {
         const windCardinal = b.wind_direction_cardinal ?? "—";
-        const windDegrees = b.wind_direction != null ? ` (${Math.round(b.wind_direction)}°)` : "";
+        const windDir = b.wind_direction_deg || b.wind_direction;
+        const windDegrees = windDir != null ? ` (${Math.round(windDir)}°)` : "";
         const gustPart = windGust !== "—" ? ` G ${windGust}` : "";
-        windDisplay = `${windCardinal} ${windSpeed}${gustPart} kn${windDegrees} ${getDirectionalArrow(b.wind_direction, 'wind')}`;
+        windDisplay = `${windCardinal} ${windSpeed}${gustPart} kn${windDegrees} ${getDirectionalArrow(windDir, 'wind')}`;
       }
       cardContent += `<p class="buoy-metric" style="margin: 0.5rem 0;"><b>💨 Wind:</b> ${windDisplay}</p>`;
 

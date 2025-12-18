@@ -366,8 +366,8 @@ function addBuoyMarker(buoy) {
       // Try multiple possible field names for wave direction
       const waveDirection = data.wave_direction_avg || data.wave_direction_peak || data.wave_direction;
       const waveHeight = data.wave_height_sig;
-      // Wind direction: unified field name across all stations
-      const windDirection = data.wind_direction;
+      // Wind direction: unified field name (wind_direction_deg), fallback to old name for buoys
+      const windDirection = data.wind_direction_deg || data.wind_direction;
 
       // For wave stations with wave direction data
       if (isWaveStation && waveDirection !== null && waveDirection !== undefined) {
@@ -440,7 +440,7 @@ function addBuoyMarker(buoy) {
       const windGust = data.wind_gust_kt !== undefined ? data.wind_gust_kt : data.wind_gust;
       const windGustRounded = windGust !== null && windGust !== undefined ? Math.round(windGust) : null;
       const windCardinal = data.wind_direction_cardinal || '—';
-      const windDir = data.wind_direction;
+      const windDir = data.wind_direction_deg || data.wind_direction;
       const windDegrees = windDir !== null && windDir !== undefined ? ` (${Math.round(windDir)}°)` : '';
       const windArrow = getDirectionalArrow(windDir, 'wind');
       const gustPart = windGustRounded !== null ? ` G ${windGustRounded}` : '';

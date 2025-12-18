@@ -172,7 +172,7 @@ async function loadWindTable() {
           name: station.name + ' 💨',
           wind_speed_kt: station.wind_speed_kt != null ? Math.round(station.wind_speed_kt) : null,
           wind_gust_kt: station.wind_gust_kt != null ? Math.round(station.wind_gust_kt) : null,
-          wind_direction: station.wind_direction,
+          wind_direction: station.wind_direction_deg || station.wind_direction,
           wind_direction_cardinal: station.wind_direction_cardinal,
           air_temp_c: station.air_temp_c,
           pressure_hpa: station.pressure_hpa,
@@ -196,7 +196,8 @@ async function loadWindTable() {
       .filter(([key]) => key !== '_meta')
       .forEach(([id, buoy]) => {
         // Only add buoys that have wind data
-        if (buoy.wind_speed != null || buoy.wind_direction != null) {
+        const buoyWindDir = buoy.wind_direction_deg || buoy.wind_direction;
+        if (buoy.wind_speed != null || buoyWindDir != null) {
           // Use field-specific timestamp for wind if available, otherwise use main observation_time
           let windObsTime = buoy.observation_time;
           if (buoy.field_times && (buoy.field_times.wind_speed || buoy.field_times.wind_direction)) {
@@ -220,7 +221,7 @@ async function loadWindTable() {
             name: buoy.name + icon,
             wind_speed_kt: buoy.wind_speed != null ? Math.round(buoy.wind_speed) : null,
             wind_gust_kt: buoy.wind_gust != null ? Math.round(buoy.wind_gust) : null,
-            wind_direction: buoy.wind_direction,
+            wind_direction: buoy.wind_direction_deg || buoy.wind_direction,
             wind_direction_cardinal: buoy.wind_direction_cardinal,
             air_temp_c: buoy.air_temp,
             pressure_hpa: buoy.pressure,
