@@ -552,7 +552,7 @@
         conditions: [
           {
             label: 'White Rock East Beach',
-            customStation: 'whiterock_pier',
+            customStation: 'whiterock_east',
             fields: ['wind_speed_only']
           },
           {
@@ -575,7 +575,7 @@
         conditions: [
           {
             label: 'White Rock East Beach',
-            customStation: 'whiterock_pier',
+            customStation: 'whiterock_east',
             fields: ['wind_speed_only']
           },
           {
@@ -655,7 +655,7 @@
           buoy: buoyData,
           wind: windData,
           custom: {
-            whiterock_pier: whiterockData
+            whiterock_east: whiterockData
           }
         };
         return cachedMarineData;
@@ -719,7 +719,7 @@
       stack.className = 'conditions-stack';
 
       // White Rock East Beach (on-shore wind)
-      const whiterockData = marineData.custom?.whiterock_pier;
+      const whiterockData = marineData.custom?.whiterock_east;
       if (whiterockData && !whiterockData.stale && whiterockData.wind_speed !== null) {
         const row = document.createElement('div');
         row.className = 'condition-row';

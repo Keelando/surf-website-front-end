@@ -287,6 +287,7 @@ async function loadWindTable() {
         'CWQK': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06800&stationID=WQK',
         // Environment Canada Airports
         'CYVR': 'https://spaces.navcanada.ca/workspace/aeroview/CYVR',
+        'CZBB': 'https://spaces.navcanada.ca/workspace/aeroview/CZBB',
         // Environment Canada Buoys
         '4600146': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46146',
         '4600304': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06400&stationID=46304',
@@ -303,7 +304,7 @@ async function loadWindTable() {
         'KBLI': 'https://www.weather.gov/wrh/timeseries?site=KBLI',
         'KORS': 'https://www.weather.gov/wrh/timeseries?site=KORS',
         // Municipal/Other
-        'whiterock_pier': 'https://www.whiterockcity.ca/1000/Weather-Station',
+        'whiterock_east': 'https://www.whiterockcity.ca/1000/Weather-Station',
         'JERICHO': 'https://jsca.bc.ca/services/weather/'
       };
 
@@ -322,7 +323,7 @@ async function loadWindTable() {
         } else if (id === 'CRPILE' || id === 'CRCHAN' || id === 'COLEB') {
           // Surrey FlowWorks (no public link)
           sourceBadge = '<br><span style="font-size: 0.75em; color: #006837;">🏛️ Surrey</span>';
-        } else if (id === 'whiterock_pier') {
+        } else if (id === 'whiterock_east') {
           // White Rock City
           sourceBadge = `<br><a href="${sourceLinks[id]}" target="_blank" rel="noopener" style="font-size: 0.75em; color: #0066cc; text-decoration: none;">🏛️ White Rock 🔗</a>`;
         } else if (id === 'JERICHO') {
