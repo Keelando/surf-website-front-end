@@ -52,11 +52,11 @@ function createDirectionalMarker(direction, speed) {
         color: white;
         padding: 2px 5px;
         border-radius: 3px;
-        font-size: 10px;
+        font-size: 13px;
         font-weight: bold;
         white-space: nowrap;
         box-shadow: 0 1px 2px rgba(0,0,0,0.3);
-        margin-bottom: 2px;
+        margin-bottom: -3px;
       ">${Math.round(speed)}kt</div>`
     : '';
 
@@ -306,7 +306,7 @@ function addLightstationMapMarker(lightstation) {
     permanent: true,
     direction: 'top',
     className: 'lightstation-label',
-    offset: [0, -35]
+    offset: [0, -30]
   });
 
   marker.addTo(lightstationMarkersLayer);

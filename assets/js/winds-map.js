@@ -65,11 +65,11 @@ function createDirectionalMarker(direction, speed) {
         color: #2c3e50;
         padding: 2px 5px;
         border-radius: 3px;
-        font-size: 11px;
+        font-size: 13px;
         font-weight: bold;
         white-space: nowrap;
         text-shadow: 1px 1px 2px rgba(255,255,255,0.9), -1px -1px 2px rgba(255,255,255,0.9), 1px -1px 2px rgba(255,255,255,0.9), -1px 1px 2px rgba(255,255,255,0.9);
-        margin-bottom: 0px;
+        margin-bottom: -3px;
       ">${Math.round(speed)}kt</div>`
     : '';
 
