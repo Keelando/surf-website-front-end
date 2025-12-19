@@ -250,12 +250,14 @@ function createTideGaugeSVG() {
  * @param {number} direction - Direction in degrees (meteorological: coming FROM)
  * @param {number} height - Wave height in meters (optional)
  * @param {string} type - 'wave', 'wind-on-wave', or 'wind'
+ * @param {boolean} stale - Whether the data is stale (>3 hours old)
  * @returns {string} HTML for marker
  */
-function createDirectionalMarker(direction, height, type) {
+function createDirectionalMarker(direction, height, type, stale = false) {
   const isWave = type === 'wave';
   const isWind = type === 'wind';
   const arrowColor = isWave ? '#1e88e5' : (isWind ? '#dc2626' : '#718096'); // Blue for waves, red for wind, gray for wind-on-wave
+  const opacity = stale ? 0.35 : 1.0; // Transparent if stale
 
   // Meteorological convention: direction value = where wave/wind is COMING FROM
   // Arrow shows propagation direction (where waves/wind are TRAVELING TO)
@@ -304,7 +306,7 @@ function createDirectionalMarker(direction, height, type) {
   // This creates a filled triangular arrow with notch, pointing down by default
   // Scaled up from ECharts symbolSize 16 for better visibility on map
   return `
-    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: ${opacity};">
       ${valueLabel}
       <div style="transform: rotate(${rotation}deg); transform-origin: center center;">
         <svg width="26" height="30" viewBox="-6 -10 12 24" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));">
@@ -368,11 +370,12 @@ function addBuoyMarker(buoy) {
       const waveHeight = data.wave_height_sig;
       // Wind direction: unified field name (wind_direction_deg), fallback to old name for buoys
       const windDirection = data.wind_direction_deg || data.wind_direction;
+      const isStale = data.stale || false;
 
       // For wave stations with wave direction data
       if (isWaveStation && waveDirection !== null && waveDirection !== undefined) {
         // Create directional arrow marker with wave height (BLUE)
-        iconHtml = createDirectionalMarker(waveDirection, waveHeight, 'wave');
+        iconHtml = createDirectionalMarker(waveDirection, waveHeight, 'wave', isStale);
         // Arrow size: 26x30px (fattened), label adds ~18px height
         iconSize = [26, waveHeight ? 48 : 30];
         // Anchor at center of rotation
@@ -381,7 +384,7 @@ function addBuoyMarker(buoy) {
       // For wave stations without wave direction but with wind direction and wave height
       else if (isWaveStation && waveHeight !== null && waveHeight !== undefined && windDirection !== null && windDirection !== undefined) {
         // Show wind direction with wave height (GRAY)
-        iconHtml = createDirectionalMarker(windDirection, waveHeight, 'wind-on-wave');
+        iconHtml = createDirectionalMarker(windDirection, waveHeight, 'wind-on-wave', isStale);
         iconSize = [26, 48];
         iconAnchor = [13, 38];
       }
@@ -390,7 +393,7 @@ function addBuoyMarker(buoy) {
         // Show red wind direction marker
         // Wind stations use wind_speed_kt, buoys use wind_speed
         const windSpeed = data.wind_speed_kt !== undefined ? data.wind_speed_kt : data.wind_speed;
-        iconHtml = createDirectionalMarker(windDirection, windSpeed, 'wind');
+        iconHtml = createDirectionalMarker(windDirection, windSpeed, 'wind', isStale);
         iconSize = [26, windSpeed ? 48 : 30];
         iconAnchor = [13, windSpeed ? 38 : 15];
       }
@@ -429,9 +432,13 @@ function addBuoyMarker(buoy) {
   if (popupData) {
     const data = popupData;
     const obsTime = data.observation_time ? new Date(data.observation_time) : null;
+    const isStale = data.stale || false;
+    const bgColor = isStale ? '#fff5f5' : '#f0f8ff';
+    const borderColor = isStale ? '#e53935' : '#0077be';
+    const headerText = isStale ? 'Latest Conditions (STALE - >3h old):' : 'Latest Conditions:';
 
-    popupContent += `<div style="background: #f0f8ff; padding: 8px; margin: 8px 0; border-radius: 4px; border-left: 3px solid #0077be;">`;
-    popupContent += `<div style="font-weight: 600; margin-bottom: 4px;">Latest Conditions:</div>`;
+    popupContent += `<div style="background: ${bgColor}; padding: 8px; margin: 8px 0; border-radius: 4px; border-left: 3px solid ${borderColor};">`;
+    popupContent += `<div style="font-weight: 600; margin-bottom: 4px; ${isStale ? 'color: #c62828;' : ''}">${headerText}</div>`;
 
     // Show wind data (handle both buoy and wind station formats)
     const windSpeed = data.wind_speed_kt !== undefined ? data.wind_speed_kt : data.wind_speed;
@@ -703,40 +710,81 @@ function addLightstationMarker(lightstation) {
   const lookupName = lightstation.id.replace(/_/g, ' ');
   if (latestLightstationData && latestLightstationData[lookupName]) {
     const obs = latestLightstationData[lookupName];
+    const isStale = obs.stale || false;
+    const bgColor = isStale ? '#fff5f5' : '#f0f8ff';
+    const borderColor = isStale ? '#e53935' : '#0077be';
+    const headerText = isStale ? 'Latest Conditions (STALE - >12h old):' : 'Latest Conditions:';
+    const headerColor = isStale ? '#c62828' : '#004b7c';
 
-    popupContent += `<div style="background: #f0f8ff; padding: 8px; margin: 8px 0; border-radius: 4px; border-left: 3px solid #0077be;">`;
-    popupContent += `<div style="font-weight: 600; margin-bottom: 4px;">Latest Conditions:</div>`;
+    popupContent += `<div style="background: ${bgColor}; padding: 8px; margin: 8px 0; border-radius: 4px; border-left: 3px solid ${borderColor};">`;
+    popupContent += `<div style="font-weight: 600; margin-bottom: 6px; color: ${headerColor}; font-size: 0.95em;">${headerText}</div>`;
+
+    // Wave Height (prominent display)
+    if (obs.sea_height_ft !== null) {
+      popupContent += `<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 6px 8px; border-radius: 4px; margin-bottom: 6px; text-align: center; font-weight: 600;">`;
+      popupContent += `🌊 Wave Height: ${obs.sea_height_ft} ft`;
+      popupContent += `</div>`;
+    }
 
     // Wind
     if (!obs.wind_calm) {
       const windText = `${obs.wind_direction || 'N/A'} ${obs.wind_speed_kt || 'N/A'} kt${obs.wind_gusting ? ' (gusting)' : ''}${obs.wind_estimated ? ' (est)' : ''}`;
-      popupContent += `<div><strong>💨 Wind:</strong> ${windText}</div>`;
+      popupContent += `<div style="margin: 4px 0;"><strong>💨 Wind:</strong> ${windText}</div>`;
     } else {
-      popupContent += `<div><strong>💨 Wind:</strong> CALM</div>`;
+      popupContent += `<div style="margin: 4px 0;"><strong>💨 Wind:</strong> CALM</div>`;
     }
 
-    // Sea state
-    if (obs.sea_height_ft !== null || obs.sea_condition) {
-      const seaText = obs.sea_height_ft !== null
-        ? `${obs.sea_height_ft} ft ${obs.sea_condition || ''}`
-        : obs.sea_condition || 'N/A';
-      popupContent += `<div><strong>🌊 Sea:</strong> ${seaText}</div>`;
+    // Sea condition (if available, separate from height)
+    if (obs.sea_condition) {
+      popupContent += `<div style="margin: 4px 0;"><strong>🌊 Sea Condition:</strong> ${obs.sea_condition}</div>`;
     }
 
     // Swell
     if (obs.swell_intensity || obs.swell_direction) {
       const swellText = `${obs.swell_intensity || ''} ${obs.swell_direction || ''} swell`.trim();
-      popupContent += `<div><strong>〰️ Swell:</strong> ${swellText || 'N/A'}</div>`;
+      popupContent += `<div style="margin: 4px 0;"><strong>〰️ Swell:</strong> ${swellText || 'N/A'}</div>`;
     }
 
-    // Report time
-    if (obs.report_time_str) {
-      popupContent += `<div style="font-size: 0.85em; color: #666; margin-top: 4px;">Report: ${obs.report_time_str}</div>`;
+    // Report time (with full date, day of week, and age in 24h format)
+    if (obs.observation_time) {
+      const obsDate = new Date(obs.observation_time);
+      const dateOptions = {
+        timeZone: 'America/Vancouver',
+        weekday: 'long',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      };
+      const formattedDate = obsDate.toLocaleString('en-US', dateOptions).replace(',', '');
+
+      // Calculate age
+      const now = new Date();
+      const ageMs = now - obsDate;
+      const ageDays = Math.floor(ageMs / (1000 * 60 * 60 * 24));
+      const ageHours = Math.floor(ageMs / (1000 * 60 * 60));
+      const ageMinutes = Math.floor((ageMs % (1000 * 60 * 60)) / (1000 * 60));
+
+      let ageText = '';
+      if (ageDays >= 1) {
+        ageText = ageDays === 1 ? ' (1 day ago)' : ` (${ageDays} days ago)`;
+      } else if (ageHours > 0) {
+        ageText = ` (${ageHours}h ago)`;
+      } else if (ageMinutes > 0) {
+        ageText = ` (${ageMinutes}m ago)`;
+      } else {
+        ageText = ' (just now)';
+      }
+
+      popupContent += `<div style="font-size: 0.85em; color: #555; margin-top: 6px; padding-top: 4px; border-top: 1px solid rgba(0,75,124,0.2);">📅 Report: ${formattedDate}${ageText}</div>`;
+    } else if (obs.report_time_str) {
+      popupContent += `<div style="font-size: 0.85em; color: #555; margin-top: 6px; padding-top: 4px; border-top: 1px solid rgba(0,75,124,0.2);">📅 Report: ${obs.report_time_str}</div>`;
     }
 
-    // Staleness warning
+    // Staleness warning (already shown in header, but keep for emphasis)
     if (obs.stale) {
-      popupContent += `<div style="color: #c53030; font-size: 0.85em; margin-top: 4px;">⚠️ Data >6 hours old</div>`;
+      popupContent += `<div style="color: #c53030; font-size: 0.85em; margin-top: 4px; font-weight: 600;">⚠️ STALE DATA</div>`;
     }
 
     popupContent += `</div>`;

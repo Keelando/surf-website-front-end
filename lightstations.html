@@ -635,7 +635,10 @@
       if (station.stale) {
         const warning = document.createElement('div');
         warning.className = 'stale-warning';
-        warning.textContent = '⚠️ Data >6 hours old';
+        warning.style.color = '#c62828';
+        warning.style.fontWeight = '600';
+        warning.style.marginTop = '0.5rem';
+        warning.textContent = '⚠️ STALE DATA (>12h old)';
         card.appendChild(warning);
       }
 

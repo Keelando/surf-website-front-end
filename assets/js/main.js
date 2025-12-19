@@ -158,13 +158,10 @@ async function loadBuoyData() {
           }).replace(',', '')
         : "—";
 
-      // Calculate data age for staleness warning
-      const dataAge = b.observation_time 
-        ? (Date.now() - new Date(b.observation_time).getTime()) / (1000 * 60) 
-        : 999;
-      const isStale = dataAge > 180; // 3 hours
-      const ageWarning = isStale 
-        ? ` <span style="color: #f57c00; font-weight: bold;">⚠️ (${Math.round(dataAge / 60)}h old)</span>` 
+      // Use backend stale flag (calculated at export time for consistency)
+      const isStale = b.stale || false;
+      const ageWarning = isStale
+        ? ` <span style="color: #c62828; font-weight: bold;">⚠️ STALE (>3h old)</span>`
         : "";
 
       // Round wind speeds to integers

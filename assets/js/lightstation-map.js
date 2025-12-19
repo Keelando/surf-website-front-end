@@ -210,9 +210,14 @@ function addLightstationMapMarker(lightstation) {
   const lookupName = lightstation.id.replace(/_/g, ' ');
   if (latestLightstationData && latestLightstationData[lookupName]) {
     const obs = latestLightstationData[lookupName];
+    const isStale = obs.stale || false;
+    const bgColor = isStale ? '#fff5f5' : '#f0f8ff';
+    const borderColor = isStale ? '#e53935' : '#0077be';
+    const headerText = isStale ? 'Latest Conditions (STALE - >12h old):' : 'Latest Conditions:';
+    const headerColor = isStale ? '#c62828' : '#004b7c';
 
-    popupContent += `<div style="background: #f0f8ff; padding: 8px; margin: 8px 0; border-radius: 4px; border-left: 3px solid #0077be;">`;
-    popupContent += `<div style="font-weight: 600; margin-bottom: 6px; color: #004b7c; font-size: 0.95em;">Latest Conditions:</div>`;
+    popupContent += `<div style="background: ${bgColor}; padding: 8px; margin: 8px 0; border-radius: 4px; border-left: 3px solid ${borderColor};">`;
+    popupContent += `<div style="font-weight: 600; margin-bottom: 6px; color: ${headerColor}; font-size: 0.95em;">${headerText}</div>`;
 
     // Wave Height (prominent display)
     if (obs.sea_height_ft !== null) {
@@ -277,9 +282,9 @@ function addLightstationMapMarker(lightstation) {
       popupContent += `<div style="font-size: 0.85em; color: #555; margin-top: 6px; padding-top: 4px; border-top: 1px solid rgba(0,75,124,0.2);">📅 Report: ${obs.report_time_str}</div>`;
     }
 
-    // Staleness warning
+    // Staleness warning (already shown in header, but keep for emphasis)
     if (obs.stale) {
-      popupContent += `<div style="color: #c53030; font-size: 0.85em; margin-top: 4px; font-weight: 600;">⚠️ Data >6 hours old</div>`;
+      popupContent += `<div style="color: #c53030; font-size: 0.85em; margin-top: 4px; font-weight: 600;">⚠️ STALE DATA</div>`;
     }
 
     popupContent += `</div>`;

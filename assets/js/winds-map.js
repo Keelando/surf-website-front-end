@@ -48,10 +48,12 @@ function getDirectionalArrow(degrees) {
  * Create directional marker with triangular arrow for map markers
  * @param {number} direction - Direction in degrees (meteorological: coming FROM)
  * @param {number} speed - Wind speed in knots
+ * @param {boolean} stale - Whether the data is stale (>3 hours old)
  * @returns {string} HTML for marker
  */
-function createDirectionalMarker(direction, speed) {
+function createDirectionalMarker(direction, speed, stale = false) {
   const arrowColor = '#dc2626'; // Red for wind
+  const opacity = stale ? 0.35 : 1.0; // Transparent if stale
 
   // Meteorological convention: direction value = where wind is COMING FROM
   // Arrow shows direction wind is TRAVELING TO
@@ -74,7 +76,7 @@ function createDirectionalMarker(direction, speed) {
     : '';
 
   return `
-    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: ${opacity};">
       ${speedLabel}
       <div style="transform: rotate(${rotation}deg); transform-origin: center center;">
         <svg width="26" height="30" viewBox="-6 -10 12 24" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));">
@@ -161,9 +163,10 @@ function addWindStationMarker(station, currentData) {
   let iconAnchor = [15, 15];
 
   const windDir = currentData ? (currentData.wind_direction_deg || currentData.wind_direction) : null;
-  if (currentData && !currentData.stale && windDir !== null && windDir !== undefined) {
+  if (currentData && windDir !== null && windDir !== undefined) {
     const windSpeed = currentData.wind_speed_kt;
-    iconHtml = createDirectionalMarker(windDir, windSpeed);
+    const isStale = currentData.stale || false;
+    iconHtml = createDirectionalMarker(windDir, windSpeed, isStale);
     iconSize = [26, windSpeed ? 48 : 30];
     iconAnchor = [13, windSpeed ? 38 : 15];
   }
@@ -182,9 +185,12 @@ function addWindStationMarker(station, currentData) {
   let popupContent = `<div class="station-popup"><h3>${station.name}</h3>`;
 
   // Add current wind data if available
-  if (currentData && !currentData.stale) {
-    popupContent += `<div style="background: #f0f8ff; padding: 8px; margin: 8px 0; border-radius: 4px; border-left: 3px solid #fb8c00;">`;
-    popupContent += `<div style="font-weight: 600; margin-bottom: 4px;">Current Wind:</div>`;
+  if (currentData) {
+    const bgColor = currentData.stale ? '#fff5f5' : '#f0f8ff';
+    const borderColor = currentData.stale ? '#e53935' : '#fb8c00';
+    const headerText = currentData.stale ? 'Last Wind (STALE - >3h old):' : 'Current Wind:';
+    popupContent += `<div style="background: ${bgColor}; padding: 8px; margin: 8px 0; border-radius: 4px; border-left: 3px solid ${borderColor};">`;
+    popupContent += `<div style="font-weight: 600; margin-bottom: 4px; ${currentData.stale ? 'color: #c62828;' : ''}">${headerText}</div>`;
 
     // Wind speed and gust
     if (currentData.wind_speed_kt != null) {
@@ -223,10 +229,6 @@ function addWindStationMarker(station, currentData) {
     }
 
     popupContent += `</div>`;
-  } else if (currentData && currentData.stale) {
-    popupContent += `<div style="background: #fff5f5; padding: 8px; margin: 8px 0; border-radius: 4px; border-left: 3px solid #e53935;">`;
-    popupContent += `<div style="color: #c62828; font-weight: 600;">Data stale (>2 hours old)</div>`;
-    popupContent += `</div>`;
   }
 
   // Station details
@@ -255,9 +257,10 @@ function addBuoyWindMarker(buoy, currentData) {
   let iconAnchor = [15, 15];
 
   const windDir = currentData ? (currentData.wind_direction_deg || currentData.wind_direction) : null;
-  if (currentData && !currentData.stale && windDir !== null && windDir !== undefined) {
+  if (currentData && windDir !== null && windDir !== undefined) {
     const windSpeed = currentData.wind_speed_kt;
-    iconHtml = createDirectionalMarker(windDir, windSpeed);
+    const isStale = currentData.stale || false;
+    iconHtml = createDirectionalMarker(windDir, windSpeed, isStale);
     iconSize = [26, windSpeed ? 48 : 30];
     iconAnchor = [13, windSpeed ? 38 : 15];
   }
@@ -276,9 +279,12 @@ function addBuoyWindMarker(buoy, currentData) {
   let popupContent = `<div class="station-popup"><h3>${buoy.name}</h3>`;
 
   // Add current wind data if available
-  if (currentData && !currentData.stale) {
-    popupContent += `<div style="background: #f0f8ff; padding: 8px; margin: 8px 0; border-radius: 4px; border-left: 3px solid #0077be;">`;
-    popupContent += `<div style="font-weight: 600; margin-bottom: 4px;">Current Wind:</div>`;
+  if (currentData) {
+    const bgColor = currentData.stale ? '#fff5f5' : '#f0f8ff';
+    const borderColor = currentData.stale ? '#e53935' : '#0077be';
+    const headerText = currentData.stale ? 'Last Wind (STALE - >3h old):' : 'Current Wind:';
+    popupContent += `<div style="background: ${bgColor}; padding: 8px; margin: 8px 0; border-radius: 4px; border-left: 3px solid ${borderColor};">`;
+    popupContent += `<div style="font-weight: 600; margin-bottom: 4px; ${currentData.stale ? 'color: #c62828;' : ''}">${headerText}</div>`;
 
     // Wind speed and gust
     if (currentData.wind_speed_kt != null) {
@@ -316,10 +322,6 @@ function addBuoyWindMarker(buoy, currentData) {
       popupContent += `<div style="font-size: 0.85em; color: #666; margin-top: 4px;">Updated: ${timeStr}</div>`;
     }
 
-    popupContent += `</div>`;
-  } else if (currentData && currentData.stale) {
-    popupContent += `<div style="background: #fff5f5; padding: 8px; margin: 8px 0; border-radius: 4px; border-left: 3px solid #e53935;">`;
-    popupContent += `<div style="color: #c62828; font-weight: 600;">Data stale (>2 hours old)</div>`;
     popupContent += `</div>`;
   }
 
