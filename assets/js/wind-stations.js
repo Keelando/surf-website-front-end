@@ -401,7 +401,13 @@ async function loadWindTable() {
           ageText = `${minutes}m`;
         }
 
-        offlineHTML += `<li style="margin-bottom: 0.25rem; break-inside: avoid;"><strong>${station.name.replace(' 💨', '').replace(' 🌊', '')}</strong> (${ageText} ago)</li>`;
+        // Add source link if available
+        let stationLink = station.name.replace(' 💨', '').replace(' 🌊', '');
+        if (sourceLinks[id]) {
+          stationLink = `<a href="${sourceLinks[id]}" target="_blank" rel="noopener" style="color: #0066cc; text-decoration: none;">${stationLink}</a>`;
+        }
+
+        offlineHTML += `<li style="margin-bottom: 0.25rem; break-inside: avoid;"><strong>${stationLink}</strong> (${ageText} ago)</li>`;
       });
 
       offlineHTML += '</ul></div>';
