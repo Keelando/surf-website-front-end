@@ -850,6 +850,24 @@ function displayTideChart(stationKey, dayOffset = 0) {
     ]);
   }
 
+  // Get geodetic offsets for calibration testing (Crescent Beach Ocean only)
+  let calibratedPrediction = [];
+  if (stationData.geodetic_offsets && stationData.geodetic_offsets.length > 0) {
+    // Create lookup map of offsets by timestamp
+    const offsetMap = {};
+    filterByDay(stationData.geodetic_offsets, 'time').forEach(offset => {
+      offsetMap[offset.time] = offset.value;
+    });
+
+    // Create calibrated prediction by adding offset to prediction
+    calibratedPrediction = predictions
+      .filter(pred => offsetMap[pred.time] !== undefined)
+      .map(pred => [
+        new Date(pred.time),
+        pred.value + offsetMap[pred.time]
+      ]);
+  }
+
   // Get combined water level data if available (for all days including today)
   // Skip total water level for geodetic stations (CGVD28 datum makes it not useful)
   let combinedData = [];
@@ -949,6 +967,9 @@ function displayTideChart(stationKey, dayOffset = 0) {
     legend: {
       data: (() => {
         let legendItems = ['Astronomical Tide', 'Observation'];
+        if (calibratedPrediction.length > 0) {
+          legendItems.push('Calibrated Prediction (+Offset)');
+        }
         if (residuals.length > 0) {
           legendItems.push('Residual (Obs - Pred)');
         }
@@ -1036,6 +1057,26 @@ function displayTideChart(stationKey, dayOffset = 0) {
       },
       symbolSize: 6,
       z: 10
+    });
+  }
+
+  // Add calibrated prediction series (prediction + geodetic offset)
+  if (calibratedPrediction.length > 0) {
+    option.series.push({
+      name: 'Calibrated Prediction (+Offset)',
+      type: 'line',
+      data: calibratedPrediction,
+      smooth: false,
+      lineStyle: {
+        color: '#ff9800',
+        width: 2,
+        type: 'dashed'
+      },
+      itemStyle: {
+        color: '#ff9800'
+      },
+      showSymbol: false,
+      z: 6
     });
   }
 
