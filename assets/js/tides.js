@@ -851,16 +851,31 @@ function displayTideChart(stationKey, dayOffset = 0) {
   }
 
   // Get geodetic offsets for calibration testing (Crescent Beach Ocean only)
-  let calibratedPrediction = [];
-  if (stationData.geodetic_offsets && stationData.geodetic_offsets.length > 0) {
-    // Create lookup map of offsets by timestamp
+  // Channel 2129: CB vs CC (Radar)
+  let calibratedPredictionCC = [];
+  if (stationData.geodetic_offsets_cc && stationData.geodetic_offsets_cc.length > 0) {
     const offsetMap = {};
-    filterByDay(stationData.geodetic_offsets, 'time').forEach(offset => {
+    filterByDay(stationData.geodetic_offsets_cc, 'time').forEach(offset => {
       offsetMap[offset.time] = offset.value;
     });
 
-    // Create calibrated prediction by adding offset to prediction
-    calibratedPrediction = predictions
+    calibratedPredictionCC = predictions
+      .filter(pred => offsetMap[pred.time] !== undefined)
+      .map(pred => [
+        new Date(pred.time),
+        pred.value + offsetMap[pred.time]
+      ]);
+  }
+
+  // Channel 2454: CB PT vs Radar
+  let calibratedPredictionPT = [];
+  if (stationData.geodetic_offsets_pt && stationData.geodetic_offsets_pt.length > 0) {
+    const offsetMap = {};
+    filterByDay(stationData.geodetic_offsets_pt, 'time').forEach(offset => {
+      offsetMap[offset.time] = offset.value;
+    });
+
+    calibratedPredictionPT = predictions
       .filter(pred => offsetMap[pred.time] !== undefined)
       .map(pred => [
         new Date(pred.time),
@@ -967,8 +982,11 @@ function displayTideChart(stationKey, dayOffset = 0) {
     legend: {
       data: (() => {
         let legendItems = ['Astronomical Tide', 'Observation'];
-        if (calibratedPrediction.length > 0) {
-          legendItems.push('Calibrated Prediction (+Offset)');
+        if (calibratedPredictionCC.length > 0) {
+          legendItems.push('Calibrated (CB vs CC)');
+        }
+        if (calibratedPredictionPT.length > 0) {
+          legendItems.push('Calibrated (CB PT vs Radar)');
         }
         if (residuals.length > 0) {
           legendItems.push('Residual (Obs - Pred)');
@@ -1061,11 +1079,12 @@ function displayTideChart(stationKey, dayOffset = 0) {
   }
 
   // Add calibrated prediction series (prediction + geodetic offset)
-  if (calibratedPrediction.length > 0) {
+  // Channel 2129: CB vs CC (Radar) - Orange
+  if (calibratedPredictionCC.length > 0) {
     option.series.push({
-      name: 'Calibrated Prediction (+Offset)',
+      name: 'Calibrated (CB vs CC)',
       type: 'line',
-      data: calibratedPrediction,
+      data: calibratedPredictionCC,
       smooth: false,
       lineStyle: {
         color: '#ff9800',
@@ -1074,6 +1093,26 @@ function displayTideChart(stationKey, dayOffset = 0) {
       },
       itemStyle: {
         color: '#ff9800'
+      },
+      showSymbol: false,
+      z: 6
+    });
+  }
+
+  // Channel 2454: CB PT vs Radar - Purple
+  if (calibratedPredictionPT.length > 0) {
+    option.series.push({
+      name: 'Calibrated (CB PT vs Radar)',
+      type: 'line',
+      data: calibratedPredictionPT,
+      smooth: false,
+      lineStyle: {
+        color: '#9c27b0',
+        width: 2,
+        type: 'dashed'
+      },
+      itemStyle: {
+        color: '#9c27b0'
       },
       showSymbol: false,
       z: 6
