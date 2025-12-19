@@ -245,6 +245,40 @@ async function loadWindTable() {
     const stations = allStations;
     stations.sort((a, b) => a[1].name.localeCompare(b[1].name));
 
+    // Station-specific source links (used in table and offline list)
+    const sourceLinks = {
+      // Environment Canada Marine Stations
+      'CWGT': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06100&stationID=WGT',
+      'CWGB': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06400&stationID=WGB',
+      'CWEL': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06200&stationID=WEL',
+      'CWSB': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06300&stationID=WSB',
+      'CVTF': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06500&stationID=VTF',
+      'CWVF': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06600&stationID=WVF',
+      'CWEZ': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06700&stationID=WEZ',
+      'CWQK': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06800&stationID=WQK',
+      // Environment Canada Airports
+      'CYVR': 'https://spaces.navcanada.ca/workspace/aeroview/CYVR',
+      'CZBB': 'https://spaces.navcanada.ca/workspace/aeroview/CZBB',
+      // Environment Canada Buoys
+      '4600146': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46146',
+      '4600304': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06400&stationID=46304',
+      '4600303': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46303',
+      '4600131': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06400&stationID=46131',
+      '4600206': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06400&stationID=46206',
+      // NOAA Buoys and Stations
+      '46087': 'https://www.ndbc.noaa.gov/station_page.php?station=46087',
+      '46088': 'https://www.ndbc.noaa.gov/station_page.php?station=46088',
+      '46267': 'https://www.ndbc.noaa.gov/station_page.php?station=46267',
+      'CPMW1': 'https://www.ndbc.noaa.gov/station_page.php?station=cpmw1',
+      'SISW1': 'https://www.ndbc.noaa.gov/station_page.php?station=sisw1',
+      // NOAA NWS Airports
+      'KBLI': 'https://www.weather.gov/wrh/timeseries?site=KBLI',
+      'KORS': 'https://www.weather.gov/wrh/timeseries?site=KORS',
+      // Municipal/Other
+      'whiterock_east': 'https://www.whiterockcity.ca/1000/Weather-Station',
+      'JERICHO': 'https://jsca.bc.ca/services/weather/'
+    };
+
     let tableHTML = `
       <thead>
         <tr>
@@ -273,40 +307,6 @@ async function loadWindTable() {
       const temp = station.air_temp_c != null ? station.air_temp_c.toFixed(1) : '—';
       const pressure = station.pressure_hpa != null ? station.pressure_hpa.toFixed(1) : '—';
       const updated = formatTimestamp(station.observation_time);
-
-      // Station-specific source links
-      const sourceLinks = {
-        // Environment Canada Marine Stations
-        'CWGT': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06100&stationID=WGT',
-        'CWGB': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06400&stationID=WGB',
-        'CWEL': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06200&stationID=WEL',
-        'CWSB': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06300&stationID=WSB',
-        'CVTF': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06500&stationID=VTF',
-        'CWVF': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06600&stationID=WVF',
-        'CWEZ': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06700&stationID=WEZ',
-        'CWQK': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06800&stationID=WQK',
-        // Environment Canada Airports
-        'CYVR': 'https://spaces.navcanada.ca/workspace/aeroview/CYVR',
-        'CZBB': 'https://spaces.navcanada.ca/workspace/aeroview/CZBB',
-        // Environment Canada Buoys
-        '4600146': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46146',
-        '4600304': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06400&stationID=46304',
-        '4600303': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=02&siteID=14305&stationID=46303',
-        '4600131': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06400&stationID=46131',
-        '4600206': 'https://weather.gc.ca/marine/weatherConditions-currentConditions_e.html?mapID=03&siteID=06400&stationID=46206',
-        // NOAA Buoys and Stations
-        '46087': 'https://www.ndbc.noaa.gov/station_page.php?station=46087',
-        '46088': 'https://www.ndbc.noaa.gov/station_page.php?station=46088',
-        '46267': 'https://www.ndbc.noaa.gov/station_page.php?station=46267',
-        'CPMW1': 'https://www.ndbc.noaa.gov/station_page.php?station=cpmw1',
-        'SISW1': 'https://www.ndbc.noaa.gov/station_page.php?station=sisw1',
-        // NOAA NWS Airports
-        'KBLI': 'https://www.weather.gov/wrh/timeseries?site=KBLI',
-        'KORS': 'https://www.weather.gov/wrh/timeseries?site=KORS',
-        // Municipal/Other
-        'whiterock_east': 'https://www.whiterockcity.ca/1000/Weather-Station',
-        'JERICHO': 'https://jsca.bc.ca/services/weather/'
-      };
 
       // Determine source badge and link
       let sourceBadge = '';
