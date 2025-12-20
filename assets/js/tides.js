@@ -10,6 +10,7 @@ let stationsMetadata = null;
 let tideChart = null;
 let currentDayOffset = 0; // 0 = today, 1 = tomorrow, 2 = day after
 let currentStationKey = null;
+let currentGeodeticResiduals = []; // Stores residuals for geodetic stations to sync chart and card
 
 // Station name formatting
 const STATION_DISPLAY_NAMES = {
@@ -28,6 +29,61 @@ const STATION_DISPLAY_NAMES = {
   'port_renfrew': 'Port Renfrew',
   'victoria_harbor': 'Victoria Harbor'
 };
+
+/* =====================================================
+   Geodetic Station Helpers
+   ===================================================== */
+
+/**
+ * Check if a station is a geodetic tide station (Surrey FlowWorks).
+ * Geodetic stations use CGVD28 datum and require calibration.
+ */
+function isGeodeticStation(stationKey) {
+  return stationKey === 'crescent_beach_ocean' || stationKey === 'crescent_channel_ocean';
+}
+
+/**
+ * Determine which methodology to use for geodetic calibration:
+ * - Crescent Beach: Apply offset to PREDICTIONS
+ * - Crescent Channel: Apply offset to OBSERVATIONS
+ */
+function getGeodeticMethodology(stationKey) {
+  if (stationKey === 'crescent_beach_ocean') {
+    return 'calibrate_prediction';
+  } else if (stationKey === 'crescent_channel_ocean') {
+    return 'calibrate_observation';
+  }
+  return null;
+}
+
+/**
+ * Get the most recent geodetic offset value for a station.
+ * Returns null if no offset data available.
+ */
+function getCurrentGeodeticOffset(stationKey) {
+  if (!tideTimeseriesData?.stations?.[stationKey]?.geodetic_offsets) {
+    return null;
+  }
+
+  const offsets = tideTimeseriesData.stations[stationKey].geodetic_offsets;
+  if (offsets.length === 0) return null;
+
+  // Find the most recent offset
+  const now = Date.now();
+  let closestOffset = null;
+  let closestDiff = Infinity;
+
+  for (const offset of offsets) {
+    const offsetTime = new Date(offset.time).getTime();
+    const diff = Math.abs(now - offsetTime);
+    if (diff < closestDiff) {
+      closestDiff = diff;
+      closestOffset = offset.value;
+    }
+  }
+
+  return closestOffset;
+}
 
 /* =====================================================
    Data Loading
@@ -130,7 +186,8 @@ function populateStationDropdown() {
     optionsHTML += '<optgroup label="Geodetic Stations (CGVD28)">';
     geodeticStations.forEach(stationKey => {
       const displayName = (STATION_DISPLAY_NAMES[stationKey] || stationKey) + ' 📊';
-      optionsHTML += `<option value="${stationKey}" class="geodetic-station">${displayName}</option>`;
+      // Use unicode em-space (\u2003) for indentation - browsers don't support padding in option elements
+      optionsHTML += `<option value="${stationKey}" class="geodetic-station" style="color: #888; font-style: italic;">\u2003\u2003${displayName}</option>`;
     });
     optionsHTML += '</optgroup>';
   }
@@ -169,15 +226,24 @@ function populateStationDropdown() {
   const urlParams = new URLSearchParams(window.location.search);
   const stationParam = urlParams.get('station');
 
-  // If station parameter exists and is valid, use it; otherwise default to Point Atkinson
+  // Priority: URL param > current selection > default to Point Atkinson
+  let stationToDisplay = null;
+
   if (stationParam && stations.includes(stationParam)) {
-    select.value = stationParam;
-    if (selectBottom) selectBottom.value = stationParam;
-    displayStation(stationParam);
+    // Use URL parameter if present and valid
+    stationToDisplay = stationParam;
+  } else if (currentStationKey && stations.includes(currentStationKey)) {
+    // Preserve current selection on auto-refresh
+    stationToDisplay = currentStationKey;
   } else if (stations.includes('point_atkinson')) {
-    select.value = 'point_atkinson';
-    if (selectBottom) selectBottom.value = 'point_atkinson';
-    displayStation('point_atkinson');
+    // Default to Point Atkinson
+    stationToDisplay = 'point_atkinson';
+  }
+
+  if (stationToDisplay) {
+    select.value = stationToDisplay;
+    if (selectBottom) selectBottom.value = stationToDisplay;
+    displayStation(stationToDisplay);
   }
 }
 
@@ -217,9 +283,6 @@ function displayStation(stationKey) {
   // Display current prediction (also from currentStation which has prediction_now)
   displayCurrentPrediction(currentStation);
 
-  // Display storm surge
-  displayStormSurge(currentStation);
-
   // Display high/low table (for current day)
   displayHighLowTable(highlowStation, currentDayOffset);
 
@@ -229,8 +292,11 @@ function displayStation(stationKey) {
   // Setup day navigation buttons
   setupDayNavigation();
 
-  // Display tide chart after section is visible
+  // Display tide chart after section is visible (must be before storm surge card for geodetic stations)
   displayTideChart(stationKey, currentDayOffset);
+
+  // Display storm surge AFTER chart so geodetic residuals are available
+  displayStormSurge(currentStation);
 }
 
 function hideStation() {
@@ -306,21 +372,37 @@ function displayCurrentObservation(station) {
   }
 
   const obs = station.observation;
-  const observedLevel = obs.value.toFixed(2);
+  let observedLevel = obs.value;
   const obsTime = new Date(obs.time);
   const timeStr = formatTime(obsTime);
   const ageStr = getAgeString(obsTime);
   const isStale = obs.stale || false;
 
+  // For geodetic stations that calibrate observations, show calibrated value
+  const stationKey = Object.keys(tideCurrentData.stations).find(key => tideCurrentData.stations[key] === station);
+  const methodology = getGeodeticMethodology(stationKey);
+  const geodeticOffset = getCurrentGeodeticOffset(stationKey);
+
+  let calibrationNote = '';
+  if (methodology === 'calibrate_observation' && geodeticOffset !== null) {
+    observedLevel = obs.value + geodeticOffset;
+    calibrationNote = `
+      <div style="color: #1976d2; margin-top: 0.5rem; font-size: 0.85rem; font-style: italic;">
+        📏 Calibrated (offset: ${geodeticOffset >= 0 ? '+' : ''}${geodeticOffset.toFixed(3)}m)
+      </div>
+    `;
+  }
+
   container.innerHTML = `
     <div style="font-size: 1.5rem; font-weight: bold; color: ${isStale ? '#e53935' : '#43a047'};">
-      ${observedLevel} m
+      ${observedLevel.toFixed(2)} m
     </div>
     <div style="color: #666; margin-top: 0.25rem; font-size: 0.9rem;">
       at ${timeStr}
       <span style="color: ${isStale ? '#e53935' : '#999'};">(${ageStr})</span>
     </div>
     ${isStale ? '<div style="color: #e53935; margin-top: 0.25rem; font-size: 0.85rem;">⚠ Data may be stale</div>' : ''}
+    ${calibrationNote}
   `;
 }
 
@@ -337,9 +419,24 @@ function displayCurrentPrediction(station) {
   }
 
   const pred = station.prediction_now;
-  const tideLevel = pred.value.toFixed(2);
+  let tideLevel = pred.value;
   const predTime = new Date(pred.time);
   const timeStr = formatTime(predTime);
+
+  // For geodetic stations that calibrate predictions, show calibrated value
+  const stationKey = Object.keys(tideCurrentData.stations).find(key => tideCurrentData.stations[key] === station);
+  const methodology = getGeodeticMethodology(stationKey);
+  const geodeticOffset = getCurrentGeodeticOffset(stationKey);
+
+  let calibrationNote = '';
+  if (methodology === 'calibrate_prediction' && geodeticOffset !== null) {
+    tideLevel = pred.value + geodeticOffset;
+    calibrationNote = `
+      <div style="color: #1976d2; margin-top: 0.5rem; font-size: 0.85rem; font-style: italic;">
+        📏 Calibrated (offset: ${geodeticOffset >= 0 ? '+' : ''}${geodeticOffset.toFixed(3)}m)
+      </div>
+    `;
+  }
 
   // Determine tide direction (rising, falling, slack)
   let tideDirection = '';
@@ -437,11 +534,12 @@ function displayCurrentPrediction(station) {
   container.innerHTML = `
     <div>
       <div style="font-size: 1.5rem; font-weight: bold; color: #0077be;">
-        ${tideLevel} m ${tideArrow}
+        ${tideLevel.toFixed(2)} m ${tideArrow}
       </div>
       <div style="color: #666; margin-top: 0.25rem; font-size: 0.9rem;">
         at ${timeStr}${tideDirection ? ` <span style="color: #0077be;">(${tideDirection})</span>` : ''}
       </div>
+      ${calibrationNote}
     </div>
     ${nextEventHtml}
   `;
@@ -453,6 +551,65 @@ function displayCurrentPrediction(station) {
 
 function displayStormSurge(station) {
   const container = document.getElementById('storm-surge');
+
+  // For geodetic stations, display the last residual value from the chart
+  const stationData = tideTimeseriesData?.stations?.[currentStationKey];
+  const isGeodetic = stationData?.geodetic_offsets && stationData.geodetic_offsets.length > 0;
+  const isCrescentChannel = currentStationKey === 'crescent_channel_ocean';
+
+  if (isGeodetic && currentGeodeticResiduals.length > 0) {
+    // Get the last (most recent) residual from the chart
+    const lastResidual = currentGeodeticResiduals[currentGeodeticResiduals.length - 1];
+    const [residualTime, residualValue] = lastResidual;
+
+    const residualStr = residualValue >= 0 ? `+${residualValue.toFixed(3)}` : residualValue.toFixed(3);
+    const color = Math.abs(residualValue) > 0.3 ? '#e53935' : (Math.abs(residualValue) > 0.15 ? '#ff9800' : '#43a047');
+    const residualTimeStr = formatTime(residualTime);
+
+    // Get ECCC forecast for comparison
+    const forecastSurge = station?.prediction_now?.surge;
+    let forecastHtml = '';
+    if (forecastSurge !== null && forecastSurge !== undefined) {
+      const forecastStr = forecastSurge >= 0 ? `+${forecastSurge.toFixed(3)}` : forecastSurge.toFixed(3);
+      forecastHtml = `
+        <div style="color: #666; margin-top: 0.75rem; font-size: 0.9rem; padding-top: 0.75rem; border-top: 1px solid #eee;">
+          <strong>ECCC Storm Surge:</strong> <span style="color: #9c27b0; font-weight: 600;">${forecastStr} m</span>
+        </div>
+      `;
+    }
+
+    const labelText = isCrescentChannel ? 'Calibrated Obs - Prediction' : 'Observed - Calibrated Pred';
+
+    container.innerHTML = `
+      <div style="font-size: 1.5rem; font-weight: bold; color: ${color};">
+        ${residualStr} m
+      </div>
+      <div style="color: #666; margin-top: 0.25rem; font-size: 0.9rem;">
+        ${labelText}
+      </div>
+      <div style="color: #999; margin-top: 0.25rem; font-size: 0.85rem;">
+        at ${residualTimeStr}
+      </div>
+      ${forecastHtml}
+      <div style="color: #999; margin-top: 0.5rem; font-size: 0.8rem;">
+        Latest value from chart
+      </div>
+    `;
+    return;
+  }
+
+  // If geodetic station but no residuals available
+  if (isGeodetic) {
+    container.innerHTML = `
+      <div style="font-size: 1rem; color: #e53935;">
+        No residual data available
+      </div>
+      <div style="color: #666; margin-top: 0.5rem; font-size: 0.85rem;">
+        Check if observations and geodetic offsets are available
+      </div>
+    `;
+    return;
+  }
 
   // Check if we have tide_offset (actual observed residual with matched timestamps)
   if (station && station.tide_offset && station.tide_offset.value !== null) {
@@ -840,32 +997,118 @@ function displayTideChart(stationKey, dayOffset = 0) {
   const obsTimes = observations.map(o => new Date(o.time));
   const obsValues = observations.map(o => o.value);
 
-  // Get residuals from timeseries data (pre-calculated for geodetic stations)
-  let residuals = [];
-  if (stationData.residuals && stationData.residuals.length > 0 && dayOffset === 0) {
-    // Filter residuals for the target day
-    residuals = filterByDay(stationData.residuals, 'time').map(r => [
-      new Date(r.time),
-      r.value
-    ]);
-  }
+  // Determine which geodetic methodology to use
+  const isCrescentChannel = stationKey === 'crescent_channel_ocean';
+  const isCrescentBeach = stationKey === 'crescent_beach_ocean';
 
-  // Get geodetic offset for calibration (Crescent Beach Ocean only)
-  // Channel 2126: CB vs CC (PT) - corrects prediction by ~-0.34m
+  // Geodetic offset handling - two methodologies:
+  // - Crescent Beach Ocean: Apply offset to PREDICTION (Channel 2126: CB vs CC PT)
+  // - Crescent Channel: Apply offset to OBSERVATION
   let calibratedPrediction = [];
+  let calibratedObservation = [];
+
   if (stationData.geodetic_offsets && stationData.geodetic_offsets.length > 0) {
     const offsetMap = {};
     filterByDay(stationData.geodetic_offsets, 'time').forEach(offset => {
       offsetMap[offset.time] = offset.value;
     });
 
-    calibratedPrediction = predictions
-      .filter(pred => offsetMap[pred.time] !== undefined)
-      .map(pred => [
-        new Date(pred.time),
-        pred.value + offsetMap[pred.time]
-      ]);
+    if (isCrescentChannel && observations.length > 0 && dayOffset === 0) {
+      // Crescent Channel: Apply offset to observations
+      calibratedObservation = observations
+        .map(obs => {
+          // Find closest offset for this observation
+          let closestOffset = null;
+          let minDiff = Infinity;
+
+          for (const offsetTime in offsetMap) {
+            const diff = Math.abs(new Date(obs.time) - new Date(offsetTime));
+            if (diff < minDiff && diff < 300000) { // Within 5 minutes
+              minDiff = diff;
+              closestOffset = offsetMap[offsetTime];
+            }
+          }
+
+          if (closestOffset !== null) {
+            return [new Date(obs.time), obs.value + closestOffset];
+          }
+          return null;
+        })
+        .filter(item => item !== null);
+    } else {
+      // Crescent Beach Ocean (and default): Apply offset to predictions
+      calibratedPrediction = predictions
+        .filter(pred => offsetMap[pred.time] !== undefined)
+        .map(pred => [
+          new Date(pred.time),
+          pred.value + offsetMap[pred.time]
+        ]);
+    }
   }
+
+  // Calculate residuals (for geodetic stations with observations)
+  let residuals = [];
+  currentGeodeticResiduals = []; // Reset global for this station
+  if (observations.length > 0 && dayOffset === 0 && stationData.geodetic_offsets) {
+    if (isCrescentChannel && calibratedObservation.length > 0) {
+      // Crescent Channel: residual = calibrated_observation - prediction
+      const predictionMap = new Map();
+      predictions.forEach(pred => {
+        predictionMap.set(new Date(pred.time).getTime(), pred.value);
+      });
+
+      calibratedObservation.forEach(([obsTime, obsValue]) => {
+        const obsTimeMs = obsTime.getTime();
+
+        // Find closest prediction (within 5 minutes)
+        let closestTime = null;
+        let minDiff = Infinity;
+
+        for (const predTime of predictionMap.keys()) {
+          const diff = Math.abs(obsTimeMs - predTime);
+          if (diff < minDiff && diff < 300000) {
+            minDiff = diff;
+            closestTime = predTime;
+          }
+        }
+
+        if (closestTime !== null) {
+          const residual = obsValue - predictionMap.get(closestTime);
+          residuals.push([obsTime, residual]);
+        }
+      });
+    } else if (calibratedPrediction.length > 0) {
+      // Crescent Beach (and default): residual = observation - calibrated_prediction
+      const calibratedMap = new Map();
+      calibratedPrediction.forEach(([time, value]) => {
+        calibratedMap.set(time.getTime(), value);
+      });
+
+      observations.forEach(obs => {
+        const obsTime = new Date(obs.time).getTime();
+
+        // Find closest calibrated prediction (within 5 minutes)
+        let closestTime = null;
+        let minDiff = Infinity;
+
+        for (const predTime of calibratedMap.keys()) {
+          const diff = Math.abs(obsTime - predTime);
+          if (diff < minDiff && diff < 300000) {
+            minDiff = diff;
+            closestTime = predTime;
+          }
+        }
+
+        if (closestTime !== null) {
+          const residual = obs.value - calibratedMap.get(closestTime);
+          residuals.push([new Date(obs.time), residual]);
+        }
+      });
+    }
+  }
+
+  // Store residuals globally for storm surge card to use
+  currentGeodeticResiduals = residuals;
 
   // Get combined water level data if available (for all days including today)
   // Skip total water level for geodetic stations (CGVD28 datum makes it not useful)
@@ -873,8 +1116,8 @@ function displayTideChart(stationKey, dayOffset = 0) {
   let surgeData = [];
   let hasCombinedData = false;
 
-  // Detect geodetic stations by station_id prefix (Surrey stations start with "surrey_")
-  const isGeodetic = stationData.station_id?.startsWith('surrey_');
+  // Detect geodetic stations by presence of geodetic_offsets data
+  const isGeodetic = stationData.geodetic_offsets && stationData.geodetic_offsets.length > 0;
 
   if (combinedWaterLevelData && combinedWaterLevelData.stations && combinedWaterLevelData.stations[stationKey]) {
     const stationCombined = combinedWaterLevelData.stations[stationKey];
@@ -965,15 +1208,36 @@ function displayTideChart(stationKey, dayOffset = 0) {
     },
     legend: {
       data: (() => {
-        let legendItems = ['Astronomical Tide', 'Observation'];
+        let legendItems = [];
+
+        // Astronomical Tide (hide for Crescent Beach Ocean)
+        if (!isCrescentBeach) {
+          legendItems.push('Astronomical Tide');
+        }
+
+        // Observation (hide for Crescent Channel - show Calibrated Observation instead)
+        if (!isCrescentChannel && observations.length > 0) {
+          legendItems.push('Observation');
+        }
+
+        // Calibrated Observation (Crescent Channel only)
+        if (calibratedObservation.length > 0) {
+          legendItems.push('Calibrated Observation');
+        }
+
+        // Calibrated Prediction (Crescent Beach only)
         if (calibratedPrediction.length > 0) {
           legendItems.push('Calibrated Prediction');
         }
+
         if (residuals.length > 0) {
-          legendItems.push('Residual (Obs - Pred)');
+          legendItems.push('Residual (Obs - Calibrated)');
         }
-        if (hasCombinedData) {
-          legendItems.push('Storm Surge (Forecast)', 'Total Water Level (Forecast)');
+        if (surgeData.length > 0) {
+          legendItems.push('Storm Surge (Forecast)');
+        }
+        if (combinedData.length > 0) {
+          legendItems.push('Total Water Level (Forecast)');
         }
         return legendItems;
       })(),
@@ -1027,30 +1291,47 @@ function displayTideChart(stationKey, dayOffset = 0) {
         fontSize: window.innerWidth < 600 ? 9 : 12
       }
     },
-    series: [
-      {
-        name: 'Astronomical Tide',
-        type: 'line',
-        data: times.map((t, i) => [t, values[i]]),
-        smooth: true,
-        lineStyle: {
-          color: '#0077be',
-          width: 2
-        },
-        itemStyle: {
-          color: '#0077be'
-        },
-        showSymbol: false
-      }
-    ]
+    series: []
   };
 
-  // Add observations if available (only show for today)
-  if (observations.length > 0 && dayOffset === 0) {
+  // Add Astronomical Tide (hide for Crescent Beach Ocean)
+  if (!isCrescentBeach) {
+    option.series.push({
+      name: 'Astronomical Tide',
+      type: 'line',
+      data: times.map((t, i) => [t, values[i]]),
+      smooth: true,
+      lineStyle: {
+        color: '#0077be',
+        width: 2
+      },
+      itemStyle: {
+        color: '#0077be'
+      },
+      showSymbol: false
+    });
+  }
+
+  // Add raw observations (hide for Crescent Channel - use calibrated instead)
+  if (observations.length > 0 && dayOffset === 0 && !isCrescentChannel) {
     option.series.push({
       name: 'Observation',
       type: 'scatter',
       data: obsTimes.map((t, i) => [t, obsValues[i]]),
+      itemStyle: {
+        color: '#43a047'
+      },
+      symbolSize: 6,
+      z: 10
+    });
+  }
+
+  // Add calibrated observation (Crescent Channel only)
+  if (calibratedObservation.length > 0) {
+    option.series.push({
+      name: 'Calibrated Observation',
+      type: 'scatter',
+      data: calibratedObservation,
       itemStyle: {
         color: '#43a047'
       },
@@ -1083,7 +1364,7 @@ function displayTideChart(stationKey, dayOffset = 0) {
   // Add residuals series for geodetic stations
   if (residuals.length > 0 && dayOffset === 0) {
     option.series.push({
-      name: 'Residual (Obs - Pred)',
+      name: 'Residual (Obs - Calibrated)',
       type: 'line',
       data: residuals,
       smooth: false,
@@ -1116,25 +1397,26 @@ function displayTideChart(stationKey, dayOffset = 0) {
     });
   }
 
-  // Add storm surge and combined water level series
-  if (hasCombinedData) {
-    // Storm surge series (small but useful to see the component)
+  // Add storm surge series (purple to distinguish from orange calibrated prediction)
+  if (surgeData.length > 0) {
     option.series.push({
       name: 'Storm Surge (Forecast)',
       type: 'line',
       data: surgeData,
       smooth: true,
       lineStyle: {
-        color: '#ff9800',
+        color: '#9c27b0',
         width: 2
       },
       itemStyle: {
-        color: '#ff9800'
+        color: '#9c27b0'
       },
       showSymbol: false
     });
+  }
 
-    // Total water level series (tide + surge)
+  // Add total water level series (only for non-geodetic/chart datum stations)
+  if (combinedData.length > 0) {
     option.series.push({
       name: 'Total Water Level (Forecast)',
       type: 'line',
