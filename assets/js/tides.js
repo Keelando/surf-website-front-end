@@ -277,6 +277,9 @@ function displayStation(stationKey) {
   // Display station metadata
   displayStationMetadata(stationKey);
 
+  // Display sunlight times for this station
+  displaySunlightTimes(stationKey);
+
   // Display current observation
   displayCurrentObservation(currentStation);
 
@@ -1527,11 +1530,111 @@ function showSelectedTideOnMap() {
 window.showSelectedTideOnMap = showSelectedTideOnMap;
 
 /* =====================================================
+   Sunlight Times Display
+   ===================================================== */
+
+let sunlightTimesData = null;
+
+async function loadSunlightTimes() {
+  try {
+    const response = await fetch(`/data/sunlight_times.json?t=${Date.now()}`);
+    sunlightTimesData = await response.json();
+  } catch (error) {
+    console.warn('Could not load sunlight times:', error);
+    sunlightTimesData = null;
+  }
+}
+
+function displaySunlightTimes(stationKey) {
+  const container = document.getElementById('sunlight-widget');
+  if (!container) return;
+
+  // Check if we have sunlight data for this station
+  if (!sunlightTimesData || !sunlightTimesData.tides || !sunlightTimesData.tides[stationKey]) {
+    container.style.display = 'none';
+    return;
+  }
+
+  const sunlight = sunlightTimesData.tides[stationKey];
+
+  // Parse times
+  const sunrise = new Date(sunlight.sunrise);
+  const sunset = new Date(sunlight.sunset);
+  const dawnCivil = new Date(sunlight.dawn_civil);
+  const duskCivil = new Date(sunlight.dusk_civil);
+
+  // Format to local time
+  const timeOptions = { hour: 'numeric', minute: '2-digit', timeZone: 'America/Vancouver' };
+  const sunriseStr = sunrise.toLocaleTimeString('en-US', timeOptions);
+  const sunsetStr = sunset.toLocaleTimeString('en-US', timeOptions);
+  const dawnStr = dawnCivil.toLocaleTimeString('en-US', timeOptions);
+  const duskStr = duskCivil.toLocaleTimeString('en-US', timeOptions);
+
+  // Format daylight duration
+  const hours = Math.floor(sunlight.daylight_duration_seconds / 3600);
+  const minutes = Math.floor((sunlight.daylight_duration_seconds % 3600) / 60);
+  const daylightDuration = `${hours}h ${minutes}m`;
+
+  // Determine current phase display
+  const phaseEmoji = {
+    'night': '🌙',
+    'astronomical_twilight': '🌆',
+    'nautical_twilight': '🌆',
+    'civil_twilight': '🌅',
+    'daylight': '☀️'
+  };
+
+  const phaseText = {
+    'night': 'Night',
+    'astronomical_twilight': 'Astronomical Twilight',
+    'nautical_twilight': 'Nautical Twilight',
+    'civil_twilight': 'Civil Twilight',
+    'daylight': 'Daylight'
+  };
+
+  const currentPhase = sunlight.current_phase || 'unknown';
+  const emoji = phaseEmoji[currentPhase] || '🌤️';
+  const phase = phaseText[currentPhase] || currentPhase;
+
+  // Build simple HTML table
+  container.innerHTML = `
+    <div class="tide-data-group">
+      <h3>Sunlight Times <span style="font-size: 0.9rem; color: #666; font-weight: normal;">(${emoji} ${phase})</span></h3>
+      <div class="data-table">
+        <table style="width: 100%;">
+          <tbody>
+            <tr>
+              <td style="padding: 0.5rem;"><b>First Light (Civil Dawn):</b></td>
+              <td style="padding: 0.5rem;">${dawnStr}</td>
+              <td style="padding: 0.5rem;"><b>Sunrise:</b></td>
+              <td style="padding: 0.5rem;">${sunriseStr}</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.5rem;"><b>Sunset:</b></td>
+              <td style="padding: 0.5rem;">${sunsetStr}</td>
+              <td style="padding: 0.5rem;"><b>Last Light (Civil Dusk):</b></td>
+              <td style="padding: 0.5rem;">${duskStr}</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.5rem;"><b>Daylight Duration:</b></td>
+              <td colspan="3" style="padding: 0.5rem;">${daylightDuration}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  container.style.display = 'block';
+}
+
+/* =====================================================
    Initialization
    ===================================================== */
 
 // Load data on page load - wait for HTMX to load footer with timestamp
-document.addEventListener('htmx:load', function() {
+document.addEventListener('htmx:load', async function() {
+  await loadSunlightTimes();
   loadTideData();
 }, { once: true });
 

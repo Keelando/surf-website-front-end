@@ -326,7 +326,7 @@ async function loadBuoyData() {
 
           // Show peak wave height (English Bay, Southern Strait)
           if (b.wave_height_peak != null) {
-            cardContent += `<p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Peak Wave Height:</b> ${b.wave_height_peak} m</p>`;
+            cardContent += `<p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Peak Wave Height:</b> ${b.wave_height_peak.toFixed(heightPrecision)} m</p>`;
           }
 
           // Show maximum wave height (Halibut Bank, Sentry Shoal)
@@ -334,7 +334,7 @@ async function loadBuoyData() {
             const sigHeight = b.wave_height_sig || 0;
             const ratio = sigHeight > 0 ? (b.wave_height_max / sigHeight).toFixed(1) : '';
             const ratioText = ratio ? ` <span style="color: #666; font-size: 0.9em;">(${ratio}× sig)</span>` : '';
-            cardContent += `<p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Maximum Wave Height:</b> ${b.wave_height_max} m${ratioText}</p>`;
+            cardContent += `<p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Maximum Wave Height:</b> ${b.wave_height_max.toFixed(heightPrecision)} m${ratioText}</p>`;
           }
 
           // Show wave direction angular spread
@@ -412,7 +412,7 @@ async function loadBuoyData() {
           }
 
           if (b.wave_period_peak != null) {
-            cardContent += `<p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Peak Period:</b> ${b.wave_period_peak} s</p>`;
+            cardContent += `<p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Peak Period:</b> ${b.wave_period_peak.toFixed(1)} s</p>`;
           }
         }
       }
