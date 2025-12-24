@@ -636,7 +636,7 @@ async function toggleCardHistory(buoyId) {
     button.disabled = true;
 
     try {
-      const timeseriesData = await fetchWithTimeout(`/data/buoy_timeseries_24h.json?t=${Date.now()}`);
+      const timeseriesData = await fetchWithTimeout(`/data/buoy_timeseries_48h.json?t=${Date.now()}`);
       const buoyData = timeseriesData[buoyId];
 
       if (buoyData && buoyData.timeseries) {

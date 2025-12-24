@@ -152,8 +152,7 @@ function renderSpectralCharts(waveChart, buoy, ts) {
       textStyle: { fontSize: window.innerWidth < 600 ? 12 : 14 }
     },
     tooltip: {
-      trigger: "axis",
-      axisPointer: { type: "cross" },
+      ...getMobileOptimizedTooltipConfig(),
       formatter: (params) => {
         if (!params || params.length === 0) return "";
         const time = formatTimeAxis(new Date(params[0].value[0]).toISOString());
@@ -601,8 +600,7 @@ function renderStandardWaveChart(waveChart, buoy, buoyId, ts) {
       textStyle: { fontSize: window.innerWidth < 600 ? 12 : 14 }
     },
     tooltip: {
-      trigger: "axis",
-      axisPointer: { type: "cross" },
+      ...getMobileOptimizedTooltipConfig(),
       formatter: (params) => {
         if (!params || params.length === 0) return "";
         const time = formatTimeAxis(new Date(params[0].value[0]).toISOString());

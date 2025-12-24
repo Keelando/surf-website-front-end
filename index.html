@@ -33,6 +33,39 @@
     header {
       margin-bottom: 0;
     }
+
+    /* Time range toggle buttons */
+    .time-range-btn {
+      padding: 0.5rem 1rem;
+      margin: 0 0.25rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: all 0.2s;
+      background: #e0e0e0;
+      color: #666;
+    }
+
+    .time-range-btn:hover {
+      background: #d0d0d0;
+      transform: translateY(-1px);
+    }
+
+    .time-range-btn.active {
+      background: #0077be;
+      color: white;
+    }
+
+    .time-range-btn.active:hover {
+      background: #005a94;
+    }
+
+    /* Wave table collapsed rows - hidden by default */
+    .collapsed-row {
+      display: none;
+    }
   </style>
 </head>
 
@@ -126,6 +159,14 @@
 
   <section id="charts-section">
     <h2>24-Hour Trends</h2>
+
+    <!-- Time Range Toggle (Top) -->
+    <div style="margin: 1rem 0; text-align: center;">
+      <label style="margin-right: 0.5rem; font-weight: 600; color: #004b7c;">Time Range:</label>
+      <button class="time-range-btn active" data-hours="24" onclick="setTimeRange(24)">24 Hours</button>
+      <button class="time-range-btn" data-hours="48" onclick="setTimeRange(48)">48 Hours</button>
+    </div>
+
     <div id="wave-comparison-chart" class="w-full h-400"></div>
     <div class="mt-sm p-md bg-surface-light rounded-md text-sm color-muted text-center leading-relaxed">
       <strong>Wave Breaking Thresholds:</strong>
@@ -157,6 +198,13 @@
       <a href="#stations-map" id="show-buoy-on-map-btn" onclick="showSelectedBuoyOnMap(event)" style="margin-left: 1rem; padding: 0.5rem 1rem; background: #0077be; color: white; text-decoration: none; border-radius: 4px; font-size: 0.9rem; display: inline-block;">Show on Map</a>
     </div>
 
+    <!-- Time Range Toggle -->
+    <div style="margin: 1rem 0; text-align: center;">
+      <label style="margin-right: 0.5rem; font-weight: 600; color: #004b7c;">Time Range:</label>
+      <button class="time-range-btn active" data-hours="24" onclick="setTimeRange(24)" style="padding: 0.5rem 1rem; margin: 0 0.25rem; background: #0077be; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: background 0.2s;">24 Hours</button>
+      <button class="time-range-btn" data-hours="48" onclick="setTimeRange(48)" style="padding: 0.5rem 1rem; margin: 0 0.25rem; background: #e0e0e0; color: #666; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: background 0.2s;">48 Hours</button>
+    </div>
+
     <div id="wave-chart" class="w-full h-500"></div>
     <!-- New Dungeness second chart (hidden by default) -->
     <div id="wave-period-chart" class="w-full h-500 hidden mt-lg"></div>
@@ -167,6 +215,14 @@
 
   <div id="wave-height-table-section">
     <h2>24-Hour Wave Height Summary</h2>
+
+    <!-- Time Range Toggle (By Table) -->
+    <div style="margin: 1rem 0; text-align: center;">
+      <label style="margin-right: 0.5rem; font-weight: 600; color: #004b7c;">Time Range:</label>
+      <button class="time-range-btn active" data-hours="24" onclick="setTimeRange(24)">24 Hours</button>
+      <button class="time-range-btn" data-hours="48" onclick="setTimeRange(48)">48 Hours</button>
+    </div>
+
     <div class="data-table">
       <table id="wave-height-table">
         <!-- Table will be populated by JavaScript -->

@@ -42,6 +42,12 @@ function generateWaveHeightTable(chartData) {
   });
 
   const sortedHours = Array.from(hourMap.keys()).sort().reverse();
+  const totalRows = sortedHours.length;
+
+  // Show first half of data by default:
+  // - 24hr mode: ~24 rows total → show 12, hide 12
+  // - 48hr mode: ~48 rows total → show 24, hide 24
+  const halfwayPoint = Math.ceil(totalRows / 2);
 
   let tableHTML = `
     <thead>
@@ -63,7 +69,7 @@ function generateWaveHeightTable(chartData) {
 
   let previousDate = null;
 
-  sortedHours.forEach((hourStr) => {
+  sortedHours.forEach((hourStr, index) => {
     const date = new Date(hourStr);
 
     // Format: "Sa-22 05h" (2-letter weekday, day, hour)
@@ -83,8 +89,11 @@ function generateWaveHeightTable(chartData) {
 
     const values = hourMap.get(hourStr);
 
+    // Add 'collapsed-row' class to second half of rows
+    const rowClass = index >= halfwayPoint ? ' class="collapsed-row"' : '';
+
     tableHTML += `
-      <tr>
+      <tr${rowClass}>
         <td><strong>${timeLabel}</strong></td>
         <td>${values["4600146"] != null ? values["4600146"] + " m" : "—"}</td>
         <td>${values["4600304"] != null ? values["4600304"] + " m" : "—"}</td>
@@ -101,6 +110,17 @@ function generateWaveHeightTable(chartData) {
 
   tableHTML += "</tbody>";
   table.innerHTML = tableHTML;
+
+  // Reset any inline styles from previous toggle (ensure rows start hidden)
+  setTimeout(() => {
+    const collapsedRows = document.querySelectorAll('#wave-height-table .collapsed-row');
+    collapsedRows.forEach(row => {
+      row.style.display = ''; // Clear inline style, let CSS class control it
+    });
+  }, 0);
+
+  // Add or update the toggle button
+  updateTableToggleButton(totalRows > halfwayPoint);
   } catch (error) {
     logger.error('WaveTable', 'Error generating wave height table', error);
     const table = document.getElementById("wave-height-table");
@@ -108,4 +128,63 @@ function generateWaveHeightTable(chartData) {
       table.innerHTML = '<tbody><tr><td colspan="10" style="text-align: center; color: #e53935; padding: 2rem;">Error generating table</td></tr></tbody>';
     }
   }
+}
+
+/**
+ * Update or create the table toggle button
+ */
+function updateTableToggleButton(shouldShow) {
+  const container = document.getElementById('wave-height-table-section');
+  if (!container) return;
+
+  // Remove existing button if present
+  const existingBtn = document.getElementById('wave-table-toggle-btn');
+  if (existingBtn) {
+    existingBtn.remove();
+  }
+
+  // Only add button if there are enough rows to collapse
+  if (shouldShow) {
+    const toggleBtn = document.createElement('div');
+    toggleBtn.id = 'wave-table-toggle-btn';
+    toggleBtn.style.cssText = 'text-align: center; margin-top: 1rem;';
+    toggleBtn.innerHTML = `
+      <button onclick="toggleWaveTableRows()" style="
+        padding: 0.5rem 1.5rem;
+        background: #0077be;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 600;
+        transition: background 0.2s;
+      " onmouseover="this.style.background='#005a94'" onmouseout="this.style.background='#0077be'">
+        ▼ Show More Rows
+      </button>
+    `;
+    container.appendChild(toggleBtn);
+  }
+}
+
+/**
+ * Toggle visibility of collapsed table rows
+ */
+function toggleWaveTableRows() {
+  const collapsedRows = document.querySelectorAll('#wave-height-table .collapsed-row');
+  const button = document.querySelector('#wave-table-toggle-btn button');
+
+  if (!collapsedRows.length || !button) return;
+
+  // Check actual computed style, not just inline style
+  const firstRow = collapsedRows[0];
+  const computedStyle = window.getComputedStyle(firstRow);
+  const isHidden = computedStyle.display === 'none';
+
+  collapsedRows.forEach(row => {
+    // Set inline style to override CSS class
+    row.style.display = isHidden ? 'table-row' : 'none';
+  });
+
+  button.innerHTML = isHidden ? '▲ Show Less Rows' : '▼ Show More Rows';
 }

@@ -226,3 +226,77 @@ function safeRenderChart(renderFn, container, chartName, ...args) {
     showChartError(container, chartName, error);
   }
 }
+
+/**
+ * Get mobile-optimized tooltip configuration for ECharts
+ * Improves touch interaction and prevents tooltip from going off-screen
+ * @returns {Object} ECharts tooltip configuration
+ */
+function getMobileOptimizedTooltipConfig() {
+  const isMobile = window.innerWidth < 768;
+
+  return {
+    trigger: 'axis',
+    confine: true, // Keep tooltip within chart bounds
+    axisPointer: {
+      type: 'line', // Show only vertical x-axis line (cleaner on mobile)
+      label: {
+        backgroundColor: '#004b7c'
+      },
+      lineStyle: {
+        color: '#004b7c',
+        width: isMobile ? 2 : 1,
+        type: 'solid'
+      }
+    },
+    // Smart positioning: avoid finger/cursor on mobile
+    position: function (point, params, dom, rect, size) {
+      if (!isMobile) {
+        // Desktop: use default positioning
+        return null;
+      }
+
+      // Mobile: position tooltip to avoid being covered by finger
+      const tooltipWidth = size.contentSize[0];
+      const tooltipHeight = size.contentSize[1];
+      const chartWidth = size.viewSize[0];
+      const chartHeight = size.viewSize[1];
+      const fingerOffset = 60; // Offset to clear finger (assuming ~40-50px finger diameter + margin)
+
+      let x = point[0];
+      let y = point[1];
+
+      // Horizontal positioning: try right first, then left if no room
+      if (x + tooltipWidth + 20 > chartWidth) {
+        x = Math.max(10, point[0] - tooltipWidth - 20); // Place to left with margin
+      } else {
+        x = point[0] + 20; // Place to right with margin
+      }
+
+      // Vertical positioning: ALWAYS try above finger first (most important for mobile UX)
+      if (point[1] - tooltipHeight - fingerOffset >= 0) {
+        // Enough room above - place tooltip above finger
+        y = point[1] - tooltipHeight - fingerOffset;
+      } else if (point[1] + fingerOffset + tooltipHeight <= chartHeight) {
+        // Not enough room above, but room below - place below finger
+        y = point[1] + fingerOffset;
+      } else {
+        // Constrained space - place at top of chart (best compromise)
+        y = 10;
+      }
+
+      return [x, y];
+    },
+    // Enhanced touch behavior
+    renderMode: 'html',
+    className: 'echarts-tooltip-mobile',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderColor: '#004b7c',
+    borderWidth: 1,
+    textStyle: {
+      color: '#333',
+      fontSize: isMobile ? 12 : 14
+    },
+    padding: isMobile ? 8 : 12
+  };
+}

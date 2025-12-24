@@ -108,8 +108,7 @@ function renderComparisonChart(waveComparisonChart, chartData) {
     },
 
     tooltip: {
-      trigger: "axis",
-      axisPointer: { type: "cross" },
+      ...getMobileOptimizedTooltipConfig(),
       formatter: (params) => {
         if (!params?.length) return "";
         const time = formatTimeAxis(new Date(params[0].value[0]).toISOString());

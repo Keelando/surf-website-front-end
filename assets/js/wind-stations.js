@@ -60,6 +60,53 @@ let windChart = null;
 let windTimeseriesData = null;
 let allStationsList = []; // Store all stations
 let currentSort = { column: null, ascending: true };
+let currentWindTimeRange = 24; // Default to 24 hours
+
+/**
+ * Filter wind timeseries data to specified time range (hours)
+ */
+function filterWindTimeseriesData(data, hours) {
+  if (!data) return data;
+
+  const now = new Date();
+  const cutoff = new Date(now - hours * 60 * 60 * 1000);
+
+  // Deep copy and filter each station's timeseries
+  const filtered = {};
+
+  Object.keys(data).forEach(stationId => {
+    if (stationId === '_meta') {
+      filtered[stationId] = data[stationId];
+      return;
+    }
+
+    const station = data[stationId];
+    filtered[stationId] = {
+      name: station.name,
+      isBuoy: station.isBuoy,
+      timeseries: {}
+    };
+
+    // Handle both buoy format (with .data) and wind station format (direct arrays)
+    Object.keys(station.timeseries || {}).forEach(metricKey => {
+      const metric = station.timeseries[metricKey];
+
+      if (Array.isArray(metric)) {
+        // Wind station format: direct array
+        filtered[stationId].timeseries[metricKey] = metric.filter(point => new Date(point.time) >= cutoff);
+      } else if (metric.data && Array.isArray(metric.data)) {
+        // Buoy format: {data: [...], name, unit}
+        filtered[stationId].timeseries[metricKey] = {
+          name: metric.name,
+          unit: metric.unit,
+          data: metric.data.filter(point => new Date(point.time) >= cutoff)
+        };
+      }
+    });
+  });
+
+  return filtered;
+}
 
 /**
  * Initialize sortable table functionality
@@ -456,8 +503,8 @@ async function loadWindTimeseries() {
   try {
     // Load both wind station and buoy timeseries data
     const [windData, buoyData] = await Promise.all([
-      fetchWithTimeout(`/data/wind_timeseries_24hr.json?t=${Date.now()}`),
-      fetchWithTimeout(`/data/buoy_timeseries_24h.json?t=${Date.now()}`)
+      fetchWithTimeout(`/data/wind_timeseries_48hr.json?t=${Date.now()}`),
+      fetchWithTimeout(`/data/buoy_timeseries_48h.json?t=${Date.now()}`)
     ]);
 
     // Merge wind and buoy data
@@ -632,12 +679,14 @@ window.viewStationChart = viewStationChart;
 window.showStationOnMap = showStationOnMap;
 
 /**
- * Render 24-hour wind data table for selected station
+ * Render wind data table for selected station (24hr or 48hr based on currentWindTimeRange)
  */
 function renderWind24HourTable(stationId) {
   if (!windTimeseriesData || !stationId) return;
 
-  const station = windTimeseriesData[stationId];
+  // Filter data based on current time range
+  const filteredData = filterWindTimeseriesData(windTimeseriesData, currentWindTimeRange);
+  const station = filteredData[stationId];
   if (!station) return;
 
   const table = document.getElementById('wind-24hr-table');
@@ -757,12 +806,56 @@ function renderWind24HourTable(stationId) {
 }
 
 /**
+ * Set time range for wind charts and update display
+ */
+function setWindTimeRange(hours) {
+  currentWindTimeRange = hours;
+
+  // Update ALL button states (sync all toggle buttons on page)
+  document.querySelectorAll('.wind-time-range-btn').forEach(btn => {
+    if (parseInt(btn.dataset.windHours) === hours) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+
+  // Update section headers to show current time range
+  updateWindTimeRangeLabels();
+
+  // Re-render current station chart and table
+  const selectedStation = document.getElementById('wind-station-select')?.value;
+  if (selectedStation) {
+    renderWindChart(selectedStation);
+    renderWind24HourTable(selectedStation);
+  }
+}
+
+/**
+ * Update all wind time range labels on the page
+ */
+function updateWindTimeRangeLabels() {
+  // Update section headers
+  const chartSectionH2 = document.querySelector('#wind-chart-section h2');
+  if (chartSectionH2) {
+    chartSectionH2.textContent = `${currentWindTimeRange}-Hour Wind Trends`;
+  }
+
+  const tableSectionH2 = document.querySelector('#wind-data-table-section h2');
+  if (tableSectionH2) {
+    tableSectionH2.textContent = `${currentWindTimeRange}-Hour Wind Data`;
+  }
+}
+
+/**
  * Render wind chart for selected station
  */
 function renderWindChart(stationId) {
   if (!windTimeseriesData || !stationId) return;
 
-  const station = windTimeseriesData[stationId];
+  // Filter data based on current time range
+  const filteredData = filterWindTimeseriesData(windTimeseriesData, currentWindTimeRange);
+  const station = filteredData[stationId];
   if (!station) return;
 
   const chartContainer = document.getElementById('wind-trend-chart');
@@ -815,10 +908,7 @@ function renderWindChart(stationId) {
       }
     },
     tooltip: {
-      trigger: 'axis',
-      axisPointer: {
-        type: 'cross'
-      },
+      ...getMobileOptimizedTooltipConfig(),
       formatter: (params) => {
         if (!params || params.length === 0) return "";
         const time = new Date(params[0].value[0]).toLocaleString("en-US", {
@@ -1005,6 +1095,7 @@ function checkHashForWindStation() {
 document.addEventListener('DOMContentLoaded', () => {
   loadWindTable();
   loadWindTimeseries();
+  updateWindTimeRangeLabels(); // Set initial labels to 24-Hour
 
   // Check for wind station in URL hash
   checkHashForWindStation();
