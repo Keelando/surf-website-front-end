@@ -7,7 +7,7 @@
   <title>Marine Forecasts | Salish Sea Wave Conditions</title>
 
   <meta name="description" content="Marine weather forecasts for Strait of Georgia including wind warnings, gale watches, and extended forecasts from Environment Canada." />
-  <meta name="keywords" content="marine forecast, Strait of Georgia, gale warning, wind forecast, Environment Canada, BC marine weather, Salish Sea forecast, weather warning, marine weather, ocean forecast, sailing forecast, boating weather, coastal forecast, storm warning, wind warning, British Columbia marine forecast, Pacific Northwest weather, sea conditions, marine safety, nautical forecast, extended forecast, weather bulletin" />
+  <meta name="keywords" content="marine forecast, Strait of Georgia, gale warning, wind forecast, Environment Canada, BC marine weather, Salish Sea forecast, weather warning, marine weather, ocean forecast, sailing forecast, boating weather, coastal forecast, storm warning, wind warning, British Columbia marine forecast, Pacific Northwest weather, sea conditions, marine safety, nautical forecast, extended forecast, weather bulletin, aviation weather, TAF, METAR, airport weather, RASP forecast, YVR weather, Bellingham airport weather" />
   <meta name="author" content="Salish Sea Wave Conditions Project" />
   <meta name="robots" content="index, follow" />
 
@@ -182,6 +182,52 @@
     header {
       margin-bottom: 0;
     }
+
+    /* Resource links styling */
+    .resource-links {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    .resource-item {
+      color: #2d3748;
+      line-height: 1.8;
+    }
+
+    .resource-item strong {
+      color: #2c5282;
+      display: inline-block;
+      min-width: 200px;
+    }
+
+    .resource-links a {
+      color: #4299e1;
+      text-decoration: none;
+      padding: 0.25rem 0.5rem;
+      border-radius: 3px;
+      transition: background-color 0.2s;
+    }
+
+    .resource-links a:hover {
+      background-color: #ebf8ff;
+      text-decoration: underline;
+    }
+
+    .resource-links a::after {
+      content: " ↗";
+      font-size: 0.8em;
+      opacity: 0.6;
+    }
+
+    @media (max-width: 768px) {
+      .resource-item strong {
+        display: block;
+        margin-bottom: 0.25rem;
+        min-width: auto;
+      }
+    }
   </style>
 </head>
 
@@ -200,6 +246,53 @@
     <div id="forecast-container">
       <div class="loading-state">
         <p>Loading marine forecasts...</p>
+      </div>
+    </div>
+
+    <!-- Related Resources Section -->
+    <div class="forecast-zone" style="margin-top: 2rem;">
+      <h2>🔗 Related Resources</h2>
+
+      <!-- Aviation Forecasts -->
+      <div class="forecast-section">
+        <h3>✈️ Aviation Forecasts (TAF/METAR)</h3>
+        <div class="resource-links">
+          <div class="resource-item">
+            <strong>YVR - Vancouver International:</strong>
+            <a href="https://metar-taf.com/taf/CYVR" target="_blank" rel="noopener">TAF</a> |
+            <a href="https://metar-taf.com/metar/CYVR" target="_blank" rel="noopener">METAR</a>
+          </div>
+          <div class="resource-item">
+            <strong>BLI - Bellingham International:</strong>
+            <a href="https://metar-taf.com/taf/KBLI" target="_blank" rel="noopener">TAF</a> |
+            <a href="https://metar-taf.com/metar/KBLI" target="_blank" rel="noopener">METAR</a>
+          </div>
+          <div class="resource-item">
+            <strong>CZBB - Boundary Bay:</strong>
+            <a href="https://metar-taf.com/taf/CZBB" target="_blank" rel="noopener">TAF</a> |
+            <a href="https://metar-taf.com/metar/CZBB" target="_blank" rel="noopener">METAR</a>
+          </div>
+          <div class="resource-item">
+            <strong>KORS - Orcas Island:</strong>
+            <a href="https://metar-taf.com/taf/KORS" target="_blank" rel="noopener">TAF</a> |
+            <a href="https://metar-taf.com/metar/KORS" target="_blank" rel="noopener">METAR</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Wind & Pressure Maps -->
+      <div class="forecast-section">
+        <h3>🌬️ Wind & Pressure Maps</h3>
+        <div class="resource-links">
+          <div class="resource-item">
+            <strong>RASP Wind Forecast:</strong>
+            <a href="https://www.canadarasp.com/RASPtable.html?param=sfcwind3,opacity=50,zoom=10,lat=49.05,lon=-122.18,model=hrdps,twodaydynamic=false,windgrams=false,wind_checkbox=true" target="_blank" rel="noopener">Strait of Georgia</a>
+          </div>
+          <div class="resource-item">
+            <strong>NOAA Pressure Map:</strong>
+            <a href="https://ocean.weather.gov/Pac_tab.php" target="_blank" rel="noopener">Pacific Surface Analysis</a>
+          </div>
+        </div>
       </div>
     </div>
   </main>

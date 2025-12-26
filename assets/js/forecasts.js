@@ -251,6 +251,19 @@ function renderExtendedForecast(extendedForecast) {
 
   html += `
       </div>
+  `;
+
+  // Add issued timestamp if available
+  if (forecastData && forecastData.generated_utc) {
+    const issuedDate = new Date(forecastData.generated_utc);
+    html += `
+      <div class="forecast-metadata">
+        <strong>Issued:</strong> ${formatTimestamp(issuedDate)}
+      </div>
+    `;
+  }
+
+  html += `
     </div>
   `;
 
