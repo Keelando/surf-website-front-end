@@ -773,7 +773,9 @@ function renderWind24HourTable(stationId) {
   if (hourlyTimes.length === 0) {
     tableHTML += '<tr><td colspan="6" style="text-align: center; padding: 2rem;">No data available</td></tr>';
   } else {
-    hourlyTimes.forEach(time => {
+    const DEFAULT_VISIBLE_ROWS = 12;
+
+    hourlyTimes.forEach((time, index) => {
       const data = dataByTime.get(time);
       const formattedTime = formatTimestamp(time);
       const speed = data.speed != null ? Math.round(data.speed) : '—';
@@ -788,8 +790,11 @@ function renderWind24HourTable(stationId) {
         direction = `${cardinal} (${Math.round(data.direction)}°) ${arrow}`;
       }
 
+      // Add 'collapsed-row' class to rows beyond the default visible count
+      const rowClass = index >= DEFAULT_VISIBLE_ROWS ? ' class="collapsed-row"' : '';
+
       tableHTML += `
-        <tr>
+        <tr${rowClass}>
           <td>${formattedTime}</td>
           <td>${direction}</td>
           <td>${speed}</td>
@@ -799,6 +804,19 @@ function renderWind24HourTable(stationId) {
         </tr>
       `;
     });
+
+    // Add expand/collapse toggle button if there are more rows than the default
+    if (hourlyTimes.length > DEFAULT_VISIBLE_ROWS) {
+      tableHTML += `
+        <tr id="toggle-row-wind-24hr">
+          <td colspan="6" style="text-align: center; padding: 1rem; background: #f5f9fc; cursor: pointer; border-bottom: none;">
+            <button onclick="toggleWind24hrRows()" style="padding: 0.5rem 1.5rem; background: #0077be; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.95rem; font-weight: 600; transition: background 0.2s;" onmouseover="this.style.background='#005a94'" onmouseout="this.style.background='#0077be'">
+              ▼ Show More Rows
+            </button>
+          </td>
+        </tr>
+      `;
+    }
   }
 
   tableHTML += '</tbody>';
@@ -1079,6 +1097,35 @@ window.selectStationAndShowChart = selectStationAndShowChart;
  * Check URL hash for station to display
  * Called on page load to handle deep links from map popups
  */
+/**
+ * Toggle visibility of extra rows in wind 24hr table
+ */
+function toggleWind24hrRows() {
+  const table = document.getElementById('wind-24hr-table');
+  if (!table) return;
+
+  const collapsedRows = table.querySelectorAll('.collapsed-row');
+  const toggleButton = table.querySelector('#toggle-row-wind-24hr button');
+
+  if (!toggleButton || collapsedRows.length === 0) return;
+
+  // Check actual computed display value (CSS or inline)
+  const firstRowStyle = window.getComputedStyle(collapsedRows[0]);
+  const isCurrentlyHidden = firstRowStyle.display === 'none';
+
+  // Toggle display for all collapsed rows
+  collapsedRows.forEach(row => {
+    row.style.display = isCurrentlyHidden ? 'table-row' : 'none';
+  });
+
+  // Update button text
+  if (isCurrentlyHidden) {
+    toggleButton.innerHTML = '▲ Show Less Rows';
+  } else {
+    toggleButton.innerHTML = '▼ Show More Rows';
+  }
+}
+
 function checkHashForWindStation() {
   const hash = window.location.hash;
 
