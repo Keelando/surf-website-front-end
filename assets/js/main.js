@@ -22,6 +22,74 @@ function getDirectionalArrow(degrees, arrowType = 'wind') {
   return `<span style="display:inline-block;transform:rotate(${rotation}deg);margin-left:0.3rem;vertical-align:middle;">${svg}</span>`;
 }
 
+// Helper function to create angular spread vector visualization
+// Shows main direction arrow with smaller arrows indicating directional spread
+function createAngularSpreadVector(avgDirection, spread, size = 60) {
+  if (avgDirection == null || spread == null) return '';
+
+  const halfSpread = spread / 2;
+  const minDir = avgDirection - halfSpread;
+  const maxDir = avgDirection + halfSpread;
+
+  // Center point
+  const cx = size / 2;
+  const cy = size / 2;
+  const radius = size * 0.42; // Arrow radius from center
+
+  // Match the existing getDirectionalArrow rotation convention:
+  // Base arrow points DOWN (towards south), then rotate by degrees
+  const mainRot = avgDirection;
+  const minRot = minDir;
+  const maxRot = maxDir;
+
+  // Calculate arc path for the spread sector
+  // The sector should show TRAVEL directions (where waves go TO), not source directions
+  // So add 180° to convert from source to travel direction, matching the arrow
+  // SVG arc angles: 0° = right (3 o'clock), 90° = down (6 o'clock), measured clockwise
+  // Subtract 90° to convert from compass to SVG angles
+  const startAngleSVG = (minRot + 180) - 90;
+  const endAngleSVG = (maxRot + 180) - 90;
+  const startAngleRad = startAngleSVG * Math.PI / 180;
+  const endAngleRad = endAngleSVG * Math.PI / 180;
+  const arcRadius = radius + 2; // Extend to circle edge
+
+  const x1 = cx + arcRadius * Math.cos(startAngleRad);
+  const y1 = cy + arcRadius * Math.sin(startAngleRad);
+  const x2 = cx + arcRadius * Math.cos(endAngleRad);
+  const y2 = cy + arcRadius * Math.sin(endAngleRad);
+
+  const largeArc = spread > 180 ? 1 : 0;
+
+  return `
+    <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="display: inline-block; vertical-align: middle; margin-left: 0.5rem;">
+      <!-- Background circle -->
+      <circle cx="${cx}" cy="${cy}" r="${radius + 2}" fill="none" stroke="#e0e7ee" stroke-width="1"/>
+
+      <!-- Spread sector -->
+      <path d="M ${cx},${cy} L ${x1},${y1} A ${arcRadius},${arcRadius} 0 ${largeArc},1 ${x2},${y2} Z"
+            fill="rgba(30, 136, 229, 0.15)"
+            stroke="rgba(30, 136, 229, 0.3)"
+            stroke-width="1"/>
+
+      <!-- Main direction arrow (single arrow within sector) -->
+      <g transform="rotate(${mainRot} ${cx} ${cy})">
+        <!-- Arrow shaft -->
+        <line x1="${cx}" y1="${cy - radius + 8}" x2="${cx}" y2="${cy + radius - 3}"
+              stroke="#1e88e5" stroke-width="2.5"/>
+        <!-- Triangular arrowhead -->
+        <path d="M${cx},${cy + radius + 2} L${cx - 5},${cy + radius - 8} L${cx + 5},${cy + radius - 8} Z"
+              fill="#1e88e5"/>
+      </g>
+
+      <!-- Cardinal directions -->
+      <text x="${cx}" y="8" text-anchor="middle" font-size="8" fill="#999">N</text>
+      <text x="${size - 6}" y="${cy + 3}" text-anchor="middle" font-size="8" fill="#999">E</text>
+      <text x="${cx}" y="${size - 2}" text-anchor="middle" font-size="8" fill="#999">S</text>
+      <text x="6" y="${cy + 3}" text-anchor="middle" font-size="8" fill="#999">W</text>
+    </svg>
+  `;
+}
+
 async function loadBuoyData() {
   const container = document.getElementById("buoy-container");
   const timestamp = document.getElementById("timestamp");
@@ -334,7 +402,12 @@ async function loadBuoyData() {
             const sigHeight = b.wave_height_sig || 0;
             const ratio = sigHeight > 0 ? (b.wave_height_max / sigHeight).toFixed(1) : '';
             const ratioText = ratio ? ` <span style="color: #666; font-size: 0.9em;">(${ratio}× sig)</span>` : '';
-            cardContent += `<p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Maximum Wave Height:</b> ${b.wave_height_max.toFixed(heightPrecision)} m${ratioText}</p>`;
+            cardContent += `<p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Max Wave Height:</b> ${b.wave_height_max.toFixed(heightPrecision)} m${ratioText}</p>`;
+          }
+
+          // Show peak period (right after peak/max wave height)
+          if (b.wave_period_peak != null) {
+            cardContent += `<p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Peak Period:</b> ${b.wave_period_peak.toFixed(1)} s</p>`;
           }
 
           // Show wave direction angular spread
@@ -368,7 +441,7 @@ async function loadBuoyData() {
                 peakColor = '#e53e3e';
               }
 
-              cardContent += `<p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Peak Spread:</b> ${peakSpread}° <span style="color: ${peakColor}; font-weight: 600;">(${peakDesc})</span></p>`;
+              cardContent += `<p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Peak Spread:</b> ${peakSpread}° <span style="color: ${peakColor}; font-weight: 600;">(${peakDesc})</span> <span style="font-size: 0.85em; color: #666;">— dominant swell</span></p>`;
             }
 
             // Show Average Spread (all frequencies) with labels
@@ -390,7 +463,41 @@ async function loadBuoyData() {
                 avgColor = '#e53e3e';
               }
 
-              cardContent += `<p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Average Spread:</b> ${avgSpread}° <span style="color: ${avgColor}; font-weight: 600;">(${avgDesc})</span></p>`;
+              cardContent += `<p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Average Spread:</b> ${avgSpread}° <span style="color: ${avgColor}; font-weight: 600;">(${avgDesc})</span> <span style="font-size: 0.85em; color: #666;">— all frequencies</span></p>`;
+            }
+
+            // Add visual angular spread vectors
+            const peakDir = b.wave_direction_peak;
+            const avgDir = b.wave_direction_avg;
+
+            if ((peakDir != null && peakSpread != null) || (avgDir != null && avgSpread != null)) {
+              cardContent += `<div style="margin-top: 0.75rem; padding: 0.75rem; background: #f8fafc; border-radius: 4px; border: 1px solid #e2e8f0;">`;
+              cardContent += `<p class="buoy-metric" style="font-weight: 600; color: #004b7c; margin-bottom: 0.5rem;">Visual Direction & Spread</p>`;
+
+              // Peak direction + spread vector
+              if (peakDir != null && peakSpread != null) {
+                cardContent += `
+                  <div style="margin: 0.5rem 0;">
+                    <span style="font-size: 0.85em; color: #666; font-weight: 600;">Peak:</span>
+                    ${createAngularSpreadVector(peakDir, peakSpread, 70)}
+                    <span style="font-size: 0.75em; color: #666; margin-left: 0.5rem;">${b.wave_direction_peak_cardinal ?? degreesToCardinal(peakDir)} ${Math.round(peakDir)}° ± ${Math.round(peakSpread/2)}°</span>
+                  </div>
+                `;
+              }
+
+              // Average direction + spread vector
+              if (avgDir != null && avgSpread != null) {
+                cardContent += `
+                  <div style="margin: 0.5rem 0;">
+                    <span style="font-size: 0.85em; color: #666; font-weight: 600;">Average:</span>
+                    ${createAngularSpreadVector(avgDir, avgSpread, 70)}
+                    <span style="font-size: 0.75em; color: #666; margin-left: 0.5rem;">${b.wave_direction_avg_cardinal ?? degreesToCardinal(avgDir)} ${Math.round(avgDir)}° ± ${Math.round(avgSpread/2)}°</span>
+                  </div>
+                `;
+              }
+
+              cardContent += `<p style="font-size: 0.75em; color: #999; margin-top: 0.5rem; margin-bottom: 0;">Arrows show wave travel direction. Sector shows angular spread.</p>`;
+              cardContent += `</div>`;
             }
 
             // Add collapsible explanatory footnote (hidden by default)
@@ -409,10 +516,6 @@ async function loadBuoyData() {
                 </div>
               `;
             }
-          }
-
-          if (b.wave_period_peak != null) {
-            cardContent += `<p class="buoy-metric"><b>&nbsp;&nbsp;&nbsp;&nbsp;Peak Period:</b> ${b.wave_period_peak.toFixed(1)} s</p>`;
           }
         }
       }

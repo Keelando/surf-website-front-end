@@ -740,6 +740,108 @@
       return svg;
     }
 
+    // Create angular spread vector visualization
+    // Shows main direction arrow with smaller arrows indicating directional spread
+    function createAngularSpreadVector(avgDirection, spread, size = 70) {
+      if (avgDirection == null || spread == null) return null;
+
+      const halfSpread = spread / 2;
+      const minDir = avgDirection - halfSpread;
+      const maxDir = avgDirection + halfSpread;
+
+      // Center point
+      const cx = size / 2;
+      const cy = size / 2;
+      const radius = size * 0.42;
+
+      // Match the existing getDirectionalArrow rotation convention:
+      // Base arrow points DOWN (towards south), then rotate by degrees
+      const mainRot = avgDirection;
+      const minRot = minDir;
+      const maxRot = maxDir;
+
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('width', size);
+      svg.setAttribute('height', size);
+      svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+      svg.style.display = 'inline-block';
+      svg.style.verticalAlign = 'middle';
+      svg.style.marginLeft = '0.5rem';
+
+      // Background circle
+      const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      circle.setAttribute('cx', cx);
+      circle.setAttribute('cy', cy);
+      circle.setAttribute('r', radius + 2);
+      circle.setAttribute('fill', 'none');
+      circle.setAttribute('stroke', '#e0e7ee');
+      circle.setAttribute('stroke-width', '1');
+      svg.appendChild(circle);
+
+      // Create spread sector arc
+      // Add 180° to show TRAVEL directions (matching arrow), not source directions
+      const startAngleSVG = (minRot + 180) - 90;
+      const endAngleSVG = (maxRot + 180) - 90;
+      const startAngleRad = startAngleSVG * Math.PI / 180;
+      const endAngleRad = endAngleSVG * Math.PI / 180;
+      const arcRadius = radius + 2; // Extend to circle edge
+
+      const x1 = cx + arcRadius * Math.cos(startAngleRad);
+      const y1 = cy + arcRadius * Math.sin(startAngleRad);
+      const x2 = cx + arcRadius * Math.cos(endAngleRad);
+      const y2 = cy + arcRadius * Math.sin(endAngleRad);
+
+      const largeArc = spread > 180 ? 1 : 0;
+
+      const arcPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      arcPath.setAttribute('d', `M ${cx},${cy} L ${x1},${y1} A ${arcRadius},${arcRadius} 0 ${largeArc},1 ${x2},${y2} Z`);
+      arcPath.setAttribute('fill', 'rgba(30, 136, 229, 0.15)');
+      arcPath.setAttribute('stroke', 'rgba(30, 136, 229, 0.3)');
+      arcPath.setAttribute('stroke-width', '1');
+      svg.appendChild(arcPath);
+
+      // Create main direction arrow
+      const arrowGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      arrowGroup.setAttribute('transform', `rotate(${mainRot} ${cx} ${cy})`);
+
+      // Arrow shaft
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', cx);
+      line.setAttribute('y1', cy - radius + 8);
+      line.setAttribute('x2', cx);
+      line.setAttribute('y2', cy + radius - 3);
+      line.setAttribute('stroke', '#1e88e5');
+      line.setAttribute('stroke-width', '2.5');
+      arrowGroup.appendChild(line);
+
+      // Triangular arrowhead
+      const arrowHead = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      arrowHead.setAttribute('d', `M${cx},${cy + radius + 2} L${cx - 5},${cy + radius - 8} L${cx + 5},${cy + radius - 8} Z`);
+      arrowHead.setAttribute('fill', '#1e88e5');
+      arrowGroup.appendChild(arrowHead);
+
+      svg.appendChild(arrowGroup);
+
+      // Cardinal directions
+      function createText(x, y, text) {
+        const textElem = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        textElem.setAttribute('x', x);
+        textElem.setAttribute('y', y);
+        textElem.setAttribute('text-anchor', 'middle');
+        textElem.setAttribute('font-size', '8');
+        textElem.setAttribute('fill', '#999');
+        textElem.textContent = text;
+        return textElem;
+      }
+
+      svg.appendChild(createText(cx, 8, 'N'));
+      svg.appendChild(createText(size - 6, cy + 3, 'E'));
+      svg.appendChild(createText(cx, size - 2, 'S'));
+      svg.appendChild(createText(6, cy + 3, 'W'));
+
+      return svg;
+    }
+
     // Create marine conditions banner (before webcam cards)
     function createConditionsBanner(marineData) {
       if (!marineData) return null;
@@ -1033,13 +1135,89 @@
               dirMetric.innerHTML = `<span class="wave-label">Dir:</span> <span class="wave-value">${dirCardinal} (${Math.round(data.wave_direction_peak)}°)</span>`;
               dataGrid.appendChild(dirMetric);
 
-              // Wave spread - show both peak and average
+              // Wave spread - show both peak and average with quality labels
               if (data.wave_direction_spread_peak !== null && data.wave_direction_spread_peak !== undefined) {
-                const spreadMetric = document.createElement('div');
-                spreadMetric.className = 'wave-metric';
-                const avgSpread = data.wave_direction_spread_avg ? ` (avg ±${Math.round(data.wave_direction_spread_avg)}°)` : '';
-                spreadMetric.innerHTML = `<span class="wave-label">Spread:</span> <span class="wave-value">±${Math.round(data.wave_direction_spread_peak)}°${avgSpread}</span>`;
-                dataGrid.appendChild(spreadMetric);
+                // Peak spread with quality description
+                const peakSpread = data.wave_direction_spread_peak;
+                let peakDesc = '';
+                let peakColor = '#666';
+                if (peakSpread < 25) {
+                  peakDesc = 'very organized';
+                  peakColor = '#38a169';
+                } else if (peakSpread < 35) {
+                  peakDesc = 'organized';
+                  peakColor = '#48bb78';
+                } else if (peakSpread < 45) {
+                  peakDesc = 'moderate';
+                  peakColor = '#d69e2e';
+                } else {
+                  peakDesc = 'confused';
+                  peakColor = '#e53e3e';
+                }
+
+                const peakSpreadMetric = document.createElement('div');
+                peakSpreadMetric.className = 'wave-metric';
+                peakSpreadMetric.style.gridColumn = 'span 2';
+                peakSpreadMetric.innerHTML = `<span class="wave-label">Peak Spread:</span> <span class="wave-value">${Math.round(peakSpread)}° <span style="color: ${peakColor}; font-weight: 600;">(${peakDesc})</span> <span style="font-size: 0.85em; color: #666;">— dominant swell</span></span>`;
+                dataGrid.appendChild(peakSpreadMetric);
+
+                // Average spread with quality description (if available)
+                if (data.wave_direction_spread_avg !== null && data.wave_direction_spread_avg !== undefined) {
+                  const avgSpread = data.wave_direction_spread_avg;
+                  let avgDesc = '';
+                  let avgColor = '#666';
+                  if (avgSpread < 30) {
+                    avgDesc = 'very clean';
+                    avgColor = '#38a169';
+                  } else if (avgSpread < 45) {
+                    avgDesc = 'clean';
+                    avgColor = '#48bb78';
+                  } else if (avgSpread < 60) {
+                    avgDesc = 'mixed';
+                    avgColor = '#d69e2e';
+                  } else {
+                    avgDesc = 'messy';
+                    avgColor = '#e53e3e';
+                  }
+
+                  const avgSpreadMetric = document.createElement('div');
+                  avgSpreadMetric.className = 'wave-metric';
+                  avgSpreadMetric.style.gridColumn = 'span 2';
+                  avgSpreadMetric.innerHTML = `<span class="wave-label">Avg Spread:</span> <span class="wave-value">${Math.round(avgSpread)}° <span style="color: ${avgColor}; font-weight: 600;">(${avgDesc})</span> <span style="font-size: 0.85em; color: #666;">— all frequencies</span></span>`;
+                  dataGrid.appendChild(avgSpreadMetric);
+                }
+
+                // Add visual angular spread vector
+                const vectorMetric = document.createElement('div');
+                vectorMetric.className = 'wave-metric';
+                vectorMetric.style.gridColumn = 'span 2';
+                vectorMetric.style.marginTop = '0.5rem';
+                vectorMetric.style.padding = '0.5rem';
+                vectorMetric.style.background = '#f8fafc';
+                vectorMetric.style.borderRadius = '4px';
+                vectorMetric.style.textAlign = 'center';
+
+                const vectorContainer = document.createElement('div');
+                const vectorSvg = createAngularSpreadVector(data.wave_direction_peak, data.wave_direction_spread_peak, 70);
+                if (vectorSvg) {
+                  const label = document.createElement('div');
+                  label.style.fontSize = '0.75em';
+                  label.style.color = '#666';
+                  label.style.marginBottom = '0.25rem';
+                  label.textContent = 'Direction & Spread';
+                  vectorContainer.appendChild(label);
+                  vectorContainer.appendChild(vectorSvg);
+
+                  const caption = document.createElement('div');
+                  caption.style.fontSize = '0.7em';
+                  caption.style.color = '#999';
+                  caption.style.marginTop = '0.25rem';
+                  caption.textContent = 'Arrows show wave travel direction';
+                  vectorContainer.appendChild(caption);
+
+                  vectorMetric.appendChild(vectorContainer);
+                  dataGrid.appendChild(vectorMetric);
+                }
               }
             }
 
