@@ -1187,37 +1187,69 @@
                   dataGrid.appendChild(avgSpreadMetric);
                 }
 
-                // Add visual angular spread vector
-                const vectorMetric = document.createElement('div');
-                vectorMetric.className = 'wave-metric';
-                vectorMetric.style.gridColumn = 'span 2';
-                vectorMetric.style.marginTop = '0.5rem';
-                vectorMetric.style.padding = '0.5rem';
-                vectorMetric.style.background = '#f8fafc';
-                vectorMetric.style.borderRadius = '4px';
-                vectorMetric.style.textAlign = 'center';
+                // Add visual angular spread vectors (peak and average)
+                const vectorsContainer = document.createElement('div');
+                vectorsContainer.className = 'wave-metric';
+                vectorsContainer.style.gridColumn = 'span 2';
+                vectorsContainer.style.marginTop = '0.5rem';
+                vectorsContainer.style.padding = '0.5rem';
+                vectorsContainer.style.background = '#f8fafc';
+                vectorsContainer.style.borderRadius = '4px';
+                vectorsContainer.style.display = 'flex';
+                vectorsContainer.style.gap = '1rem';
+                vectorsContainer.style.justifyContent = 'center';
 
-                const vectorContainer = document.createElement('div');
-                const vectorSvg = createAngularSpreadVector(data.wave_direction_peak, data.wave_direction_spread_peak, 70);
-                if (vectorSvg) {
-                  const label = document.createElement('div');
-                  label.style.fontSize = '0.75em';
-                  label.style.color = '#666';
-                  label.style.marginBottom = '0.25rem';
-                  label.textContent = 'Direction & Spread';
-                  vectorContainer.appendChild(label);
-                  vectorContainer.appendChild(vectorSvg);
+                // Peak spread diagram
+                const peakVectorContainer = document.createElement('div');
+                peakVectorContainer.style.textAlign = 'center';
+                const peakVectorSvg = createAngularSpreadVector(data.wave_direction_peak, data.wave_direction_spread_peak, 70);
+                if (peakVectorSvg) {
+                  const peakLabel = document.createElement('div');
+                  peakLabel.style.fontSize = '0.75em';
+                  peakLabel.style.color = '#666';
+                  peakLabel.style.marginBottom = '0.25rem';
+                  peakLabel.style.fontWeight = '600';
+                  peakLabel.textContent = 'Peak Spread';
+                  peakVectorContainer.appendChild(peakLabel);
+                  peakVectorContainer.appendChild(peakVectorSvg);
 
-                  const caption = document.createElement('div');
-                  caption.style.fontSize = '0.7em';
-                  caption.style.color = '#999';
-                  caption.style.marginTop = '0.25rem';
-                  caption.textContent = 'Arrows show wave travel direction';
-                  vectorContainer.appendChild(caption);
+                  const peakCaption = document.createElement('div');
+                  peakCaption.style.fontSize = '0.7em';
+                  peakCaption.style.color = '#999';
+                  peakCaption.style.marginTop = '0.25rem';
+                  peakCaption.textContent = 'Dominant swell';
+                  peakVectorContainer.appendChild(peakCaption);
 
-                  vectorMetric.appendChild(vectorContainer);
-                  dataGrid.appendChild(vectorMetric);
+                  vectorsContainer.appendChild(peakVectorContainer);
                 }
+
+                // Average spread diagram (if available)
+                if (data.wave_direction_spread_avg !== null && data.wave_direction_spread_avg !== undefined) {
+                  const avgVectorContainer = document.createElement('div');
+                  avgVectorContainer.style.textAlign = 'center';
+                  const avgVectorSvg = createAngularSpreadVector(data.wave_direction_peak, data.wave_direction_spread_avg, 70);
+                  if (avgVectorSvg) {
+                    const avgLabel = document.createElement('div');
+                    avgLabel.style.fontSize = '0.75em';
+                    avgLabel.style.color = '#666';
+                    avgLabel.style.marginBottom = '0.25rem';
+                    avgLabel.style.fontWeight = '600';
+                    avgLabel.textContent = 'Average Spread';
+                    avgVectorContainer.appendChild(avgLabel);
+                    avgVectorContainer.appendChild(avgVectorSvg);
+
+                    const avgCaption = document.createElement('div');
+                    avgCaption.style.fontSize = '0.7em';
+                    avgCaption.style.color = '#999';
+                    avgCaption.style.marginTop = '0.25rem';
+                    avgCaption.textContent = 'All frequencies';
+                    avgVectorContainer.appendChild(avgCaption);
+
+                    vectorsContainer.appendChild(avgVectorContainer);
+                  }
+                }
+
+                dataGrid.appendChild(vectorsContainer);
               }
             }
 

@@ -1,24 +1,7 @@
 {
-  "date": "2025-12-30",
-  "generated_at": "2025-12-31T00:06:00.662323+00:00",
-  "sunrise": "2025-12-30T16:05:42.847648+00:00",
-  "sunset": "2025-12-31T00:21:31.372477+00:00",
-  "solar_noon": "2025-12-30T20:13:35+00:00",
-  "dawn_astronomical": "2025-12-30T14:09:00.347117+00:00",
-  "dawn_nautical": "2025-12-30T14:47:29.430541+00:00",
-  "dawn_civil": "2025-12-30T15:27:44.905649+00:00",
-  "dusk_civil": "2025-12-30T00:59:32.354458+00:00",
-  "dusk_nautical": "2025-12-30T01:39:50.234800+00:00",
-  "dusk_astronomical": "2025-12-30T02:18:21.076249+00:00",
-  "golden_hour": {
-    "start": "2025-12-30T15:41:38.148686+00:00",
-    "end": "2025-12-30T16:59:22.688801+00:00"
-  },
-  "blue_hour": {
-    "start": "2025-12-30T15:27:44.905649+00:00",
-    "end": "2025-12-30T15:41:38.148686+00:00"
-  },
-  "daylight_duration_seconds": 29748,
-  "is_daylight_now": true,
-  "current_phase": "daylight"
+  "date": "2025-12-31",
+  "generated_at": "2026-01-01T00:06:00.640319+00:00",
+  "error": "day is out of range for month",
+  "is_daylight_now": false,
+  "current_phase": "unknown"
 }
