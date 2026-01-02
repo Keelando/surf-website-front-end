@@ -1,7 +1,24 @@
 {
-  "date": "2025-12-31",
-  "generated_at": "2026-01-01T00:06:00.640319+00:00",
-  "error": "day is out of range for month",
-  "is_daylight_now": false,
-  "current_phase": "unknown"
+  "date": "2026-01-01",
+  "generated_at": "2026-01-02T00:06:00.605590+00:00",
+  "sunrise": "2026-01-01T16:05:42.320409+00:00",
+  "sunset": "2026-01-02T00:23:22.370423+00:00",
+  "solar_noon": "2026-01-01T20:14:32+00:00",
+  "dawn_astronomical": "2026-01-01T14:09:14.655481+00:00",
+  "dawn_nautical": "2026-01-01T14:47:40.482700+00:00",
+  "dawn_civil": "2026-01-01T15:27:50.997525+00:00",
+  "dusk_civil": "2026-01-01T01:01:17.375340+00:00",
+  "dusk_nautical": "2026-01-01T01:41:30.809443+00:00",
+  "dusk_astronomical": "2026-01-01T02:19:58.773345+00:00",
+  "golden_hour": {
+    "start": "2026-01-01T15:41:42.073913+00:00",
+    "end": "2026-01-01T16:59:07.736408+00:00"
+  },
+  "blue_hour": {
+    "start": "2026-01-01T15:27:50.997525+00:00",
+    "end": "2026-01-01T15:41:42.073913+00:00"
+  },
+  "daylight_duration_seconds": 29860,
+  "is_daylight_now": true,
+  "current_phase": "daylight"
 }
