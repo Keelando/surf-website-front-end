@@ -1242,6 +1242,14 @@ function displayTideChart(stationKey, dayOffset = 0) {
         if (combinedData.length > 0) {
           legendItems.push('Total Water Level (Forecast)');
         }
+
+        // Current time indicator (only for today)
+        if (dayOffset === 0) {
+          // Determine if we'll have residual data
+          const hasResidual = observations.length > 0;
+          legendItems.push(hasResidual ? 'Now (Predicted + Residual)' : 'Now (Predicted)');
+        }
+
         return legendItems;
       })(),
       bottom: getResponsiveLegendBottom(),
@@ -1437,6 +1445,95 @@ function displayTideChart(stationKey, dayOffset = 0) {
     });
   }
 
+  // Add current time indicator (only for today)
+  if (dayOffset === 0) {
+    const now = new Date();
+
+    // Find current predicted tide by interpolating between predictions
+    let currentPredictedTide = null;
+    let nearestResidual = null;
+
+    // Find predictions bracketing current time
+    for (let i = 0; i < predictions.length - 1; i++) {
+      const t1 = new Date(predictions[i].time);
+      const t2 = new Date(predictions[i + 1].time);
+
+      if (now >= t1 && now <= t2) {
+        // Linear interpolation
+        const ratio = (now - t1) / (t2 - t1);
+        currentPredictedTide = predictions[i].value + ratio * (predictions[i + 1].value - predictions[i].value);
+        break;
+      }
+    }
+
+    // If we found a predicted tide value
+    if (currentPredictedTide !== null) {
+      let currentEstimatedTide = currentPredictedTide;
+
+      // Calculate tide residual from most recent observation
+      if (observations.length > 0) {
+        // Get the most recent observation
+        const latestObs = observations[observations.length - 1];
+        const obsTime = new Date(latestObs.time);
+        const obsValue = latestObs.value;
+
+        // Find predicted tide at observation time (or interpolate)
+        let predAtObsTime = null;
+        for (let i = 0; i < predictions.length - 1; i++) {
+          const t1 = new Date(predictions[i].time);
+          const t2 = new Date(predictions[i + 1].time);
+
+          if (obsTime >= t1 && obsTime <= t2) {
+            const ratio = (obsTime - t1) / (t2 - t1);
+            predAtObsTime = predictions[i].value + ratio * (predictions[i + 1].value - predictions[i].value);
+            break;
+          }
+        }
+
+        // If we found a matching prediction, calculate residual
+        if (predAtObsTime !== null) {
+          nearestResidual = obsValue - predAtObsTime;
+
+          // Apply residual to current prediction (fancy version!)
+          currentEstimatedTide = currentPredictedTide + nearestResidual;
+        }
+      }
+
+      // Add current time marker
+      option.series.push({
+        name: nearestResidual !== null ? 'Now (Predicted + Residual)' : 'Now (Predicted)',
+        type: 'scatter',
+        data: [[now, currentEstimatedTide]],
+        itemStyle: {
+          color: nearestResidual !== null ? '#e53935' : '#ff9800',
+          borderColor: '#fff',
+          borderWidth: 2
+        },
+        symbolSize: 12,
+        z: 15,
+        tooltip: {
+          formatter: function(params) {
+            const timeStr = now.toLocaleString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false,
+              timeZone: 'America/Vancouver'
+            });
+            let tooltip = `<strong>Now</strong><br/>${timeStr}<br/>`;
+            tooltip += `Tide: ${currentEstimatedTide.toFixed(3)} m<br/>`;
+            if (nearestResidual !== null) {
+              tooltip += `<span style="color: #666; font-size: 0.9em;">Predicted: ${currentPredictedTide.toFixed(3)} m<br/>`;
+              tooltip += `Residual: ${nearestResidual >= 0 ? '+' : ''}${nearestResidual.toFixed(3)} m</span>`;
+            }
+            return tooltip;
+          }
+        }
+      });
+    }
+  }
+
   // Clear existing chart data and render fresh (fixes day navigation issues)
   tideChart.clear();
   tideChart.setOption(option);
@@ -1596,31 +1693,55 @@ function displaySunlightTimes(stationKey) {
   const emoji = phaseEmoji[currentPhase] || '🌤️';
   const phase = phaseText[currentPhase] || currentPhase;
 
-  // Build simple HTML table
+  // Build modern card-based layout
   container.innerHTML = `
     <div class="tide-data-group">
       <h3>Sunlight Times <span style="font-size: 0.9rem; color: #666; font-weight: normal;">(${emoji} ${phase})</span></h3>
-      <div class="data-table">
-        <table style="width: 100%;">
-          <tbody>
-            <tr>
-              <td style="padding: 0.5rem;"><b>First Light (Civil Dawn):</b></td>
-              <td style="padding: 0.5rem;">${dawnStr}</td>
-              <td style="padding: 0.5rem;"><b>Sunrise:</b></td>
-              <td style="padding: 0.5rem;">${sunriseStr}</td>
-            </tr>
-            <tr>
-              <td style="padding: 0.5rem;"><b>Sunset:</b></td>
-              <td style="padding: 0.5rem;">${sunsetStr}</td>
-              <td style="padding: 0.5rem;"><b>Last Light (Civil Dusk):</b></td>
-              <td style="padding: 0.5rem;">${duskStr}</td>
-            </tr>
-            <tr>
-              <td style="padding: 0.5rem;"><b>Daylight Duration:</b></td>
-              <td colspan="3" style="padding: 0.5rem;">${daylightDuration}</td>
-            </tr>
-          </tbody>
-        </table>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+
+        <!-- Dawn Card -->
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">🌅</div>
+          <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 0.25rem;">First Light</div>
+          <div style="font-size: 1.3rem; font-weight: bold;">${dawnStr}</div>
+          <div style="font-size: 0.75rem; opacity: 0.8; margin-top: 0.25rem;">Civil Dawn</div>
+        </div>
+
+        <!-- Sunrise Card -->
+        <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">🌄</div>
+          <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 0.25rem;">Sunrise</div>
+          <div style="font-size: 1.3rem; font-weight: bold;">${sunriseStr}</div>
+          <div style="font-size: 0.75rem; opacity: 0.8; margin-top: 0.25rem;">Sun Above Horizon</div>
+        </div>
+
+        <!-- Sunset Card -->
+        <div style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">🌇</div>
+          <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 0.25rem;">Sunset</div>
+          <div style="font-size: 1.3rem; font-weight: bold;">${sunsetStr}</div>
+          <div style="font-size: 0.75rem; opacity: 0.8; margin-top: 0.25rem;">Sun Below Horizon</div>
+        </div>
+
+        <!-- Dusk Card -->
+        <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">🌆</div>
+          <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 0.25rem;">Last Light</div>
+          <div style="font-size: 1.3rem; font-weight: bold;">${duskStr}</div>
+          <div style="font-size: 0.75rem; opacity: 0.8; margin-top: 0.25rem;">Civil Dusk</div>
+        </div>
+
+      </div>
+
+      <!-- Daylight Duration Summary -->
+      <div style="margin-top: 1rem; padding: 0.75rem; background: #f7fafc; border-radius: 6px; border-left: 4px solid #0077be;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <div style="font-size: 1.5rem;">☀️</div>
+          <div>
+            <div style="font-size: 0.85rem; color: #666;">Daylight Duration</div>
+            <div style="font-size: 1.2rem; font-weight: bold; color: #0077be;">${daylightDuration}</div>
+          </div>
+        </div>
       </div>
     </div>
   `;
