@@ -781,13 +781,30 @@ function displayHighLowTable(station, dayOffset = 0) {
   // Calculate target day in Pacific timezone
   const pacific = 'America/Vancouver';
   const now = new Date();
-  const targetDay = new Date(now);
-  targetDay.setDate(now.getDate() + dayOffset);
 
-  // Get target day string in Pacific timezone (YYYY-MM-DD)
-  const targetDateStr = new Date(targetDay.toLocaleString('en-US', { timeZone: pacific }))
-    .toISOString()
-    .split('T')[0];
+  // Get current year/month/day in Pacific timezone
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: pacific,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  const parts = formatter.formatToParts(now);
+  const year = parseInt(parts.find(p => p.type === 'year').value);
+  const month = parseInt(parts.find(p => p.type === 'month').value);
+  const day = parseInt(parts.find(p => p.type === 'day').value);
+
+  // Create a date for midnight Pacific time on the current Pacific day
+  const pacificMidnight = new Date(year, month - 1, day);
+
+  // Add day offset
+  pacificMidnight.setDate(pacificMidnight.getDate() + dayOffset);
+
+  // Format as YYYY-MM-DD
+  const targetYear = pacificMidnight.getFullYear();
+  const targetMonth = String(pacificMidnight.getMonth() + 1).padStart(2, '0');
+  const targetDay = String(pacificMidnight.getDate()).padStart(2, '0');
+  const targetDateStr = `${targetYear}-${targetMonth}-${targetDay}`;
 
   // Filter events for the target day
   const eventsForDay = station.events.filter(event => {
@@ -870,14 +887,27 @@ function updateChartForDay() {
 function updateDayLabel() {
   const label = document.getElementById('chart-date-label');
   const pacific = 'America/Vancouver';
-  const today = new Date();
-  const targetDate = new Date(today);
-  targetDate.setDate(today.getDate() + currentDayOffset);
+  const now = new Date();
+
+  // Get current year/month/day in Pacific timezone
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: pacific,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  const parts = formatter.formatToParts(now);
+  const year = parseInt(parts.find(p => p.type === 'year').value);
+  const month = parseInt(parts.find(p => p.type === 'month').value);
+  const day = parseInt(parts.find(p => p.type === 'day').value);
+
+  // Create date and add offset
+  const targetDate = new Date(year, month - 1, day);
+  targetDate.setDate(targetDate.getDate() + currentDayOffset);
 
   const dateStr = targetDate.toLocaleDateString('en-US', {
     month: 'short',
-    day: 'numeric',
-    timeZone: pacific
+    day: 'numeric'
   });
 
   if (currentDayOffset === 0) {
@@ -920,14 +950,26 @@ function displayTideChart(stationKey, dayOffset = 0) {
   const pacific = 'America/Vancouver';
   const now = new Date();
 
-  // Calculate the target date (add dayOffset to current date)
-  const targetDate = new Date(now);
-  targetDate.setDate(now.getDate() + dayOffset);
+  // Get current year/month/day in Pacific timezone using Intl API
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: pacific,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  const parts = formatter.formatToParts(now);
+  const year = parseInt(parts.find(p => p.type === 'year').value);
+  const month = parseInt(parts.find(p => p.type === 'month').value);
+  const day = parseInt(parts.find(p => p.type === 'day').value);
 
-  // Format the target date in Pacific timezone to get year/month/day
-  const pacificYear = parseInt(targetDate.toLocaleString('en-US', { timeZone: pacific, year: 'numeric' }));
-  const pacificMonth = parseInt(targetDate.toLocaleString('en-US', { timeZone: pacific, month: 'numeric' }));
-  const pacificDay = parseInt(targetDate.toLocaleString('en-US', { timeZone: pacific, day: 'numeric' }));
+  // Create a date for the current Pacific day and add offset
+  const targetDate = new Date(year, month - 1, day);
+  targetDate.setDate(targetDate.getDate() + dayOffset);
+
+  // Extract components for date string
+  const pacificYear = targetDate.getFullYear();
+  const pacificMonth = targetDate.getMonth() + 1;
+  const pacificDay = targetDate.getDate();
 
   // Create a date string for this Pacific day
   const targetDateStr = `${pacificYear}-${String(pacificMonth).padStart(2, '0')}-${String(pacificDay).padStart(2, '0')}`;
