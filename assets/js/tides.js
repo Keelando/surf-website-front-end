@@ -277,8 +277,8 @@ function displayStation(stationKey) {
   // Display station metadata
   displayStationMetadata(stationKey);
 
-  // Display sunlight times for this station
-  displaySunlightTimes(stationKey);
+  // Display sunlight times for this station (for current day)
+  displaySunlightTimes(stationKey, currentDayOffset);
 
   // Display current observation
   displayCurrentObservation(currentStation);
@@ -523,7 +523,7 @@ function displayCurrentPrediction(station) {
             <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #eee; font-size: 0.85rem;">
               <div style="color: #666;">
                 Next ${eventType} Tide: <strong style="color: #0077be;">${eventHeight} m</strong>
-                ${combinedWaterLevel ? `<span style="color: #9c27b0; font-weight: 600;">(${combinedWaterLevel} m total)</span>` : ''}
+                ${combinedWaterLevel ? `<span style="color: #00897b; font-weight: 600;">(${combinedWaterLevel} m total)</span>` : ''}
                 <span style="color: #43a047; font-weight: 600;">${timeUntilStr}</span>
                 <span style="color: #999;">(${eventTimeStr})</span>
               </div>
@@ -742,9 +742,9 @@ function displayStormSurge(station) {
             </div>
             <div style="font-size: 0.95rem; line-height: 1.6;">
               Today's forecasted peak water level is
-              <strong style="color: #9c27b0; font-size: 1.1rem;">${todayPeak.total_water_level_m.toFixed(2)} m</strong>
+              <strong style="color: #00897b; font-size: 1.1rem;">${todayPeak.total_water_level_m.toFixed(2)} m</strong>
               with a storm surge of
-              <strong style="color: #ff9800;">${todayPeak.storm_surge_m >= 0 ? '+' : ''}${todayPeak.storm_surge_m.toFixed(3)} m</strong>
+              <strong style="color: #9c27b0;">${todayPeak.storm_surge_m >= 0 ? '+' : ''}${todayPeak.storm_surge_m.toFixed(3)} m</strong>
               at <strong style="color: #0077be;">${peakTimeStr}</strong>.
             </div>
           </div>
@@ -860,7 +860,7 @@ function setupDayNavigation() {
   });
 
   newNextBtn.addEventListener('click', () => {
-    if (currentDayOffset < 2) {
+    if (currentDayOffset < 2) {  // We have 3 days of data (0-2)
       currentDayOffset++;
       updateChartForDay();
     }
@@ -881,6 +881,9 @@ function updateChartForDay() {
     if (highlowStation) {
       displayHighLowTable(highlowStation, currentDayOffset);
     }
+
+    // Update the sunlight widget for the selected day
+    displaySunlightTimes(currentStationKey, currentDayOffset);
   }
 }
 
@@ -924,7 +927,7 @@ function updateNavigationButtons() {
   const nextBtn = document.getElementById('next-day-btn');
 
   prevBtn.disabled = currentDayOffset === 0;
-  nextBtn.disabled = currentDayOffset === 2;
+  nextBtn.disabled = currentDayOffset === 2;  // We have 3 days of data (0-2)
 
   prevBtn.style.opacity = currentDayOffset === 0 ? '0.3' : '1';
   nextBtn.style.opacity = currentDayOffset === 2 ? '0.3' : '1';
@@ -1365,6 +1368,60 @@ function displayTideChart(stationKey, dayOffset = 0) {
     });
   }
 
+  // Add sunlight times as vertical lines (separate series for each event so they appear in legend)
+  const sunlightTimes = getSunlightTimesForDate(stationKey, targetDateStr);
+  if (sunlightTimes) {
+    // Define sunlight events with shared colors
+    const sunlightEvents = [
+      {
+        name: 'First Light / Last Light',
+        times: [new Date(sunlightTimes.first_light), new Date(sunlightTimes.last_light)],
+        color: '#e91e63',  // Pink/magenta for twilight
+        width: 1
+      },
+      {
+        name: 'Sunrise / Sunset',
+        times: [new Date(sunlightTimes.sunrise), new Date(sunlightTimes.sunset)],
+        color: '#ff9800',  // Orange for sun
+        width: 1.5
+      }
+    ];
+
+    // Add each sunlight event type as a separate series
+    sunlightEvents.forEach(event => {
+      const markLineData = [];
+
+      // Filter times that fall within the day's range
+      event.times.forEach(time => {
+        if (time >= dayStart && time <= dayEnd) {
+          markLineData.push({
+            xAxis: time,
+            lineStyle: { color: event.color, type: 'dashed', width: event.width },
+            label: { show: false }  // No labels on the lines - they're in the legend
+          });
+        }
+      });
+
+      // Only add series if we have mark lines to show
+      if (markLineData.length > 0) {
+        option.series.push({
+          name: event.name,
+          type: 'line',
+          data: [],  // No data, just mark lines
+          markLine: {
+            silent: true,
+            symbol: 'none',
+            data: markLineData
+          },
+          showSymbol: false,
+          lineStyle: { opacity: 0 },  // Make the line invisible
+          itemStyle: { opacity: 0 },
+          tooltip: { show: false }  // Don't show in tooltip
+        });
+      }
+    });
+  }
+
   // Add raw observations (hide for Crescent Channel - use calibrated instead)
   if (observations.length > 0 && dayOffset === 0 && !isCrescentChannel) {
     option.series.push({
@@ -1476,11 +1533,11 @@ function displayTideChart(stationKey, dayOffset = 0) {
       data: combinedData,
       smooth: true,
       lineStyle: {
-        color: '#9c27b0',
+        color: '#00897b',  // Teal color to distinguish from purple storm surge
         width: 3
       },
       itemStyle: {
-        color: '#9c27b0'
+        color: '#00897b'
       },
       showSymbol: false,
       z: 5
@@ -1684,73 +1741,112 @@ async function loadSunlightTimes() {
   }
 }
 
-function displaySunlightTimes(stationKey) {
+/**
+ * Get sunlight times for a specific station and date
+ * @param {string} stationKey - Station identifier
+ * @param {string} dateStr - Date in YYYY-MM-DD format
+ * @returns {object|null} - Sunlight times or null if not found
+ */
+function getSunlightTimesForDate(stationKey, dateStr) {
+  if (!sunlightTimesData || !sunlightTimesData.stations || !sunlightTimesData.stations[stationKey]) {
+    return null;
+  }
+
+  const station = sunlightTimesData.stations[stationKey];
+  return station.days[dateStr] || null;
+}
+
+function displaySunlightTimes(stationKey, dayOffset = 0) {
   const container = document.getElementById('sunlight-widget');
   if (!container) return;
 
+  // Get target date in Pacific timezone based on offset
+  const pacific = 'America/Vancouver';
+  const now = new Date();
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: pacific,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  const parts = formatter.formatToParts(now);
+  const year = parseInt(parts.find(p => p.type === 'year').value);
+  const month = parseInt(parts.find(p => p.type === 'month').value);
+  const day = parseInt(parts.find(p => p.type === 'day').value);
+
+  // Create target date and apply offset
+  const targetDate = new Date(year, month - 1, day);
+  targetDate.setDate(targetDate.getDate() + dayOffset);
+
+  const targetYear = targetDate.getFullYear();
+  const targetMonth = targetDate.getMonth() + 1;
+  const targetDay = targetDate.getDate();
+  const targetDateStr = `${targetYear}-${String(targetMonth).padStart(2, '0')}-${String(targetDay).padStart(2, '0')}`;
+
+  // Get sunlight times for the target date
+  const sunlight = getSunlightTimesForDate(stationKey, targetDateStr);
+
   // Check if we have sunlight data for this station
-  if (!sunlightTimesData || !sunlightTimesData.tides || !sunlightTimesData.tides[stationKey]) {
+  if (!sunlight) {
     container.style.display = 'none';
     return;
   }
 
-  const sunlight = sunlightTimesData.tides[stationKey];
-
   // Parse times
+  const firstLight = new Date(sunlight.first_light);
   const sunrise = new Date(sunlight.sunrise);
   const sunset = new Date(sunlight.sunset);
-  const dawnCivil = new Date(sunlight.dawn_civil);
-  const duskCivil = new Date(sunlight.dusk_civil);
+  const lastLight = new Date(sunlight.last_light);
 
   // Format to local time
   const timeOptions = { hour: 'numeric', minute: '2-digit', timeZone: 'America/Vancouver' };
+  const firstLightStr = firstLight.toLocaleTimeString('en-US', timeOptions);
   const sunriseStr = sunrise.toLocaleTimeString('en-US', timeOptions);
   const sunsetStr = sunset.toLocaleTimeString('en-US', timeOptions);
-  const dawnStr = dawnCivil.toLocaleTimeString('en-US', timeOptions);
-  const duskStr = duskCivil.toLocaleTimeString('en-US', timeOptions);
+  const lastLightStr = lastLight.toLocaleTimeString('en-US', timeOptions);
 
-  // Format daylight duration
-  const hours = Math.floor(sunlight.daylight_duration_seconds / 3600);
-  const minutes = Math.floor((sunlight.daylight_duration_seconds % 3600) / 60);
+  // Calculate daylight duration
+  const daylightDurationMs = sunset - sunrise;
+  const hours = Math.floor(daylightDurationMs / (1000 * 60 * 60));
+  const minutes = Math.floor((daylightDurationMs % (1000 * 60 * 60)) / (1000 * 60));
   const daylightDuration = `${hours}h ${minutes}m`;
 
-  // Determine current phase display
-  const phaseEmoji = {
-    'night': '🌙',
-    'astronomical_twilight': '🌆',
-    'nautical_twilight': '🌆',
-    'civil_twilight': '🌅',
-    'daylight': '☀️'
-  };
-
-  const phaseText = {
-    'night': 'Night',
-    'astronomical_twilight': 'Astronomical Twilight',
-    'nautical_twilight': 'Nautical Twilight',
-    'civil_twilight': 'Civil Twilight',
-    'daylight': 'Daylight'
-  };
-
-  const currentPhase = sunlight.current_phase || 'unknown';
-  const emoji = phaseEmoji[currentPhase] || '🌤️';
-  const phase = phaseText[currentPhase] || currentPhase;
+  // Format date label for heading
+  const dateStr = targetDate.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric'
+  });
+  let dayLabel = '';
+  if (dayOffset === 0) {
+    dayLabel = `Today (${dateStr})`;
+  } else if (dayOffset === 1) {
+    dayLabel = `Tomorrow (${dateStr})`;
+  } else {
+    dayLabel = dateStr;
+  }
 
   // Build modern card-based layout
   container.innerHTML = `
     <div class="tide-data-group">
-      <h3>Sunlight Times <span style="font-size: 0.9rem; color: #666; font-weight: normal;">(${emoji} ${phase})</span></h3>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+        <h3 style="margin: 0;">Sunlight Times for ${dayLabel}</h3>
+        <div class="chart-nav-buttons" style="display: flex; gap: 0.5rem;">
+          <button id="sunlight-prev-day-btn" title="Previous day" style="padding: 0.5rem 1rem; background: #0077be; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem;">◀</button>
+          <button id="sunlight-next-day-btn" title="Next day" style="padding: 0.5rem 1rem; background: #0077be; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem;">▶</button>
+        </div>
+      </div>
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
 
-        <!-- Dawn Card -->
+        <!-- First Light Card -->
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
           <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">🌅</div>
           <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 0.25rem;">First Light</div>
-          <div style="font-size: 1.3rem; font-weight: bold;">${dawnStr}</div>
+          <div style="font-size: 1.3rem; font-weight: bold;">${firstLightStr}</div>
           <div style="font-size: 0.75rem; opacity: 0.8; margin-top: 0.25rem;">Civil Dawn</div>
         </div>
 
         <!-- Sunrise Card -->
-        <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <div style="background: linear-gradient(135deg, #d88ab8 0%, #d97685 100%); color: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
           <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">🌄</div>
           <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 0.25rem;">Sunrise</div>
           <div style="font-size: 1.3rem; font-weight: bold;">${sunriseStr}</div>
@@ -1758,18 +1854,18 @@ function displaySunlightTimes(stationKey) {
         </div>
 
         <!-- Sunset Card -->
-        <div style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <div style="background: linear-gradient(135deg, #e8945f 0%, #f5c563 100%); color: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
           <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">🌇</div>
           <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 0.25rem;">Sunset</div>
           <div style="font-size: 1.3rem; font-weight: bold;">${sunsetStr}</div>
           <div style="font-size: 0.75rem; opacity: 0.8; margin-top: 0.25rem;">Sun Below Horizon</div>
         </div>
 
-        <!-- Dusk Card -->
-        <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <!-- Last Light Card -->
+        <div style="background: linear-gradient(135deg, #6ba3d4 0%, #5cb5d1 100%); color: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
           <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">🌆</div>
           <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 0.25rem;">Last Light</div>
-          <div style="font-size: 1.3rem; font-weight: bold;">${duskStr}</div>
+          <div style="font-size: 1.3rem; font-weight: bold;">${lastLightStr}</div>
           <div style="font-size: 0.75rem; opacity: 0.8; margin-top: 0.25rem;">Civil Dusk</div>
         </div>
 
@@ -1789,6 +1885,36 @@ function displaySunlightTimes(stationKey) {
   `;
 
   container.style.display = 'block';
+
+  // Add event listeners for sunlight day navigation buttons
+  const sunlightPrevBtn = document.getElementById('sunlight-prev-day-btn');
+  const sunlightNextBtn = document.getElementById('sunlight-next-day-btn');
+
+  if (sunlightPrevBtn && sunlightNextBtn) {
+    // Update button states
+    sunlightPrevBtn.disabled = currentDayOffset === 0;
+    sunlightNextBtn.disabled = currentDayOffset === 2; // We have 3 days of data (0-2)
+
+    sunlightPrevBtn.style.opacity = currentDayOffset === 0 ? '0.3' : '1';
+    sunlightNextBtn.style.opacity = currentDayOffset === 2 ? '0.3' : '1';
+    sunlightPrevBtn.style.cursor = currentDayOffset === 0 ? 'not-allowed' : 'pointer';
+    sunlightNextBtn.style.cursor = currentDayOffset === 2 ? 'not-allowed' : 'pointer';
+
+    // Add click handlers
+    sunlightPrevBtn.addEventListener('click', () => {
+      if (currentDayOffset > 0) {
+        currentDayOffset--;
+        updateChartForDay();
+      }
+    });
+
+    sunlightNextBtn.addEventListener('click', () => {
+      if (currentDayOffset < 2) {
+        currentDayOffset++;
+        updateChartForDay();
+      }
+    });
+  }
 }
 
 /* =====================================================

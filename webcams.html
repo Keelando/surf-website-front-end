@@ -1297,6 +1297,7 @@
     async function createWebcamCard(webcam, metadata) {
       const card = document.createElement('div');
       card.className = 'webcam-card';
+      card.id = webcam.id;  // Add ID for anchor linking
       card.dataset.webcamId = webcam.id;
 
       // Header
@@ -1548,6 +1549,16 @@
 
         // Now that cards are in DOM, load slideshows
         webcamsToLoadSlideshow.forEach(webcam => loadSlideshow(webcam));
+      }
+
+      // Handle scroll to hash anchor if present (e.g., #whiterock)
+      if (window.location.hash) {
+        setTimeout(() => {
+          const target = document.getElementById(window.location.hash.substring(1));
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 300); // Short delay to ensure cards are fully rendered
       }
     }
 
