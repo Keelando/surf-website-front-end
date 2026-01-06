@@ -1,3 +1,6 @@
+# NOTE: Keep this file updated as new data sources are added!
+# When adding new automated data pipelines, make sure to add their output files here.
+
 # Data files (regenerated automatically)
 data/*.json
 data/storm_surge/*.json
