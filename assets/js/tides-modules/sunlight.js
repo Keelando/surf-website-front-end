@@ -49,10 +49,11 @@ class SunlightDataStore {
  * @param {string} stationKey - Station identifier
  * @param {number} dayOffset - Day offset (0=today, 1=tomorrow, 2=day after)
  * @param {SunlightDataStore} sunlightStore - Sunlight data store
+ * @param {Object} tideDataStore - Tide data store (for updating day offset)
  * @param {Function} updateChartCallback - Callback to update chart when day changes
  * @returns {void}
  */
-export function displaySunlightTimes(stationKey, dayOffset, sunlightStore, updateChartCallback) {
+export function displaySunlightTimes(stationKey, dayOffset, sunlightStore, tideDataStore, updateChartCallback) {
   const container = document.getElementById('sunlight-widget');
   if (!container) return;
 
@@ -198,14 +199,18 @@ export function displaySunlightTimes(stationKey, dayOffset, sunlightStore, updat
 
     // Add click handlers
     sunlightPrevBtn.addEventListener('click', () => {
-      if (dayOffset > 0) {
-        updateChartCallback(-1); // decrement day
+      const currentOffset = tideDataStore.getDayOffset();
+      if (currentOffset > 0) {
+        tideDataStore.setDayOffset(currentOffset - 1);
+        updateChartCallback();
       }
     });
 
     sunlightNextBtn.addEventListener('click', () => {
-      if (dayOffset < 2) {
-        updateChartCallback(1); // increment day
+      const currentOffset = tideDataStore.getDayOffset();
+      if (currentOffset < 2) {
+        tideDataStore.setDayOffset(currentOffset + 1);
+        updateChartCallback();
       }
     });
   }

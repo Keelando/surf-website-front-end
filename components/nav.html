@@ -32,10 +32,10 @@
         }
       });
 
-      // Update clock
+      // Update clock (handles multiple nav instances on same page)
       function updateClock() {
-        const clock = document.getElementById('nav-clock');
-        if (!clock) return;
+        const clocks = document.querySelectorAll('.nav-clock');
+        if (clocks.length === 0) return;
 
         const now = new Date();
         const options = {
@@ -46,7 +46,11 @@
           hour12: false
         };
         const timeString = now.toLocaleTimeString('en-US', options);
-        clock.textContent = `PST ${timeString}`;
+
+        // Update all clock instances
+        clocks.forEach(clock => {
+          clock.textContent = `PST ${timeString}`;
+        });
       }
 
       // Update immediately and then every second

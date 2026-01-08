@@ -3,6 +3,8 @@
  * Centralized configuration values
  */
 
+export const PACIFIC_TZ = 'America/Vancouver';
+
 export const STATION_DISPLAY_NAMES = {
   'point_atkinson': 'Point Atkinson',
   'kitsilano': 'Kitsilano',

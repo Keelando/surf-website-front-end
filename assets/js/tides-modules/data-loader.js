@@ -80,7 +80,7 @@ export class TideDataStore {
    * @returns {Object|null} Current prediction data
    */
   getCurrentPrediction(stationKey) {
-    return this.tideCurrentData?.stations?.[stationKey]?.prediction || null;
+    return this.tideCurrentData?.stations?.[stationKey]?.prediction_now || null;
   }
 
   /**
@@ -121,6 +121,15 @@ export class TideDataStore {
    */
   getCombinedWaterLevel(stationKey) {
     return this.combinedWaterLevelData?.stations?.[stationKey] || null;
+  }
+
+  /**
+   * Get all combined water level data (for all stations)
+   *
+   * @returns {Object|null} Full combined water level data object
+   */
+  getAllCombinedWaterLevel() {
+    return this.combinedWaterLevelData;
   }
 
   /**
