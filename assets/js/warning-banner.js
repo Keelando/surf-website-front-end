@@ -327,6 +327,9 @@ function getWarningSeverityClass(type) {
   if (typeLower.includes('strong wind') || typeLower.includes('wind')) {
     return 'warning-strong-wind';
   }
+  if (typeLower.includes('waterspout') || typeLower.includes('water spout')) {
+    return 'warning-waterspout';
+  }
 
   return 'warning-default';
 }

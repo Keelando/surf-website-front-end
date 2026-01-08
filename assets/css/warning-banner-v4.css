@@ -81,11 +81,11 @@
   transform: scale(0.95);
 }
 
-/* Storm Warning - Most Severe (48+ knots) */
+/* Storm Warning - Most Severe (48+ knots) - Intense Dark Red */
 .warning-storm {
-  background: linear-gradient(to right, #991b1b, #b91c1c);
+  background: linear-gradient(to right, #7f1d1d, #991b1b);
   color: #fff;
-  border-left: 6px solid #7f1d1d; /* Dark red border for urgency */
+  border-left: 6px solid #450a0a; /* Very dark red border for urgency */
   animation: stormPulse 2s ease-in-out infinite; /* More urgent animation */
 }
 
@@ -99,11 +99,11 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* Gale Warning - High Severity (34-47 knots) */
+/* Gale Warning - High Severity (34-47 knots) - Bright Orange */
 .warning-gale {
-  background: linear-gradient(to right, #c2410c, #ea580c);
+  background: linear-gradient(to right, #ea580c, #f97316);
   color: #fff;
-  border-left: 5px solid #9a3412; /* Dark orange border for high severity */
+  border-left: 5px solid #c2410c; /* Dark orange border for high severity */
 }
 
 .warning-gale .warning-details-link {
@@ -116,11 +116,11 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* Strong Wind Warning - Moderate Severity (20-33 knots) */
+/* Strong Wind Warning - Moderate Severity (20-33 knots) - Yellow-Amber */
 .warning-strong-wind {
-  background: linear-gradient(to right, #b45309, #d97706);
+  background: linear-gradient(to right, #d97706, #f59e0b);
   color: #fff;
-  border-left: 4px solid #92400e; /* Dark amber border */
+  border-left: 4px solid #b45309; /* Dark amber border */
 }
 
 .warning-strong-wind .warning-details-link {
@@ -133,7 +133,24 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* Default Warning Styles */
+/* Waterspout Warning - Purple */
+.warning-waterspout {
+  background: linear-gradient(to right, #7c3aed, #a855f7);
+  color: #fff;
+  border-left: 4px solid #5b21b6; /* Dark purple border */
+}
+
+.warning-waterspout .warning-details-link {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.warning-waterspout .warning-details-link:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Default Warning Styles - Blue */
 .warning-default {
   background: linear-gradient(to right, #1e40af, #2563eb);
   color: #fff;
