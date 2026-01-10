@@ -380,8 +380,7 @@ function updateForecastChart(stationId) {
       }
     },
     tooltip: {
-      trigger: "axis",
-      axisPointer: { type: "cross" },
+      ...getMobileOptimizedTooltipConfig(),
       formatter: (params) => {
         if (!params || params.length === 0) return "";
         const time = new Date(params[0].data[0]).toLocaleString("en-US", {
@@ -758,7 +757,7 @@ function updateHindcastChart(stationId) {
       subtextStyle: { fontSize: 10, color: '#666' }
     },
     tooltip: {
-      trigger: "axis",
+      ...getMobileOptimizedTooltipConfig(),
       formatter: (params) => {
         if (!params || params.length === 0) return "";
 

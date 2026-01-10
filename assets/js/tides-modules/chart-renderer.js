@@ -650,24 +650,7 @@ export function displayTideChart(stationKey, dayOffset, tideTimeseriesData, comb
   // Build chart option
   const option = {
     tooltip: {
-      trigger: 'axis',
-      confine: true,
-      position: function (point, params, dom, rect, size) {
-        const chartWidth = size.viewSize[0];
-        const chartHeight = size.viewSize[1];
-        const tooltipWidth = size.contentSize[0];
-        const tooltipHeight = size.contentSize[1];
-
-        let x = point[0] + 10;
-        let y = point[1] - tooltipHeight / 2;
-
-        if (x + tooltipWidth > chartWidth) x = point[0] - tooltipWidth - 10;
-        if (y + tooltipHeight > chartHeight) y = chartHeight - tooltipHeight - 10;
-        if (y < 0) y = 10;
-        if (x < 0) x = 10;
-
-        return [x, y];
-      },
+      ...getMobileOptimizedTooltipConfig(),
       formatter: function(params) {
         const date = new Date(params[0].value[0]);
         const timeStr = date.toLocaleString('en-US', {

@@ -120,7 +120,7 @@ function updateSurgeChart(stationId) {
       textStyle: { fontSize: window.innerWidth < 600 ? 12 : 14 }
     },
     tooltip: {
-      trigger: "axis",
+      ...getMobileOptimizedTooltipConfig(),
       formatter: (params) => {
         const idx = params[0].dataIndex;
         const time = new Date(times[idx]).toLocaleString("en-US", {

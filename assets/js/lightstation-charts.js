@@ -365,10 +365,7 @@ function renderWindSpeedChart(stationName, station) {
       }
     },
     tooltip: {
-      trigger: 'axis',
-      axisPointer: {
-        type: 'cross'
-      },
+      ...getMobileOptimizedTooltipConfig(),
       formatter: (params) => {
         if (!params || params.length === 0) return "";
         const time = new Date(params[0].value[0]).toLocaleString("en-US", {
@@ -543,10 +540,7 @@ function renderWaveHeightChart(stationName, station) {
       }
     },
     tooltip: {
-      trigger: 'axis',
-      axisPointer: {
-        type: 'cross'
-      },
+      ...getMobileOptimizedTooltipConfig(),
       formatter: (params) => {
         if (!params || params.length === 0) return "";
         const time = new Date(params[0].value[0]).toLocaleString("en-US", {
