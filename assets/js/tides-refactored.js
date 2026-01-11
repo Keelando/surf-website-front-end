@@ -30,7 +30,8 @@ import {
 } from './tides-modules/display.js';
 import {
   displayTideChart,
-  disposeChart
+  disposeChart,
+  getCurrentGeodeticResiduals
 } from './tides-modules/chart-renderer.js';
 import { displaySunlightTimes } from './tides-modules/sunlight.js';
 import { updateTimestamp, showError, showSelectedTideOnMap } from './tides-modules/utils.js';
@@ -129,6 +130,12 @@ function displayTideChartWrapper(stationKey, dayOffset) {
     tideDataStore.getAllCombinedWaterLevel(),
     (key, dateStr) => sunlightDataStore.getForDate(key, dateStr)
   );
+
+  // After chart display, get geodetic residuals and store them for storm surge card
+  const residuals = getCurrentGeodeticResiduals();
+  if (residuals && residuals.length > 0) {
+    tideDataStore.setGeodeticResiduals(residuals);
+  }
 }
 
 /**
