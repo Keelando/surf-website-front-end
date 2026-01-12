@@ -12,6 +12,8 @@ let observedSurgeData = null;
 const STATION_ORDER = [
   "Point_Atkinson",
   "Crescent_Beach_Channel",
+  "Crescent_Beach_Ocean",      // Surrey - new
+  "Crescent_Channel_Ocean",     // Surrey - new
   "Campbell_River",
   "Neah_Bay",
   "New_Dungeness",

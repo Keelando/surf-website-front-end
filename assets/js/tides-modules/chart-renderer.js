@@ -72,118 +72,6 @@ function interpolateTide(predictions, targetTime) {
 }
 
 /**
- * Calculate calibrated observations for Crescent Channel
- * Applies geodetic offset to observations
- */
-function calculateCalibratedObservations(observations, offsetMap, dayOffset) {
-  if (observations.length === 0 || dayOffset !== 0) return [];
-
-  return observations
-    .map(obs => {
-      // Find closest offset for this observation
-      let closestOffset = null;
-      let minDiff = Infinity;
-
-      for (const offsetTime in offsetMap) {
-        const diff = Math.abs(new Date(obs.time) - new Date(offsetTime));
-        if (diff < minDiff && diff < 300000) { // Within 5 minutes
-          minDiff = diff;
-          closestOffset = offsetMap[offsetTime];
-        }
-      }
-
-      if (closestOffset !== null) {
-        return [new Date(obs.time), obs.value + closestOffset];
-      }
-      return null;
-    })
-    .filter(item => item !== null);
-}
-
-/**
- * Calculate calibrated predictions for Crescent Beach Ocean
- * Applies geodetic offset to predictions
- */
-function calculateCalibratedPredictions(predictions, offsetMap) {
-  return predictions
-    .filter(pred => offsetMap[pred.time] !== undefined)
-    .map(pred => [
-      new Date(pred.time),
-      pred.value + offsetMap[pred.time]
-    ]);
-}
-
-/**
- * Calculate residuals for Crescent Channel
- * residual = calibrated_observation - prediction
- */
-function calculateResidualsForChannel(calibratedObservation, predictions) {
-  const predictionMap = new Map();
-  predictions.forEach(pred => {
-    predictionMap.set(new Date(pred.time).getTime(), pred.value);
-  });
-
-  const residuals = [];
-  calibratedObservation.forEach(([obsTime, obsValue]) => {
-    const obsTimeMs = obsTime.getTime();
-
-    // Find closest prediction (within 5 minutes)
-    let closestTime = null;
-    let minDiff = Infinity;
-
-    for (const predTime of predictionMap.keys()) {
-      const diff = Math.abs(obsTimeMs - predTime);
-      if (diff < minDiff && diff < 300000) {
-        minDiff = diff;
-        closestTime = predTime;
-      }
-    }
-
-    if (closestTime !== null) {
-      const residual = obsValue - predictionMap.get(closestTime);
-      residuals.push([obsTime, residual]);
-    }
-  });
-
-  return residuals;
-}
-
-/**
- * Calculate residuals for Crescent Beach Ocean
- * residual = observation - calibrated_prediction
- */
-function calculateResidualsForBeach(observations, calibratedPrediction) {
-  const calibratedMap = new Map();
-  calibratedPrediction.forEach(([time, value]) => {
-    calibratedMap.set(time.getTime(), value);
-  });
-
-  const residuals = [];
-  observations.forEach(obs => {
-    const obsTime = new Date(obs.time).getTime();
-
-    // Find closest calibrated prediction (within 5 minutes)
-    let closestTime = null;
-    let minDiff = Infinity;
-
-    for (const predTime of calibratedMap.keys()) {
-      const diff = Math.abs(obsTime - predTime);
-      if (diff < minDiff && diff < 300000) {
-        minDiff = diff;
-        closestTime = predTime;
-      }
-    }
-
-    if (closestTime !== null) {
-      const residual = obs.value - calibratedMap.get(closestTime);
-      residuals.push([new Date(obs.time), residual]);
-    }
-  });
-
-  return residuals;
-}
-
-/**
  * Build chart series array based on available data
  */
 function buildChartSeries(data) {
@@ -195,8 +83,6 @@ function buildChartSeries(data) {
     obsTimes,
     obsValues,
     observations,
-    calibratedObservation,
-    calibratedPrediction,
     residuals,
     surgeData,
     combinedData,
@@ -272,8 +158,8 @@ function buildChartSeries(data) {
     });
   }
 
-  // 3. Raw observations (hide for Crescent Channel)
-  if (observations.length > 0 && dayOffset === 0 && !isCrescentChannel) {
+  // 3. Raw observations (show for Crescent Beach only, skip for Crescent Channel)
+  if (observations.length > 0 && dayOffset === 0 && isCrescentBeach) {
     series.push({
       name: 'Observation',
       type: 'scatter',
@@ -284,36 +170,10 @@ function buildChartSeries(data) {
     });
   }
 
-  // 4. Calibrated observation (Crescent Channel only)
-  if (calibratedObservation.length > 0) {
-    series.push({
-      name: 'Calibrated Observation',
-      type: 'scatter',
-      data: calibratedObservation,
-      itemStyle: { color: '#43a047' },
-      symbolSize: 6,
-      z: 10
-    });
-  }
-
-  // 5. Calibrated prediction (Crescent Beach Ocean)
-  if (calibratedPrediction.length > 0) {
-    series.push({
-      name: 'Calibrated Prediction',
-      type: 'line',
-      data: calibratedPrediction,
-      smooth: false,
-      lineStyle: { color: '#ff9800', width: 2, type: 'dashed' },
-      itemStyle: { color: '#ff9800' },
-      showSymbol: false,
-      z: 6
-    });
-  }
-
-  // 6. Residuals for geodetic stations
+  // 4. Tidal residuals for Surrey stations (pre-calculated by Surrey)
   if (residuals.length > 0 && dayOffset === 0) {
     series.push({
-      name: 'Residual (Obs - Calibrated)',
+      name: 'Tidal Residual (Surrey)',
       type: 'line',
       data: residuals,
       smooth: false,
@@ -431,8 +291,6 @@ function buildLegendData(data) {
     isCrescentBeach,
     isCrescentChannel,
     observations,
-    calibratedObservation,
-    calibratedPrediction,
     residuals,
     surgeData,
     combinedData,
@@ -451,18 +309,8 @@ function buildLegendData(data) {
     legendItems.push('Observation');
   }
 
-  // Calibrated Observation (Crescent Channel only)
-  if (calibratedObservation.length > 0) {
-    legendItems.push('Calibrated Observation');
-  }
-
-  // Calibrated Prediction (Crescent Beach only)
-  if (calibratedPrediction.length > 0) {
-    legendItems.push('Calibrated Prediction');
-  }
-
   if (residuals.length > 0) {
-    legendItems.push('Residual (Obs - Calibrated)');
+    legendItems.push('Tidal Residual (Surrey)');
   }
   if (surgeData.length > 0) {
     legendItems.push('Storm Surge (Forecast)');
@@ -568,28 +416,14 @@ export function displayTideChart(stationKey, dayOffset, tideTimeseriesData, comb
   const isCrescentChannel = stationKey === 'crescent_channel_ocean';
   const isCrescentBeach = stationKey === 'crescent_beach_ocean';
 
-  // Geodetic offset handling
-  let calibratedPrediction = [];
-  let calibratedObservation = [];
+  // Get Surrey's pre-calculated tidal residuals (if available)
   let residuals = [];
-
-  if (stationData.geodetic_offsets && stationData.geodetic_offsets.length > 0) {
-    const offsetMap = {};
-    filterByDay(stationData.geodetic_offsets, 'time', dayStart, dayEnd).forEach(offset => {
-      offsetMap[offset.time] = offset.value;
-    });
-
-    if (isCrescentChannel && observations.length > 0 && dayOffset === 0) {
-      // Crescent Channel: Apply offset to observations
-      calibratedObservation = calculateCalibratedObservations(observations, offsetMap, dayOffset);
-      residuals = calculateResidualsForChannel(calibratedObservation, predictions);
-    } else {
-      // Crescent Beach Ocean (and default): Apply offset to predictions
-      calibratedPrediction = calculateCalibratedPredictions(predictions, offsetMap);
-      if (observations.length > 0 && dayOffset === 0 && calibratedPrediction.length > 0) {
-        residuals = calculateResidualsForBeach(observations, calibratedPrediction);
-      }
-    }
+  if (stationData.residuals && stationData.residuals.length > 0 && dayOffset === 0) {
+    // Filter residuals for the current day and convert to chart format
+    residuals = filterByDay(stationData.residuals, 'time', dayStart, dayEnd).map(r => [
+      new Date(r.time),
+      r.value
+    ]);
   }
 
   // Store residuals globally for storm surge card
@@ -598,7 +432,7 @@ export function displayTideChart(stationKey, dayOffset, tideTimeseriesData, comb
   // Get combined water level data
   let combinedData = [];
   let surgeData = [];
-  const isGeodetic = stationData.geodetic_offsets && stationData.geodetic_offsets.length > 0;
+  const isGeodetic = isCrescentBeach || isCrescentChannel; // Surrey stations are geodetic
 
   if (combinedWaterLevelData?.stations?.[stationKey]) {
     const forecast = combinedWaterLevelData.stations[stationKey].forecast || [];
@@ -634,8 +468,6 @@ export function displayTideChart(stationKey, dayOffset, tideTimeseriesData, comb
     obsTimes,
     obsValues,
     observations,
-    calibratedObservation,
-    calibratedPrediction,
     residuals,
     surgeData,
     combinedData,
