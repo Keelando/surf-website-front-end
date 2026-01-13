@@ -623,6 +623,29 @@
         ]
       },
       {
+        id: 'mudbay',
+        region: 'salish_sea_south',
+        name: 'Mud Bay HD',
+        location: 'South Surrey, BC',
+        dataUrl: '/data/mudbay/latest.json',
+        imageUrl: '/data/mudbay/latest.jpg',
+        slideshowUrl: '/data/mudbay/slideshow_manifest.json',
+        slideshowPath: '/data/mudbay/',
+        streamDelay: 0,  // minutes (direct image URL)
+        conditions: [
+          {
+            label: 'White Rock East Beach',
+            customStation: 'whiterock_east',
+            fields: ['wind_speed_only']
+          },
+          {
+            label: 'Crescent Pile',
+            buoyStation: 'CRPILE',
+            fields: ['wind', 'waves']
+          }
+        ]
+      },
+      {
         id: 'coxbay',
         region: 'west_coast_vi',
         name: 'Cox Bay',
@@ -1387,6 +1410,26 @@
 
           info.appendChild(source);
         }
+
+        // Show on map link
+        const mapLink = document.createElement('div');
+        mapLink.style.marginTop = '0.5rem';
+        const mapLinkAnchor = document.createElement('a');
+        mapLinkAnchor.href = `/?station=${webcam.id}#map-section`;
+        mapLinkAnchor.textContent = '📍 Show on map';
+        mapLinkAnchor.style.color = '#2c5282';
+        mapLinkAnchor.style.textDecoration = 'none';
+        mapLinkAnchor.style.fontWeight = '600';
+        mapLinkAnchor.style.display = 'inline-block';
+        mapLinkAnchor.style.padding = '0.5rem 0';
+        mapLinkAnchor.onmouseover = function() {
+          this.style.textDecoration = 'underline';
+        };
+        mapLinkAnchor.onmouseout = function() {
+          this.style.textDecoration = 'none';
+        };
+        mapLink.appendChild(mapLinkAnchor);
+        info.appendChild(mapLink);
 
         // Refresh button
         const refreshBtn = document.createElement('button');

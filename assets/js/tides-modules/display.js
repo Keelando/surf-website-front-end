@@ -4,7 +4,7 @@
  */
 
 import { STATION_DISPLAY_NAMES } from './constants.js';
-import { getGeodeticMethodology, getCurrentGeodeticOffset } from './geodetic.js';
+import { isGeodeticStation, getGeodeticMethodology, getCurrentGeodeticOffset } from './geodetic.js';
 import { formatTime, getAgeString } from './utils.js';
 
 /**
@@ -327,6 +327,68 @@ export function displayCurrentPrediction(station, stationKey, tideDataStore) {
 }
 
 /**
+ * Generate Today's Peak Tide Forecast HTML section
+ * @param {Object} tideDataStore - Tide data store instance
+ * @param {string} stationKey - Station identifier
+ * @returns {string} HTML string for peak forecast, or empty string if not available
+ */
+function generatePeakForecastHtml(tideDataStore, stationKey) {
+  const combinedData = tideDataStore.getCombinedWaterLevel(stationKey);
+  if (!combinedData || !combinedData.forecast || combinedData.forecast.length === 0) {
+    return '';
+  }
+
+  // Get today's date range in Pacific time
+  const now = new Date();
+  const pacificNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Vancouver' }));
+  const todayStart = new Date(pacificNow);
+  todayStart.setHours(0, 0, 0, 0);
+  const todayEnd = new Date(pacificNow);
+  todayEnd.setHours(23, 59, 59, 999);
+
+  // Filter forecast for today only and find peak
+  let todayPeak = null;
+  combinedData.forecast.forEach(entry => {
+    const entryTime = new Date(entry.time);
+    const pacificEntryTime = new Date(entryTime.toLocaleString('en-US', { timeZone: 'America/Vancouver' }));
+
+    // Check if this entry is today
+    if (pacificEntryTime >= todayStart && pacificEntryTime <= todayEnd) {
+      if (!todayPeak || entry.total_water_level_m > todayPeak.total_water_level_m) {
+        todayPeak = entry;
+      }
+    }
+  });
+
+  if (!todayPeak) {
+    return '';
+  }
+
+  const peakTime = new Date(todayPeak.time);
+  const peakTimeStr = peakTime.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZone: 'America/Vancouver'
+  });
+
+  return `
+    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #ddd;">
+      <div style="font-size: 0.9rem; color: #666; margin-bottom: 0.75rem;">
+        <strong>Today's Peak Tide Forecast</strong>
+      </div>
+      <div style="font-size: 0.95rem; line-height: 1.6;">
+        Today's forecasted peak water level is
+        <strong style="color: #00897b; font-size: 1.1rem;">${todayPeak.total_water_level_m.toFixed(2)} m</strong>
+        with a storm surge of
+        <strong style="color: #9c27b0;">${todayPeak.storm_surge_m >= 0 ? '+' : ''}${todayPeak.storm_surge_m.toFixed(3)} m</strong>
+        at <strong style="color: #0077be;">${peakTimeStr}</strong>.
+      </div>
+    </div>
+  `;
+}
+
+/**
  * Display storm surge / tide offset
  *
  * @param {Object} station - Station data object
@@ -337,67 +399,73 @@ export function displayCurrentPrediction(station, stationKey, tideDataStore) {
 export function displayStormSurge(station, stationKey, tideDataStore) {
   const container = document.getElementById('storm-surge');
 
-  // For geodetic stations, display the last residual value from the chart
-  const stationData = tideDataStore.getTimeseries(stationKey);
-  const isGeodetic = stationData?.geodetic_offsets && stationData.geodetic_offsets.length > 0;
-  const isCrescentChannel = stationKey === 'crescent_channel_ocean';
+  // ===================================================================
+  // GEODETIC STATIONS (Surrey/FlowWorks data - CGVD28 datum)
+  // ===================================================================
+  // Geodetic stations use Surrey's pre-calculated residuals (taken at face value)
+  // This data must NEVER mix with DFO data
+  if (isGeodeticStation(stationKey)) {
+    const geodeticResiduals = tideDataStore.getGeodeticResiduals();
 
-  const geodeticResiduals = tideDataStore.getGeodeticResiduals();
-  if (isGeodetic && geodeticResiduals.length > 0) {
-    // Get the last (most recent) residual from the chart
-    const lastResidual = geodeticResiduals[geodeticResiduals.length - 1];
-    const [residualTime, residualValue] = lastResidual;
+    if (geodeticResiduals.length > 0) {
+      // Get the last (most recent) residual from the chart
+      const lastResidual = geodeticResiduals[geodeticResiduals.length - 1];
+      const [residualTime, residualValue] = lastResidual;
 
-    const residualStr = residualValue >= 0 ? `+${residualValue.toFixed(3)}` : residualValue.toFixed(3);
-    const color = Math.abs(residualValue) > 0.3 ? '#e53935' : (Math.abs(residualValue) > 0.15 ? '#ff9800' : '#43a047');
-    const residualTimeStr = formatTime(residualTime);
+      const residualStr = residualValue >= 0 ? `+${residualValue.toFixed(3)}` : residualValue.toFixed(3);
+      const color = Math.abs(residualValue) > 0.3 ? '#e53935' : (Math.abs(residualValue) > 0.15 ? '#ff9800' : '#43a047');
+      const residualTimeStr = formatTime(residualTime);
 
-    // Get ECCC forecast for comparison
-    const forecastSurge = station?.prediction_now?.surge;
-    let forecastHtml = '';
-    if (forecastSurge !== null && forecastSurge !== undefined) {
-      const forecastStr = forecastSurge >= 0 ? `+${forecastSurge.toFixed(3)}` : forecastSurge.toFixed(3);
-      forecastHtml = `
-        <div style="color: #666; margin-top: 0.75rem; font-size: 0.9rem; padding-top: 0.75rem; border-top: 1px solid #eee;">
-          <strong>ECCC Storm Surge:</strong> <span style="color: #9c27b0; font-weight: 600;">${forecastStr} m</span>
+      // Get ECCC forecast for comparison (optional)
+      const forecastSurge = station?.prediction_now?.surge;
+      let forecastHtml = '';
+      if (forecastSurge !== null && forecastSurge !== undefined) {
+        const forecastStr = forecastSurge >= 0 ? `+${forecastSurge.toFixed(3)}` : forecastSurge.toFixed(3);
+        forecastHtml = `
+          <div style="color: #666; margin-top: 0.75rem; font-size: 0.9rem; padding-top: 0.75rem; border-top: 1px solid #eee;">
+            <strong>ECCC Storm Surge:</strong> <span style="color: #9c27b0; font-weight: 600;">${forecastStr} m</span>
+          </div>
+        `;
+      }
+
+      // Get peak forecast if available
+      const peakForecastHtml = generatePeakForecastHtml(tideDataStore, stationKey);
+
+      container.innerHTML = `
+        <div style="font-size: 1.5rem; font-weight: bold; color: ${color};">
+          ${residualStr} m
+        </div>
+        <div style="color: #666; margin-top: 0.25rem; font-size: 0.9rem;">
+          Residual
+        </div>
+        <div style="color: #999; margin-top: 0.25rem; font-size: 0.85rem;">
+          at ${residualTimeStr}
+        </div>
+        ${forecastHtml}
+        <div style="color: #999; margin-top: 0.5rem; font-size: 0.8rem;">
+          Latest value from chart
+        </div>
+        ${peakForecastHtml}
+      `;
+      return;
+    } else {
+      // Geodetic station but no residuals available
+      container.innerHTML = `
+        <div style="font-size: 1rem; color: #e53935;">
+          No residual data available
+        </div>
+        <div style="color: #666; margin-top: 0.5rem; font-size: 0.85rem;">
+          Check if Surrey observations and residuals are available
         </div>
       `;
+      return;
     }
-
-    const labelText = isCrescentChannel ? 'Calibrated Obs - Prediction' : 'Observed - Calibrated Pred';
-
-    container.innerHTML = `
-      <div style="font-size: 1.5rem; font-weight: bold; color: ${color};">
-        ${residualStr} m
-      </div>
-      <div style="color: #666; margin-top: 0.25rem; font-size: 0.9rem;">
-        ${labelText}
-      </div>
-      <div style="color: #999; margin-top: 0.25rem; font-size: 0.85rem;">
-        at ${residualTimeStr}
-      </div>
-      ${forecastHtml}
-      <div style="color: #999; margin-top: 0.5rem; font-size: 0.8rem;">
-        Latest value from chart
-      </div>
-    `;
-    return;
   }
 
-  // If geodetic station but no residuals available
-  if (isGeodetic) {
-    container.innerHTML = `
-      <div style="font-size: 1rem; color: #e53935;">
-        No residual data available
-      </div>
-      <div style="color: #666; margin-top: 0.5rem; font-size: 0.85rem;">
-        Check if observations and geodetic offsets are available
-      </div>
-    `;
-    return;
-  }
-
-  // Check if we have tide_offset (actual observed residual with matched timestamps)
+  // ===================================================================
+  // DFO STATIONS (Chart Datum)
+  // ===================================================================
+  // Check if we have tide_offset (observed - predicted with matched timestamps)
   if (station && station.tide_offset && station.tide_offset.value !== null) {
     const offset = station.tide_offset.value;
     const offsetStr = offset >= 0 ? `+${offset.toFixed(2)}` : offset.toFixed(2);
@@ -419,6 +487,9 @@ export function displayStormSurge(station, stationKey, tideDataStore) {
       `;
     }
 
+    // Get peak forecast if available
+    const peakForecastHtml = generatePeakForecastHtml(tideDataStore, stationKey);
+
     container.innerHTML = `
       <div style="font-size: 1.5rem; font-weight: bold; color: ${color};">
         ${offsetStr} m
@@ -433,6 +504,7 @@ export function displayStormSurge(station, stationKey, tideDataStore) {
       <div style="color: #999; margin-top: 0.25rem; font-size: 0.8rem;">
         ${station.tide_offset.description}
       </div>
+      ${peakForecastHtml}
     `;
     return;
   }
@@ -477,56 +549,8 @@ export function displayStormSurge(station, stationKey, tideDataStore) {
 
   const timeStr = formatTime(surgeTime);
 
-  // Calculate today's peak from forecast data
-  let peakHtml = '';
-  if (combinedData && combinedData.forecast && combinedData.forecast.length > 0) {
-    // Get today's date range in Pacific time
-    const now = new Date();
-    const pacificNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Vancouver' }));
-    const todayStart = new Date(pacificNow);
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date(pacificNow);
-    todayEnd.setHours(23, 59, 59, 999);
-
-    // Filter forecast for today only and find peak
-    let todayPeak = null;
-    combinedData.forecast.forEach(entry => {
-      const entryTime = new Date(entry.time);
-      const pacificEntryTime = new Date(entryTime.toLocaleString('en-US', { timeZone: 'America/Vancouver' }));
-
-      // Check if this entry is today
-      if (pacificEntryTime >= todayStart && pacificEntryTime <= todayEnd) {
-        if (!todayPeak || entry.total_water_level_m > todayPeak.total_water_level_m) {
-          todayPeak = entry;
-        }
-      }
-    });
-
-    if (todayPeak) {
-      const peakTime = new Date(todayPeak.time);
-      const peakTimeStr = peakTime.toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true,
-        timeZone: 'America/Vancouver'
-      });
-
-      peakHtml = `
-        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #ddd;">
-          <div style="font-size: 0.9rem; color: #666; margin-bottom: 0.75rem;">
-            <strong>Today's Peak Tide Forecast</strong>
-          </div>
-          <div style="font-size: 0.95rem; line-height: 1.6;">
-            Today's forecasted peak water level is
-            <strong style="color: #00897b; font-size: 1.1rem;">${todayPeak.total_water_level_m.toFixed(2)} m</strong>
-            with a storm surge of
-            <strong style="color: #9c27b0;">${todayPeak.storm_surge_m >= 0 ? '+' : ''}${todayPeak.storm_surge_m.toFixed(3)} m</strong>
-            at <strong style="color: #0077be;">${peakTimeStr}</strong>.
-          </div>
-        </div>
-      `;
-    }
-  }
+  // Get peak forecast if available
+  const peakHtml = generatePeakForecastHtml(tideDataStore, stationKey);
 
   container.innerHTML = `
     <div>

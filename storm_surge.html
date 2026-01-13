@@ -223,14 +223,40 @@
     <!-- Model Information -->
     <section class="section-container">
       <h2>Model Information</h2>
-      <p><strong>Model:</strong> GDSPS (Global Deterministic Storm Surge Prediction System)</p>
+
+      <h3 style="margin-top: 1.5rem; margin-bottom: 0.75rem; font-size: 1.1rem;">About GDSPS</h3>
+      <p style="line-height: 1.6;">
+        The <strong>Global Deterministic Storm Surge Prediction System (GDSPS)</strong> is Environment Canada's operational
+        ocean model that forecasts storm surge conditions worldwide. The system generates 10-day (240-hour) predictions of water
+        level changes caused by atmospheric conditions including wind stress and barometric pressure. Running on a high-resolution
+        grid (approximately 3-9 km spacing), the model integrates atmospheric forcing data with ocean dynamics to predict how
+        weather patterns will affect coastal water levels.
+      </p>
+      <p style="line-height: 1.6; margin-top: 0.75rem;">
+        The model separates storm surge (weather-driven water level changes) from astronomical tides through harmonic analysis,
+        allowing forecasters and coastal communities to see how much higher or lower water will be compared to normal tide predictions.
+        This separation is crucial for coastal flood planning and marine safety.
+      </p>
+
+      <div style="background: #fff3cd; border-left: 4px solid #ff9800; padding: 0.75rem 1rem; margin: 1rem 0; border-radius: 4px;">
+        <p style="margin: 0; font-weight: 600; color: #856404;">⚠️ Important Note:</p>
+        <p style="margin: 0.5rem 0 0 0; color: #856404;">
+          Storm surge forecasts <strong>do not include wave action</strong> (wave setup, wave runup, or breaking waves).
+          Actual water levels during storms may be higher than predicted surge values due to wave effects.
+        </p>
+      </div>
+
+      <h3 style="margin-top: 1.5rem; margin-bottom: 0.75rem; font-size: 1.1rem;">Technical Details</h3>
       <p><strong>Provider:</strong> Environment and Climate Change Canada</p>
-      <p><strong>Resolution:</strong> 15 km horizontal resolution</p>
+      <p><strong>Resolution:</strong> 1/12° (3-9 km)</p>
       <p><strong>Update Frequency:</strong> Twice daily (00Z and 12Z model runs)</p>
       <p><strong>Data Availability:</strong> Forecasts typically published ~6 hours after model initialization</p>
       <p><strong>Forecast Horizon:</strong> 10 days (240 hours)</p>
+
       <p style="margin-top: 1rem; font-size: 0.9rem; color: #718096;">
-        More information: <a href="https://eccc-msc.github.io/open-data/msc-data/nwp_gdsps/readme_gdsps_en/" target="_blank" style="color: #4299e1;">GDSPS Documentation</a>
+        More information:
+        <a href="https://eccc-msc.github.io/open-data/msc-data/nwp_gdsps/readme_gdsps_en/" target="_blank" style="color: #4299e1;">GDSPS Documentation</a> |
+        <a href="https://open.canada.ca/data/en/dataset/d244c9fa-776f-446f-9ccf-1d575cc21a5c" target="_blank" style="color: #4299e1;">Open Canada Dataset</a>
       </p>
     </section>
   </main>

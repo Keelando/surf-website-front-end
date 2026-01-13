@@ -11,9 +11,8 @@ let observedSurgeData = null;
 // Station display order
 const STATION_ORDER = [
   "Point_Atkinson",
-  "Crescent_Beach_Channel",
-  "Crescent_Beach_Ocean",      // Surrey - new
-  "Crescent_Channel_Ocean",     // Surrey - new
+  "Crescent_Channel_Ocean",     // Surrey - reuses Crescent_Beach_Channel forecast
+  "Crescent_Beach_Ocean",       // Surrey - reuses Crescent_Beach_Channel forecast
   "Campbell_River",
   "Neah_Bay",
   "New_Dungeness",
@@ -63,7 +62,12 @@ function initForecastSelector() {
   selector.innerHTML = "";
 
   STATION_ORDER.forEach(stationId => {
-    const station = forecastData.stations?.[stationId];
+    // Surrey stations reuse Crescent_Beach_Channel forecast
+    const forecastStationId = (stationId === "Crescent_Beach_Ocean" || stationId === "Crescent_Channel_Ocean")
+      ? "Crescent_Beach_Channel"
+      : stationId;
+
+    const station = forecastData.stations?.[forecastStationId];
     if (station) {
       const option = document.createElement("option");
       option.value = stationId;
@@ -72,7 +76,15 @@ function initForecastSelector() {
       const hasObservedSurge = observedSurgeData?.stations?.[stationId];
       const indicator = hasObservedSurge ? ' 📡' : '';
 
-      option.textContent = station.station_name + indicator;
+      // Use proper display name for Surrey stations
+      let displayName = station.station_name;
+      if (stationId === "Crescent_Beach_Ocean") {
+        displayName = "Crescent Beach Ocean";
+      } else if (stationId === "Crescent_Channel_Ocean") {
+        displayName = "Crescent Channel Ocean";
+      }
+
+      option.textContent = displayName + indicator;
       selector.appendChild(option);
     }
   });
@@ -90,11 +102,23 @@ function updateStationIndicator(elementId, stationId) {
   const indicator = document.getElementById(elementId);
   if (!indicator) return;
 
+  // Surrey stations reuse Crescent_Beach_Channel forecast
+  const forecastStationId = (stationId === "Crescent_Beach_Ocean" || stationId === "Crescent_Channel_Ocean")
+    ? "Crescent_Beach_Channel"
+    : stationId;
+
   let stationName = "";
-  if (elementId.includes("forecast") && forecastData?.stations?.[stationId]) {
-    stationName = forecastData.stations[stationId].station_name;
-  } else if (elementId.includes("hindcast") && hindcastData?.stations?.[stationId]) {
-    stationName = hindcastData.stations[stationId].station_name;
+  if (elementId.includes("forecast") && forecastData?.stations?.[forecastStationId]) {
+    stationName = forecastData.stations[forecastStationId].station_name;
+  } else if (elementId.includes("hindcast") && hindcastData?.stations?.[forecastStationId]) {
+    stationName = hindcastData.stations[forecastStationId].station_name;
+  }
+
+  // Use proper display name for Surrey stations
+  if (stationId === "Crescent_Beach_Ocean") {
+    stationName = "Crescent Beach Ocean";
+  } else if (stationId === "Crescent_Channel_Ocean") {
+    stationName = "Crescent Channel Ocean";
   }
 
   if (stationName) {
@@ -204,20 +228,38 @@ function updatePeakToday(stationId) {
 }
 
 function updateForecastChart(stationId) {
-  if (!forecastData?.stations?.[stationId]) {
+  // Surrey stations reuse Crescent_Beach_Channel forecast (same area or exact same location)
+  let forecastStationId = stationId;
+  let displayName = null;
+
+  if (stationId === "Crescent_Beach_Ocean") {
+    forecastStationId = "Crescent_Beach_Channel";
+    displayName = "Crescent Beach Ocean";
+  } else if (stationId === "Crescent_Channel_Ocean") {
+    forecastStationId = "Crescent_Beach_Channel";
+    displayName = "Crescent Channel Ocean";
+  }
+
+  if (!forecastData?.stations?.[forecastStationId]) {
     logger.warn("StormSurge", `No forecast data found for station: ${stationId}`);
     return;
   }
 
-  const station = forecastData.stations[stationId];
+  const station = forecastData.stations[forecastStationId];
+
+  // Create display station object (don't mutate original)
+  const displayStation = displayName ? {
+    ...station,
+    station_name: displayName
+  } : station;
 
   if (!station.forecast || Object.keys(station.forecast).length === 0) {
     logger.warn("StormSurge", `No forecast data for ${stationId}`);
     return;
   }
 
-  // Update peak display and get peak data for markers
-  const peakData = updatePeakToday(stationId);
+  // Update peak display and get peak data for markers (use forecastStationId for lookup)
+  const peakData = updatePeakToday(forecastStationId);
 
   // Prepare data
   const forecastData_series = [];
@@ -367,7 +409,7 @@ function updateForecastChart(stationId) {
   // Set chart options (notMerge: true to replace all data when switching stations)
   forecastChart.setOption({
     title: {
-      text: window.innerWidth < 600 ? station.station_name : `${station.station_name} - Surge Forecast`,
+      text: window.innerWidth < 600 ? displayStation.station_name : `${displayStation.station_name} - Surge Forecast`,
       subtext: window.innerWidth < 600 ? 'Surge Forecast' : '',
       left: "center",
       textStyle: {
@@ -465,9 +507,9 @@ function updateForecastChart(stationId) {
   }, true); // notMerge: true to prevent old data from persisting
 
   // Update metadata
-  updateForecastMetadata(station, forecastData_series.map(d => d[0]), values);
+  updateForecastMetadata(displayStation, forecastData_series.map(d => d[0]), values);
 
-  logger.info("StormSurge", `Loaded ${values.length} hours of forecast for ${station.station_name}`);
+  logger.info("StormSurge", `Loaded ${values.length} hours of forecast for ${displayStation.station_name}`);
 }
 
 function updateForecastMetadata(station, times, values) {
@@ -493,9 +535,23 @@ function updateForecastMetadata(station, times, values) {
     timeZoneName: "short"
   });
 
+  // Extract model run time (00Z or 12Z format)
+  let modelRunDisplay = "";
+  if (forecastData.model_run_time) {
+    const modelRunTime = new Date(forecastData.model_run_time);
+    const hourUTC = modelRunTime.getUTCHours();
+    const dateStr = modelRunTime.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      timeZone: "UTC"
+    });
+    modelRunDisplay = `${dateStr} ${hourUTC.toString().padStart(2, '0')}Z`;
+  }
+
   metaEl.innerHTML = `
     <strong>Station:</strong> ${station.station_name}<br/>
     <strong>Location:</strong> ${station.location.lat.toFixed(4)}°N, ${Math.abs(station.location.lon).toFixed(4)}°W<br/>
+    ${modelRunDisplay ? `<strong>Model Run:</strong> ${modelRunDisplay}<br/>` : ''}
     <strong>Data Retrieved:</strong> ${formatDate(generatedTime)}<br/>
     <strong>Forecast Period:</strong> ${formatDate(firstForecast)} to ${formatDate(lastForecast)}<br/>
     <strong>Resolution:</strong> ${values.length} hours (1-hour intervals)<br/>
@@ -550,7 +606,12 @@ function initHindcastSelector() {
 
   // Only show stations that have hindcast data
   STATION_ORDER.forEach(stationId => {
-    const station = hindcastData.stations?.[stationId];
+    // Surrey stations reuse Crescent_Beach_Channel forecast
+    const forecastStationId = (stationId === "Crescent_Beach_Ocean" || stationId === "Crescent_Channel_Ocean")
+      ? "Crescent_Beach_Channel"
+      : stationId;
+
+    const station = hindcastData.stations?.[forecastStationId];
     if (station && station.hindcast && station.hindcast.length > 0) {
       const option = document.createElement("option");
       option.value = stationId;
@@ -559,7 +620,15 @@ function initHindcastSelector() {
       const hasObservedSurge = observedSurgeData?.stations?.[stationId];
       const indicator = hasObservedSurge ? ' 📡' : '';
 
-      option.textContent = station.station_name + indicator;
+      // Use proper display name for Surrey stations
+      let displayName = station.station_name;
+      if (stationId === "Crescent_Beach_Ocean") {
+        displayName = "Crescent Beach Ocean";
+      } else if (stationId === "Crescent_Channel_Ocean") {
+        displayName = "Crescent Channel Ocean";
+      }
+
+      option.textContent = displayName + indicator;
       selector.appendChild(option);
     }
   });
@@ -574,12 +643,23 @@ function initHindcastSelector() {
 }
 
 function updateHindcastChart(stationId) {
-  if (!hindcastData?.stations?.[stationId]) {
+  // Surrey stations reuse Crescent_Beach_Channel hindcast
+  const forecastStationId = (stationId === "Crescent_Beach_Ocean" || stationId === "Crescent_Channel_Ocean")
+    ? "Crescent_Beach_Channel"
+    : stationId;
+
+  if (!hindcastData?.stations?.[forecastStationId]) {
     logger.warn("StormSurge", `No hindcast data found for station: ${stationId}`);
     return;
   }
 
-  const station = hindcastData.stations[stationId];
+  const station = hindcastData.stations[forecastStationId];
+
+  // Create display station object (don't mutate original)
+  const displayStation = (stationId === "Crescent_Beach_Ocean" || stationId === "Crescent_Channel_Ocean") ? {
+    ...station,
+    station_name: stationId === "Crescent_Beach_Ocean" ? "Crescent Beach Ocean" : "Crescent Channel Ocean"
+  } : station;
 
   if (!station.hindcast || station.hindcast.length === 0) {
     const container = document.getElementById("hindcast-chart");
@@ -744,8 +824,8 @@ function updateHindcastChart(stationId) {
   hindcastChart.setOption({
     title: {
       text: window.innerWidth < 600
-        ? `${station.station_name} - Hindcast`
-        : `${station.station_name} - Hindcast Comparison (48h Predictions)`,
+        ? `${displayStation.station_name} - Hindcast`
+        : `${displayStation.station_name} - Hindcast Comparison (48h Predictions)`,
       subtext: window.innerWidth < 600
         ? 'Observed (black) vs Forecast runs (colored)'
         : 'Black line = Tide offset observations | Colored lines = Historical forecast runs',
@@ -841,9 +921,9 @@ function updateHindcastChart(stationId) {
   }, true); // notMerge: true to prevent old data from persisting
 
   // Update metadata
-  updateHindcastMetadata(station);
+  updateHindcastMetadata(displayStation);
 
-  logger.info("StormSurge", `Loaded hindcast data for ${station.station_name} (${sortedDates.length} forecast dates)`);
+  logger.info("StormSurge", `Loaded hindcast data for ${displayStation.station_name} (${sortedDates.length} forecast dates)`);
 }
 
 function getColorForIndex(index, total) {
@@ -879,13 +959,26 @@ function updateHindcastMetadata(station) {
     timeZoneName: "short"
   });
 
+  // Extract model run time if available (hindcast data uses 18Z runs)
+  let modelRunDisplay = "18Z model run (closest to noon Pacific)";
+  if (hindcastData.model_run_time) {
+    const modelRunTime = new Date(hindcastData.model_run_time);
+    const hourUTC = modelRunTime.getUTCHours();
+    const dateStr = modelRunTime.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      timeZone: "UTC"
+    });
+    modelRunDisplay = `${dateStr} ${hourUTC.toString().padStart(2, '0')}Z`;
+  }
+
   metaEl.innerHTML = `
     <strong>Station:</strong> ${station.station_name}<br/>
     <strong>Location:</strong> ${station.location.lat.toFixed(4)}°N, ${Math.abs(station.location.lon).toFixed(4)}°W<br/>
     <strong>Data Retrieved:</strong> ${formatDate(generatedTime)}<br/>
     <strong>Forecast Horizon:</strong> ${hindcastData.forecast_horizon_hours || 48} hours ahead<br/>
     <strong>Historical Days:</strong> ${daysAvailable} day${daysAvailable !== 1 ? 's' : ''} (max ${hindcastData.max_days_back || 10})<br/>
-    <strong>Collection Time:</strong> 18Z model run (closest to noon Pacific)
+    <strong>Collection Time:</strong> ${modelRunDisplay}
   `;
 }
 

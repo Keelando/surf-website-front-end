@@ -8,7 +8,8 @@ let surgeData = null;
 // Station display order
 const STATION_ORDER = [
   "Point_Atkinson",
-  "Crescent_Beach_Channel",
+  "Crescent_Channel_Ocean",     // Surrey - reuses Crescent_Beach_Channel forecast
+  "Crescent_Beach_Ocean",       // Surrey - reuses Crescent_Beach_Channel forecast
   "Campbell_River",
   "Neah_Bay",
   "New_Dungeness",
@@ -38,49 +39,92 @@ async function loadStormSurgeData() {
 function initStationSelector() {
   const selector = document.getElementById("surge-station-select");
   if (!selector || selector.dataset.initialized) return;
-  
+
   // Clear existing options
   selector.innerHTML = "";
-  
+
   // Add options for each station
   STATION_ORDER.forEach(stationId => {
-    const station = surgeData.stations?.[stationId];
+    // Surrey stations reuse Crescent_Beach_Channel forecast
+    const forecastStationId = (stationId === "Crescent_Beach_Ocean" || stationId === "Crescent_Channel_Ocean")
+      ? "Crescent_Beach_Channel"
+      : stationId;
+
+    const station = surgeData.stations?.[forecastStationId];
     if (station) {
       const option = document.createElement("option");
       option.value = stationId;
-      option.textContent = station.station_name;
+
+      // Use proper display name for Surrey stations
+      let displayName = station.station_name;
+      if (stationId === "Crescent_Beach_Ocean") {
+        displayName = "Crescent Beach Ocean";
+      } else if (stationId === "Crescent_Channel_Ocean") {
+        displayName = "Crescent Channel Ocean";
+      }
+
+      option.textContent = displayName;
       selector.appendChild(option);
     }
   });
-  
+
   // Add change event listener
   selector.addEventListener("change", (e) => {
     updateSurgeChart(e.target.value);
     updateActiveStationIndicator(e.target.value);
   });
-  
+
   selector.dataset.initialized = "true";
-  
+
   // Update indicator
   updateActiveStationIndicator(selector.value);
 }
 
 function updateActiveStationIndicator(stationId) {
   const indicator = document.getElementById("active-surge-indicator");
-  if (!indicator || !surgeData?.stations?.[stationId]) return;
-  
-  const station = surgeData.stations[stationId];
-  indicator.textContent = `📍 Viewing: ${station.station_name}`;
+  if (!indicator) return;
+
+  // Surrey stations reuse Crescent_Beach_Channel forecast
+  const forecastStationId = (stationId === "Crescent_Beach_Ocean" || stationId === "Crescent_Channel_Ocean")
+    ? "Crescent_Beach_Channel"
+    : stationId;
+
+  if (!surgeData?.stations?.[forecastStationId]) return;
+
+  const station = surgeData.stations[forecastStationId];
+
+  // Use proper display name for Surrey stations
+  let displayName = station.station_name;
+  if (stationId === "Crescent_Beach_Ocean") {
+    displayName = "Crescent Beach Ocean";
+  } else if (stationId === "Crescent_Channel_Ocean") {
+    displayName = "Crescent Channel Ocean";
+  }
+
+  indicator.textContent = `📍 Viewing: ${displayName}`;
   indicator.classList.add("active");
 }
 
 function updateSurgeChart(stationId) {
-  if (!surgeData?.stations?.[stationId]) {
+  // Surrey stations reuse Crescent_Beach_Channel forecast
+  const forecastStationId = (stationId === "Crescent_Beach_Ocean" || stationId === "Crescent_Channel_Ocean")
+    ? "Crescent_Beach_Channel"
+    : stationId;
+
+  if (!surgeData?.stations?.[forecastStationId]) {
     logger.warn("StormSurgeChart", `No data found for station: ${stationId}`);
     return;
   }
 
-  const station = surgeData.stations[stationId];
+  const station = surgeData.stations[forecastStationId];
+
+  // Create display station object (don't mutate original)
+  let displayName = station.station_name;
+  if (stationId === "Crescent_Beach_Ocean") {
+    displayName = "Crescent Beach Ocean";
+  } else if (stationId === "Crescent_Channel_Ocean") {
+    displayName = "Crescent Channel Ocean";
+  }
 
   if (!station.forecast || Object.keys(station.forecast).length === 0) {
     logger.warn("StormSurgeChart", `No forecast data for ${stationId}`);
@@ -115,7 +159,7 @@ function updateSurgeChart(stationId) {
   // Set chart options
   surgeChart.setOption({
     title: {
-      text: `${station.station_name} - Storm Surge Forecast`,
+      text: `${displayName} - Storm Surge Forecast`,
       left: "center",
       textStyle: { fontSize: window.innerWidth < 600 ? 12 : 14 }
     },
@@ -221,19 +265,19 @@ function updateSurgeChart(stationId) {
   });
 
   // Update metadata display
-  updateMetadata(station, times, values);
+  updateMetadata(station, times, values, displayName);
 
-  logger.info("StormSurgeChart", `Loaded ${values.length} hours of storm surge forecast for ${station.station_name}`);
+  logger.info("StormSurgeChart", `Loaded ${values.length} hours of storm surge forecast for ${displayName}`);
 }
 
-function updateMetadata(station, times, values) {
+function updateMetadata(station, times, values, displayName = null) {
   const metaEl = document.getElementById("surge-metadata");
   if (!metaEl) return;
-  
+
   const generatedTime = new Date(surgeData.generated_utc);
   const firstForecast = new Date(times[0]);
   const lastForecast = new Date(times[times.length - 1]);
-  
+
   const formatDate = (date) => date.toLocaleString("en-US", {
     month: "short",
     day: "numeric",
@@ -244,10 +288,27 @@ function updateMetadata(station, times, values) {
     timeZoneName: "short"
   });
 
+  // Extract model run time (00Z or 12Z format)
+  let modelRunDisplay = "";
+  if (surgeData.model_run_time) {
+    const modelRunTime = new Date(surgeData.model_run_time);
+    const hourUTC = modelRunTime.getUTCHours();
+    const dateStr = modelRunTime.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      timeZone: "UTC"
+    });
+    modelRunDisplay = `${dateStr} ${hourUTC.toString().padStart(2, '0')}Z`;
+  }
+
+  // Use displayName if provided, otherwise use station.station_name
+  const stationName = displayName || station.station_name;
+
   metaEl.innerHTML = `
-    <strong>Station:</strong> ${station.station_name}<br/>
+    <strong>Station:</strong> ${stationName}<br/>
     <strong>Location:</strong> ${station.location.lat.toFixed(4)}°N, ${Math.abs(station.location.lon).toFixed(4)}°W<br/>
     <strong>Model:</strong> GDSPS (Global Deterministic Storm Surge Prediction System)<br/>
+    ${modelRunDisplay ? `<strong>Model Run:</strong> ${modelRunDisplay}<br/>` : ''}
     <strong>Data Retrieved:</strong> ${formatDate(generatedTime)}<br/>
     <strong>Forecast Period:</strong> ${formatDate(firstForecast)} to ${formatDate(lastForecast)}<br/>
     <strong>Resolution:</strong> ${values.length} hours (1-hour intervals)

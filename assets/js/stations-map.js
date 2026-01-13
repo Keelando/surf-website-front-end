@@ -5,12 +5,14 @@
 
 let stationsMap = null;
 let markersLayer = null;
-let buoyMarkers = {}; // Store buoy markers by ID for easy access
+let buoyMarkers = {}; // Store buoy markers by ID for easy access (includes wind stations)
 let latestBuoyData = null; // Cache for latest buoy data
 let latestWindData = null; // Cache for latest wind station data
 let stormSurgeData = null; // Cache for storm surge forecast data
 let lightstationMarkers = {}; // Store lightstation markers by ID for easy access
 let latestLightstationData = null; // Cache for latest lightstation observations
+let webcamMarkers = {}; // Store webcam markers by ID for easy access
+let tideMarkers = {}; // Store tide station markers by ID for easy access
 
 // Helper function to convert cardinal direction to degrees
 function cardinalToDegrees(cardinal) {
@@ -157,10 +159,58 @@ async function loadStationsAndMarkers() {
         addWebcamMarker(webcam);
       });
     }
+
+    // Check for station parameter in URL and zoom to it
+    checkAndZoomToStation();
   } catch (error) {
     logger.error('StationsMap', 'Error loading stations', error);
     // Fallback to inline station data if fetch fails
     loadFallbackStations();
+  }
+}
+
+/**
+ * Check URL parameters for station ID and zoom to that station if found
+ * URL format: /?station=<stationId>#map-section
+ */
+function checkAndZoomToStation() {
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const stationId = urlParams.get('station');
+
+    if (!stationId) return;
+
+    // Check all marker types for the station
+    const allMarkers = {
+      ...buoyMarkers,      // Includes wind stations
+      ...tideMarkers,
+      ...lightstationMarkers,
+      ...webcamMarkers
+    };
+
+    const marker = allMarkers[stationId];
+
+    if (marker) {
+      // Get marker position
+      const latLng = marker.getLatLng();
+
+      // Zoom to marker with smooth animation
+      stationsMap.setView(latLng, 12, {
+        animate: true,
+        duration: 1.0
+      });
+
+      // Open popup after zoom animation completes
+      setTimeout(() => {
+        marker.openPopup();
+      }, 1000);
+
+      logger.info('StationsMap', `Zoomed to station: ${stationId}`);
+    } else {
+      logger.warn('StationsMap', `Station not found: ${stationId}`);
+    }
+  } catch (error) {
+    logger.error('StationsMap', 'Error zooming to station', error);
   }
 }
 
@@ -554,6 +604,7 @@ function addBuoyMarker(buoy) {
       <div><strong>Location:</strong> ${buoy.location}</div>
       <div><strong>Source:</strong> ${buoy.source}</div>
       <div><strong>Type:</strong> ${typeLabel}</div>
+      <div><strong>Coordinates:</strong> ${buoy.lat.toFixed(4)}, ${buoy.lon.toFixed(4)}</div>
     </div>`;
 
   // Add tide data note for stations that provide it
@@ -580,14 +631,13 @@ function addBuoyMarker(buoy) {
   buoyMarkers[buoy.id] = marker;
 }
 
-// Store tide markers by key for later access
-let tideMarkers = {};
-
 // Mapping from tide station keys to storm surge station names
 const TIDE_TO_SURGE_MAP = {
   'point_atkinson': 'Point_Atkinson',
   'campbell_river': 'Campbell_River',
   'crescent_pile': 'Crescent_Beach_Channel',
+  'crescent_beach_ocean': 'Crescent_Beach_Ocean',
+  'crescent_channel_ocean': 'Crescent_Channel_Ocean',
   'tofino': 'Tofino'
 };
 
@@ -596,6 +646,8 @@ const SURGE_TO_MARKER_MAP = {
   'Point_Atkinson': { type: 'tide', id: 'point_atkinson' },
   'Campbell_River': { type: 'tide', id: 'campbell_river' },
   'Crescent_Beach_Channel': { type: 'tide', id: 'crescent_pile' },
+  'Crescent_Beach_Ocean': { type: 'tide', id: 'crescent_beach_ocean' },
+  'Crescent_Channel_Ocean': { type: 'tide', id: 'crescent_channel_ocean' },
   'Neah_Bay': { type: 'buoy', id: '46087' },
   'New_Dungeness': { type: 'buoy', id: '46088' },
   'Tofino': { type: 'tide', id: 'tofino' }
@@ -677,6 +729,7 @@ function addTideMarker(tide, stationKey) {
       <div><strong>Location:</strong> ${tide.location}</div>
       <div><strong>Source:</strong> ${tide.source}</div>
       <div><strong>Type:</strong> ${stationType}</div>
+      <div><strong>Coordinates:</strong> ${tide.lat.toFixed(4)}, ${tide.lon.toFixed(4)}</div>
       ${tide.note ? `<div style="font-style: italic; margin-top: 4px; color: #666;">${tide.note}</div>` : ''}
     </div>
     <a href="/tides.html?station=${stationKey}" class="view-data-btn" style="display: inline-block; margin-top: 8px; padding: 6px 12px; background: #0077be; color: white; text-decoration: none; border-radius: 4px; font-size: 0.9em;">View Data →</a>
@@ -798,6 +851,7 @@ function addLightstationMarker(lightstation) {
       <div><strong>Region:</strong> ${lightstation.region}</div>
       <div><strong>Source:</strong> ${lightstation.source}</div>
       <div><strong>Type:</strong> Lightstation</div>
+      <div><strong>Coordinates:</strong> ${lightstation.lat.toFixed(4)}, ${lightstation.lon.toFixed(4)}</div>
       ${lightstation.established ? `<div><strong>Established:</strong> ${lightstation.established}</div>` : ''}
       ${lightstation.notes ? `<div style="font-style: italic; margin-top: 4px; color: #666;">${lightstation.notes}</div>` : ''}
     </div>
@@ -841,6 +895,7 @@ function addWebcamMarker(webcam) {
     <div style="font-size: 0.9em; line-height: 1.4; margin-top: 8px;">
       <div><strong>ID:</strong> ${webcam.id}</div>
       <div><strong>Type:</strong> Webcam</div>
+      <div><strong>Coordinates:</strong> ${webcam.lat.toFixed(4)}, ${webcam.lon.toFixed(4)}</div>
     </div>
     <a href="${webcam.page_url}" class="view-data-btn" style="display: inline-block; margin-top: 8px; padding: 6px 12px; background: #2c5282; color: white; text-decoration: none; border-radius: 4px; font-size: 0.9em;">View Webcam →</a>
   </div>`;
@@ -849,8 +904,7 @@ function addWebcamMarker(webcam) {
   marker.addTo(markersLayer);
 
   // Store marker reference for later access
-  if (!window.webcamMarkers) window.webcamMarkers = {};
-  window.webcamMarkers[webcam.id] = marker;
+  webcamMarkers[webcam.id] = marker;
 }
 
 // Fallback station data if fetch fails
