@@ -585,6 +585,7 @@
         imageUrl: '/data/wrcam/latest.jpg',
         slideshowUrl: '/data/wrcam/slideshow_manifest.json',
         slideshowPath: '/data/wrcam/',
+        updateInterval: 10,  // minutes
         streamDelay: 6,  // minutes
         conditions: [
           {
@@ -608,7 +609,9 @@
         imageUrl: '/data/bbcam/latest.jpg',
         slideshowUrl: '/data/bbcam/slideshow_manifest.json',
         slideshowPath: '/data/bbcam/',
+        updateInterval: 10,  // minutes
         streamDelay: 20,  // minutes
+        downNotice: '⚠️ YouTube livestream temporarily unavailable. Images shown are from last successful capture.',  // Temporary downtime notice
         conditions: [
           {
             label: 'White Rock East Beach',
@@ -631,7 +634,8 @@
         imageUrl: '/data/mudbay/latest.jpg',
         slideshowUrl: '/data/mudbay/slideshow_manifest.json',
         slideshowPath: '/data/mudbay/',
-        streamDelay: 0,  // minutes (direct image URL)
+        updateInterval: 15,  // minutes
+        streamDelay: null,  // unknown (direct image URL from construction cam)
         conditions: [
           {
             label: 'White Rock East Beach',
@@ -654,6 +658,7 @@
         imageUrl: '/data/coxbay/latest.jpg',
         slideshowUrl: '/data/coxbay/slideshow_manifest.json',
         slideshowPath: '/data/coxbay/',
+        updateInterval: 10,  // minutes
         streamDelay: 20,  // minutes
         conditions: [
           {
@@ -1380,10 +1385,23 @@
       const info = document.createElement('div');
       info.className = 'webcam-info';
 
+      // Down notice (if present)
+      if (webcam.downNotice) {
+        const downNotice = document.createElement('div');
+        downNotice.className = 'webcam-update-notice';
+        downNotice.style.background = '#fff3cd';
+        downNotice.style.color = '#856404';
+        downNotice.style.borderLeft = '4px solid #ffc107';
+        downNotice.textContent = webcam.downNotice;
+        info.appendChild(downNotice);
+      }
+
       // Update notice with delay info
       const updateNotice = document.createElement('div');
       updateNotice.className = 'webcam-update-notice';
-      updateNotice.textContent = `Updated every 10 minutes • ~${webcam.streamDelay} min stream delay`;
+      const interval = webcam.updateInterval || 10;
+      const delayText = webcam.streamDelay === null ? 'unknown delay' : `~${webcam.streamDelay} min stream delay`;
+      updateNotice.textContent = `Updated every ${interval} minutes • ${delayText}`;
       info.appendChild(updateNotice);
 
       if (metadata) {
@@ -1700,7 +1718,10 @@
         // Add age indicator if not the latest image
         let ageIndicator = card.querySelector('.slideshow-age-indicator');
         if (state.currentIndex > 0) {
-          const minutesAgo = state.currentIndex * 10; // Images are 10 minutes apart
+          // Find webcam config to get update interval
+          const webcam = webcams.find(w => w.id === webcamId);
+          const interval = webcam ? (webcam.updateInterval || 10) : 10;
+          const minutesAgo = state.currentIndex * interval;
           if (!ageIndicator) {
             ageIndicator = document.createElement('div');
             ageIndicator.className = 'slideshow-age-indicator';
