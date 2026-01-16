@@ -5,22 +5,20 @@
 data/*.json
 data/storm_surge/*.json
 
-# Webcam images and metadata (regenerated automatically every 10 minutes)
-data/wrcam/latest.jpg
-data/wrcam/latest.json
-data/bbcam/latest.jpg
-data/bbcam/latest.json
-data/coxbay/latest.jpg
-data/coxbay/latest.json
+# Webcam images and metadata (regenerated automatically)
+data/wrcam/*.jpg
+data/wrcam/*.json
 data/wrcam/slideshow/*.jpg
+data/bbcam/*.jpg
+data/bbcam/*.json
 data/bbcam/slideshow/*.jpg
+data/coxbay/*.jpg
+data/coxbay/*.json
 data/coxbay/slideshow/*.jpg
-data/wrcam/slideshow_manifest.json
-data/bbcam/slideshow_manifest.json
-data/coxbay/slideshow_manifest.json
-data/wrcam/sunlight.json
-data/bbcam/sunlight.json
-data/coxbay/sunlight.json
+data/mudbay/*.jpg
+data/mudbay/*.json
+data/mudbay/slideshow/*.jpg
+data/webcam/*.jpg
 
 # Logs
 *.log
