@@ -471,9 +471,9 @@ function displayCurrentPrediction(station) {
         if (nextEvent.time && nextEvent.type && nextEvent.value != null) {
           const eventTime = new Date(nextEvent.time);
           const eventTimeStr = eventTime.toLocaleTimeString('en-US', {
-            hour: 'numeric',
+            hour: '2-digit',
             minute: '2-digit',
-            hour12: true,
+            hour12: false,
             timeZone: 'America/Vancouver'
           });
           const eventType = nextEvent.type === 'high' ? 'High' : 'Low';
@@ -729,9 +729,9 @@ function displayStormSurge(station) {
       if (todayPeak) {
         const peakTime = new Date(todayPeak.time);
         const peakTimeStr = peakTime.toLocaleTimeString('en-US', {
-          hour: 'numeric',
+          hour: '2-digit',
           minute: '2-digit',
-          hour12: true,
+          hour12: false,
           timeZone: 'America/Vancouver'
         });
 
@@ -1798,8 +1798,8 @@ function displaySunlightTimes(stationKey, dayOffset = 0) {
   const sunset = new Date(sunlight.sunset);
   const lastLight = new Date(sunlight.last_light);
 
-  // Format to local time
-  const timeOptions = { hour: 'numeric', minute: '2-digit', timeZone: 'America/Vancouver' };
+  // Format to local time (24-hour)
+  const timeOptions = { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'America/Vancouver' };
   const firstLightStr = firstLight.toLocaleTimeString('en-US', timeOptions);
   const sunriseStr = sunrise.toLocaleTimeString('en-US', timeOptions);
   const sunsetStr = sunset.toLocaleTimeString('en-US', timeOptions);

@@ -222,6 +222,7 @@ function addWindStationMarker(station, currentData) {
       const timeStr = obsTime.toLocaleTimeString('en-US', {
         hour: '2-digit',
         minute: '2-digit',
+        hour12: false,
         timeZone: 'America/Vancouver',
         timeZoneName: 'short'
       });
@@ -316,6 +317,7 @@ function addBuoyWindMarker(buoy, currentData) {
       const timeStr = obsTime.toLocaleTimeString('en-US', {
         hour: '2-digit',
         minute: '2-digit',
+        hour12: false,
         timeZone: 'America/Vancouver',
         timeZoneName: 'short'
       });

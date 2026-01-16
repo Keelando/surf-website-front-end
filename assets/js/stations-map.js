@@ -588,6 +588,7 @@ function addBuoyMarker(buoy) {
       const timeStr = obsTime.toLocaleTimeString('en-US', {
         hour: '2-digit',
         minute: '2-digit',
+        hour12: false,
         timeZone: 'America/Vancouver',
         timeZoneName: 'short'
       });
@@ -711,6 +712,7 @@ function addTideMarker(tide, stationKey) {
     const timeStr = surgeForecast.time.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
+      hour12: false,
       timeZone: 'America/Vancouver',
       timeZoneName: 'short'
     });

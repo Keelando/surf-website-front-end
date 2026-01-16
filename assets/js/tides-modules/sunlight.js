@@ -95,8 +95,8 @@ export function displaySunlightTimes(stationKey, dayOffset, sunlightStore, tideD
   const sunset = new Date(sunlight.sunset);
   const lastLight = new Date(sunlight.last_light);
 
-  // Format to local time
-  const timeOptions = { hour: 'numeric', minute: '2-digit', timeZone: 'America/Vancouver' };
+  // Format to local time (24-hour)
+  const timeOptions = { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'America/Vancouver' };
   const firstLightStr = firstLight.toLocaleTimeString('en-US', timeOptions);
   const sunriseStr = sunrise.toLocaleTimeString('en-US', timeOptions);
   const sunsetStr = sunset.toLocaleTimeString('en-US', timeOptions);

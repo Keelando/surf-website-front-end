@@ -252,9 +252,9 @@ export function displayCurrentPrediction(station, stationKey, tideDataStore) {
       if (nextEvent.time && nextEvent.type && nextEvent.value != null) {
         const eventTime = new Date(nextEvent.time);
         const eventTimeStr = eventTime.toLocaleTimeString('en-US', {
-          hour: 'numeric',
+          hour: '2-digit',
           minute: '2-digit',
-          hour12: true,
+          hour12: false,
           timeZone: 'America/Vancouver'
         });
         const eventType = nextEvent.type === 'high' ? 'High' : 'Low';
@@ -366,9 +366,9 @@ function generatePeakForecastHtml(tideDataStore, stationKey) {
 
   const peakTime = new Date(todayPeak.time);
   const peakTimeStr = peakTime.toLocaleTimeString('en-US', {
-    hour: 'numeric',
+    hour: '2-digit',
     minute: '2-digit',
-    hour12: true,
+    hour12: false,
     timeZone: 'America/Vancouver'
   });
 
