@@ -600,6 +600,11 @@
             label: 'English Bay Buoy',
             buoyStation: '4600304',
             fields: ['wind', 'waves']
+          },
+          {
+            label: 'Jericho Sailing Centre',
+            windStation: 'JERICHO',
+            fields: ['wind']
           }
         ]
       },
@@ -1054,7 +1059,7 @@
       regionWebcams.forEach(webcam => {
         if (webcam.conditions) {
           webcam.conditions.forEach(condition => {
-            const key = condition.buoyStation || condition.customStation;
+            const key = condition.buoyStation || condition.customStation || condition.windStation;
             if (key && !conditionSources.has(key)) {
               conditionSources.set(key, condition);
             }
@@ -1083,6 +1088,8 @@
           data = marineData.buoy?.[condition.buoyStation];
         } else if (condition.customStation) {
           data = marineData.custom?.[condition.customStation];
+        } else if (condition.windStation) {
+          data = marineData.wind?.[condition.windStation];
         }
 
         if (!data || data.stale) return;
