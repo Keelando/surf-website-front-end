@@ -463,26 +463,167 @@
     @media (max-width: 1024px) {
       .webcam-grid {
         grid-template-columns: 1fr;
-        padding: 0 1rem;
+        padding: 0 0.5rem;
       }
     }
 
     @media (max-width: 768px) {
-      .webcam-grid {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
+      .webcam-region {
+        margin: 1rem auto;
         padding: 0 0.5rem;
       }
 
+      .webcam-region-header {
+        padding: 0.75rem 1rem;
+      }
+
+      .webcam-region-header h2 {
+        font-size: 1.1rem;
+      }
+
+      .webcam-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 1rem 0;
+      }
+
+      .webcam-card {
+        border-radius: 6px;
+      }
+
+      .webcam-header {
+        padding: 0.75rem 1rem;
+      }
+
+      .webcam-header h3 {
+        font-size: 1.1rem;
+      }
+
       .webcam-image-container {
-        min-height: 200px;
+        min-height: 180px;
+      }
+
+      .webcam-info {
+        padding: 0.75rem 1rem;
+      }
+
+      .webcam-update-notice {
+        font-size: 0.8rem;
+        padding: 0.4rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .slideshow-controls {
+        padding: 0.5rem;
+        gap: 0.5rem;
+      }
+
+      .slideshow-nav {
+        padding: 0.4rem 0.75rem;
+        font-size: 1rem;
+        min-width: 36px;
+      }
+
+      .slideshow-dot {
+        width: 10px;
+        height: 10px;
+      }
+
+      .marine-conditions-banner {
+        padding: 0.75rem 1rem;
+        margin: 0 0 1rem 0;
+      }
+
+      .marine-conditions-banner h3 {
+        font-size: 0.95rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .conditions-stack {
+        gap: 0.5rem;
+      }
+
+      .condition-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+        padding: 0.4rem 0;
+      }
+
+      .condition-station-name {
+        font-size: 0.85rem;
+        min-width: auto;
+      }
+
+      .condition-data {
+        gap: 0.75rem;
+      }
+
+      .condition-timestamp {
+        margin-left: 0;
+        font-size: 0.75rem;
+      }
+
+      /* Collapsible intro sections on mobile */
+      .intro-section {
+        margin-bottom: 1rem !important;
+        padding: 0.75rem 1rem !important;
+      }
+
+      .intro-section h2 {
+        font-size: 1rem !important;
+        cursor: pointer;
+      }
+
+      .intro-section.collapsed .intro-content {
+        display: none;
+      }
+
+      .intro-section h2::after {
+        content: ' ▼';
+        font-size: 0.7em;
+        opacity: 0.7;
+      }
+
+      .intro-section.collapsed h2::after {
+        content: ' ▶';
+      }
+
+      .refresh-button {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.85rem;
       }
     }
 
-    @media (max-width: 550px) {
-      .webcam-grid {
-        grid-template-columns: 1fr;
+    @media (max-width: 480px) {
+      .webcam-region {
+        margin: 0.75rem auto;
         padding: 0 0.25rem;
+      }
+
+      .webcam-grid {
+        gap: 0.75rem;
+        padding: 0.75rem 0;
+      }
+
+      .webcam-header {
+        padding: 0.6rem 0.75rem;
+      }
+
+      .webcam-header h3 {
+        font-size: 1rem;
+      }
+
+      .webcam-location {
+        font-size: 0.8rem;
+      }
+
+      .webcam-info {
+        padding: 0.6rem 0.75rem;
+      }
+
+      .condition-section-label {
+        font-size: 0.7rem;
       }
     }
   </style>
@@ -498,55 +639,30 @@
   <div hx-get="/components/tagline-webcams.html?v=1" hx-trigger="load" hx-swap="outerHTML swap:0ms settle:0ms" style="min-height: 40px;"></div>
 
   <div class="container">
-    <section style="background: #edf2f7; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
-      <h2 style="margin-top: 0; color: #2c5282; font-size: 1.3rem;">About Coastal Webcams</h2>
-      <p style="margin-bottom: 0.5rem;">
-        Recent views from coastal webcams around the Salish Sea.
-        Images are updated every 10-30 minutes to provide current visual conditions for beaches, piers, and marine areas.
-      </p>
-      <p style="margin-bottom: 0.5rem;">
-        <strong>Important:</strong> Screen grabs are delayed due to livestream latency.
-        For real-time conditions, click "View Source" to watch the live stream directly.
-      </p>
-      <p style="margin: 0;">
-        <strong>Note:</strong> Check the timestamp on each image for precise capture time.
-      </p>
+    <section class="intro-section collapsed" style="background: #edf2f7; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+      <h2 onclick="this.parentElement.classList.toggle('collapsed')" style="margin: 0; color: #2c5282; font-size: 1.1rem; cursor: pointer;">About Coastal Webcams</h2>
+      <div class="intro-content" style="margin-top: 0.75rem;">
+        <p style="margin: 0 0 0.5rem 0; font-size: 0.9rem;">
+          Recent views from coastal webcams around the Salish Sea. Images update every 10-30 minutes.
+        </p>
+        <p style="margin: 0; font-size: 0.85rem; color: #4a5568;">
+          <strong>Note:</strong> Screen grabs have stream delay. Click "View Source" for live video.
+        </p>
+      </div>
     </section>
 
-    <!-- Additional Webcam Resources -->
-    <section style="background: white; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; border: 1px solid #e0e7ee;">
-      <h2 style="margin-top: 0; color: #2c5282; font-size: 1.2rem; border-bottom: 2px solid #4299e1; padding-bottom: 0.5rem;">📹 Additional Webcam Resources</h2>
-      <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem;">
-        <div style="color: #2d3748; line-height: 1.8;">
-          <strong style="color: #2c5282; display: inline-block; min-width: 250px;">Point Roberts Marina:</strong>
-          <a href="https://www.pointrobertsmarina.com/webcams/" target="_blank" rel="noopener" style="color: #4299e1; text-decoration: none; padding: 0.25rem 0.5rem; border-radius: 3px;">View Webcams ↗</a>
-        </div>
-        <div style="color: #2d3748; line-height: 1.8;">
-          <strong style="color: #2c5282; display: inline-block; min-width: 250px;">Birch Bay:</strong>
-          <a href="https://birchbaywa.org/webcam/" target="_blank" rel="noopener" style="color: #4299e1; text-decoration: none; padding: 0.25rem 0.5rem; border-radius: 3px;">View Webcam ↗</a>
-        </div>
-        <div style="color: #2d3748; line-height: 1.8;">
-          <strong style="color: #2c5282; display: inline-block; min-width: 250px;">Ambleside Beach (West Vancouver):</strong>
-          <a href="https://www.hollyburnsailingclub.ca/webcam" target="_blank" rel="noopener" style="color: #4299e1; text-decoration: none; padding: 0.25rem 0.5rem; border-radius: 3px;">Hollyburn Sailing Club ↗</a>
-        </div>
-        <div style="color: #2d3748; line-height: 1.8;">
-          <strong style="color: #2c5282; display: inline-block; min-width: 250px;">Boundary Bay:</strong>
-          <a href="http://www.boundarybayweather.com/" target="_blank" rel="noopener" style="color: #4299e1; text-decoration: none; padding: 0.25rem 0.5rem; border-radius: 3px;">View Webcam ↗</a>
-        </div>
-        <div style="color: #2d3748; line-height: 1.8;">
-          <strong style="color: #2c5282; display: inline-block; min-width: 250px;">Jericho Beach (Vancouver):</strong>
-          <a href="https://www.kiteboardbc.com/webcam/jericho/" target="_blank" rel="noopener" style="color: #4299e1; text-decoration: none; padding: 0.25rem 0.5rem; border-radius: 3px;">Kite Board BC ↗</a>
-          <span style="color: #718096; margin: 0 0.5rem;">|</span>
-          <a href="https://jsca.bc.ca/services/steamcam-ptz/" target="_blank" rel="noopener" style="color: #4299e1; text-decoration: none; padding: 0.25rem 0.5rem; border-radius: 3px;">JSCA HD Video ↗</a>
-        </div>
-        <div style="color: #2d3748; line-height: 1.8;">
-          <strong style="color: #2c5282; display: inline-block; min-width: 250px;">Chesterman Beach (Tofino):</strong>
-          <a href="https://www.youtube.com/watch?v=eCcF7epO2T8" target="_blank" rel="noopener" style="color: #4299e1; text-decoration: none; padding: 0.25rem 0.5rem; border-radius: 3px;">Wickaninnish Inn Live ↗</a>
-        </div>
-        <div style="color: #2d3748; line-height: 1.8;">
-          <strong style="color: #2c5282; display: inline-block; min-width: 250px;">Mackenzie Beach (Tofino):</strong>
-          <a href="https://oceanvillageresort.com/beach-cam/" target="_blank" rel="noopener" style="color: #4299e1; text-decoration: none; padding: 0.25rem 0.5rem; border-radius: 3px;">Ocean Village Resort ↗</a>
-        </div>
+    <!-- Additional Webcam Resources - collapsed by default on mobile -->
+    <section class="intro-section collapsed" style="background: white; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; border: 1px solid #e0e7ee;">
+      <h2 onclick="this.parentElement.classList.toggle('collapsed')" style="margin: 0; color: #2c5282; font-size: 1rem; cursor: pointer;">More Webcams</h2>
+      <div class="intro-content" style="margin-top: 0.75rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.5rem; font-size: 0.85rem;">
+        <a href="https://www.pointrobertsmarina.com/webcams/" target="_blank" rel="noopener" style="color: #4299e1;">Point Roberts Marina ↗</a>
+        <a href="https://birchbaywa.org/webcam/" target="_blank" rel="noopener" style="color: #4299e1;">Birch Bay ↗</a>
+        <a href="https://www.hollyburnsailingclub.ca/webcam" target="_blank" rel="noopener" style="color: #4299e1;">Ambleside (Hollyburn SC) ↗</a>
+        <a href="http://www.boundarybayweather.com/" target="_blank" rel="noopener" style="color: #4299e1;">Boundary Bay ↗</a>
+        <a href="https://www.kiteboardbc.com/webcam/jericho/" target="_blank" rel="noopener" style="color: #4299e1;">Jericho (KiteboardBC) ↗</a>
+        <a href="https://jsca.bc.ca/services/steamcam-ptz/" target="_blank" rel="noopener" style="color: #4299e1;">Jericho (JSCA HD) ↗</a>
+        <a href="https://www.youtube.com/watch?v=eCcF7epO2T8" target="_blank" rel="noopener" style="color: #4299e1;">Chesterman Beach ↗</a>
+        <a href="https://oceanvillageresort.com/beach-cam/" target="_blank" rel="noopener" style="color: #4299e1;">Mackenzie Beach ↗</a>
       </div>
     </section>
 
@@ -1105,8 +1221,10 @@
         const dataDiv = document.createElement('div');
         dataDiv.className = 'condition-data';
 
-        // Wind section
-        if (data.wind_speed !== null && data.wind_direction !== null) {
+        // Wind section - handle both buoy (wind_speed) and wind station (wind_speed_kt) formats
+        const windSpeed = data.wind_speed ?? data.wind_speed_kt;
+        const windGust = data.wind_gust ?? data.wind_gust_kt;
+        if (windSpeed !== null && windSpeed !== undefined && data.wind_direction !== null) {
           const windSection = document.createElement('div');
           windSection.className = 'condition-section';
 
@@ -1128,8 +1246,8 @@
           windDetails.innerHTML = `
             <span class="wind-cardinal">${data.wind_direction_cardinal || ''}</span>
             <span class="wind-degrees">(${Math.round(data.wind_direction)}°)</span>
-            <span class="wind-speed">${data.wind_speed.toFixed(0)}</span>
-            ${data.wind_gust ? `<span class="wind-gust">G ${data.wind_gust.toFixed(0)}</span>` : ''}
+            <span class="wind-speed">${windSpeed.toFixed(0)}</span>
+            ${windGust ? `<span class="wind-gust">G ${windGust.toFixed(0)}</span>` : ''}
             <span class="wind-gust">kt</span>
           `;
           windDiv.appendChild(windDetails);
