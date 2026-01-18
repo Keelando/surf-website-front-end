@@ -18,6 +18,9 @@ data/coxbay/slideshow/*.jpg
 data/mudbay/*.jpg
 data/mudbay/*.json
 data/mudbay/slideshow/*.jpg
+data/englishbay/*.jpg
+data/englishbay/*.json
+data/englishbay/slideshow/*.jpg
 data/webcam/*.jpg
 
 # Logs

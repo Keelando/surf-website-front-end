@@ -567,6 +567,9 @@
   <script>
     // Webcam configuration with regional grouping
     const webcamRegions = {
+      'english_bay': {
+        name: 'English Bay - Vancouver'
+      },
       'salish_sea_south': {
         name: 'Salish Sea - Boundary Bay - White Rock'
       },
@@ -576,6 +579,30 @@
     };
 
     const webcams = [
+      {
+        id: 'englishbay',
+        region: 'english_bay',
+        name: 'Ambleside Beach / English Bay',
+        location: 'West Vancouver, BC',
+        dataUrl: '/data/englishbay/latest.json',
+        imageUrl: '/data/englishbay/latest.jpg',
+        slideshowUrl: '/data/englishbay/slideshow_manifest.json',
+        slideshowPath: '/data/englishbay/',
+        updateInterval: 20,  // minutes
+        streamDelay: null,  // direct image, minimal delay
+        attribution: {
+          text: 'Webcam provided by Hollyburn Sailing Club',
+          url: 'https://www.hollyburnsailingclub.ca/',
+          logo: null
+        },
+        conditions: [
+          {
+            label: 'English Bay Buoy',
+            buoyStation: '4600304',
+            fields: ['wind', 'waves']
+          }
+        ]
+      },
       {
         id: 'whiterock',
         region: 'salish_sea_south',
@@ -1384,6 +1411,18 @@
       // Info section
       const info = document.createElement('div');
       info.className = 'webcam-info';
+
+      // Attribution notice (if present) - displayed prominently
+      if (webcam.attribution) {
+        const attrNotice = document.createElement('div');
+        attrNotice.style.cssText = 'background: linear-gradient(to right, #2c5282, #2b6cb0); color: white; padding: 0.75rem 1rem; margin-bottom: 0.75rem; border-radius: 4px; text-align: center; font-weight: 500;';
+        if (webcam.attribution.url) {
+          attrNotice.innerHTML = `${webcam.attribution.text} &mdash; <a href="${webcam.attribution.url}" target="_blank" rel="noopener" style="color: #90cdf4; text-decoration: underline;">⛵ Visit their website</a>`;
+        } else {
+          attrNotice.textContent = webcam.attribution.text;
+        }
+        info.appendChild(attrNotice);
+      }
 
       // Down notice (if present)
       if (webcam.downNotice) {
