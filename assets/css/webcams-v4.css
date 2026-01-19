@@ -556,7 +556,7 @@
 }
 
 /* ==========================================================================
-   Intro Sections
+   Intro Sections (Collapsible)
    ========================================================================== */
 
 .intro-section {
@@ -571,11 +571,48 @@
   border: 1px solid #e0e7ee;
 }
 
+.intro-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.intro-section-header:hover {
+  opacity: 0.85;
+}
+
+.intro-section-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  font-size: 0.8rem;
+  color: var(--webcam-primary);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.intro-section.collapsed .intro-section-toggle {
+  transform: rotate(-90deg);
+}
+
 .intro-section h2 {
   margin: 0;
   color: var(--webcam-primary);
   font-size: 1.1rem;
   cursor: pointer;
+  flex: 1;
+}
+
+.intro-section-hint {
+  font-size: 0.8rem;
+  color: var(--webcam-text-muted);
+  font-weight: normal;
+  margin-left: auto;
+  padding-left: 0.5rem;
 }
 
 .intro-section.collapsed .intro-content {
@@ -584,6 +621,8 @@
 
 .intro-content {
   margin-top: 0.75rem;
+  padding-left: 1.5rem;
+  border-left: 2px solid var(--webcam-border);
 }
 
 .intro-content p {
@@ -600,6 +639,8 @@
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 0.5rem;
   font-size: 0.85rem;
+  padding-left: 0;
+  border-left: none;
 }
 
 .webcam-links-grid a {
@@ -758,14 +799,12 @@
     font-size: 1rem;
   }
 
-  .intro-section h2::after {
-    content: ' ▼';
-    font-size: 0.7em;
-    opacity: 0.7;
+  .intro-section-hint {
+    font-size: 0.7rem;
   }
 
-  .intro-section.collapsed h2::after {
-    content: ' ▶';
+  .intro-content {
+    padding-left: 1rem;
   }
 
   .refresh-button {

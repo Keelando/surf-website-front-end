@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="/assets/css/style-v4.css?v=20251112" />
   <link rel="stylesheet" href="/assets/css/nav-tide-styles-v4.css" />
   <link rel="stylesheet" href="/assets/css/warning-banner-v4.css" />
-  <link rel="stylesheet" href="/assets/css/webcams-v4.css?v=20260119" />
+  <link rel="stylesheet" href="/assets/css/webcams-v4.css?v=20260119b" />
 </head>
 <body>
   <!-- Warning banners container -->
@@ -27,7 +27,11 @@
 
   <div class="container">
     <section class="intro-section collapsed">
-      <h2 onclick="this.parentElement.classList.toggle('collapsed')">About Coastal Webcams</h2>
+      <div class="intro-section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+        <span class="intro-section-toggle">▼</span>
+        <h2>About Coastal Webcams</h2>
+        <span class="intro-section-hint">Update frequency & tips</span>
+      </div>
       <div class="intro-content">
         <p>Recent views from coastal webcams around the Salish Sea. Images update every 10-30 minutes.</p>
         <p style="font-size: 0.85rem; color: #4a5568;">
@@ -37,7 +41,11 @@
     </section>
 
     <section class="intro-section bordered collapsed">
-      <h2 onclick="this.parentElement.classList.toggle('collapsed')">More Webcams</h2>
+      <div class="intro-section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+        <span class="intro-section-toggle">▼</span>
+        <h2>More Webcams</h2>
+        <span class="intro-section-hint">7 external links</span>
+      </div>
       <div class="intro-content webcam-links-grid">
         <a href="https://www.pointrobertsmarina.com/webcams/" target="_blank" rel="noopener">Point Roberts Marina ↗</a>
         <a href="https://birchbaywa.org/webcam/" target="_blank" rel="noopener">Birch Bay ↗</a>
