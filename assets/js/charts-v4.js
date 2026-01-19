@@ -56,14 +56,16 @@ async function loadChartsData() {
     if (chartData._meta?.generated_utc) {
       const dataTime = new Date(chartData._meta.generated_utc);
       const timestampEl = document.getElementById("timestamp");
-      timestampEl.textContent = `Chart data updated: ${dataTime.toLocaleString("en-US", {
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-        timeZone: "America/Vancouver",
-      })}`;
+      if (timestampEl) {
+        timestampEl.textContent = `Chart data updated: ${dataTime.toLocaleString("en-US", {
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+          timeZone: "America/Vancouver",
+        })}`;
+      }
     }
 
     initCharts();
@@ -73,7 +75,10 @@ async function loadChartsData() {
     updateTimeRangeLabels(); // Set initial labels to 24-Hour
   } catch (err) {
     logger.error("Charts", "Error loading chart data", err);
-    document.getElementById("timestamp").textContent = "⚠️ Error loading chart data";
+    const timestampEl = document.getElementById("timestamp");
+    if (timestampEl) {
+      timestampEl.textContent = "⚠️ Error loading chart data";
+    }
   }
 }
 
