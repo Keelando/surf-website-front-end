@@ -2,6 +2,14 @@
    Navigation Bar Styles
    ===================================================== */
 
+/* Normalize text sizing across mobile browsers (Chrome vs Firefox) */
+.main-nav,
+.main-nav * {
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 .main-nav {
   /* Modern ocean gradient */
   background: linear-gradient(135deg, #1a365d 0%, #2c5282 50%, #1e6b8c 100%);
@@ -99,7 +107,7 @@
   .main-nav {
     flex-wrap: wrap;
     gap: 0.25rem;
-    padding: 0.3rem;
+    padding: 0.35rem;
     justify-content: center;
   }
 
@@ -109,8 +117,8 @@
   }
 
   .nav-link {
-    padding: 0.45rem 0.6rem;
-    font-size: 0.75rem;
+    padding: 0.5rem 0.65rem;
+    font-size: 0.8rem;
     border-radius: 4px;
   }
 }
@@ -119,12 +127,12 @@
 @media (max-width: 480px) {
   .main-nav {
     gap: 0.2rem;
-    padding: 0.25rem;
+    padding: 0.3rem;
   }
 
   .nav-link {
-    padding: 0.4rem 0.5rem;
-    font-size: 0.7rem;
+    padding: 0.45rem 0.55rem;
+    font-size: 0.8rem;
     border-radius: 3px;
   }
 }
@@ -133,12 +141,12 @@
 @media (max-width: 380px) {
   .main-nav {
     gap: 0.15rem;
-    padding: 0.2rem;
+    padding: 0.25rem;
   }
 
   .nav-link {
-    padding: 0.35rem 0.4rem;
-    font-size: 0.65rem;
+    padding: 0.4rem 0.45rem;
+    font-size: 0.75rem;
     border-radius: 3px;
   }
 }
