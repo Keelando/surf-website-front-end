@@ -959,8 +959,8 @@ function updateHindcastMetadata(station) {
     timeZoneName: "short"
   });
 
-  // Extract model run time if available (hindcast data uses 18Z runs)
-  let modelRunDisplay = "18Z model run (closest to noon Pacific)";
+  // Extract model run time if available (hindcast data uses 12Z runs)
+  let modelRunDisplay = "12Z model run";
   if (hindcastData.model_run_time) {
     const modelRunTime = new Date(hindcastData.model_run_time);
     const hourUTC = modelRunTime.getUTCHours();

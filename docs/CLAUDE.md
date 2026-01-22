@@ -428,7 +428,7 @@ GoAccess-based analytics report generated hourly from Caddy access logs.
 ### fetch_storm_surge.py
 - Fetches GeoMet GDSPS storm surge forecasts using OWSLib
 - Processes GeoTIFF/WMS layers for specific locations
-- Runs every 6 hours (aligned with GeoMet updates)
+- Runs twice daily after 00Z and 12Z model runs
 
 ### tide_to_sqlite.py
 - Fetches DFO IWLS tide data via API for configured stations

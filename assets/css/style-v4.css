@@ -59,7 +59,88 @@ footer {
   background-color: var(--color-primary-dark);
   color: white;
   text-align: center;
-  padding: 1rem;
+  padding: 2rem 1rem;
+}
+
+.footer-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.footer-section {
+  margin-bottom: 1.25rem;
+}
+
+.footer-section:last-child {
+  margin-bottom: 0;
+}
+
+.footer-section h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.7;
+  font-weight: 500;
+}
+
+.footer-sources {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem 1rem;
+  font-size: 0.95rem;
+}
+
+.footer-sources span {
+  opacity: 0.9;
+}
+
+.footer-sources a {
+  color: #90cdf4;
+  text-decoration: none;
+}
+
+.footer-sources a:hover {
+  text-decoration: underline;
+}
+
+.footer-disclaimer {
+  font-size: 0.9rem;
+  opacity: 0.85;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+.land-acknowledgement {
+  font-size: 1rem;
+  font-style: italic;
+  opacity: 1;
+  max-width: 650px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.footer-bottom {
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  margin-top: 1.25rem;
+}
+
+footer .github-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+  text-decoration: none;
+  font-size: 0.85rem;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+footer .github-link:hover {
+  opacity: 1;
 }
 
 /* -----------------------------

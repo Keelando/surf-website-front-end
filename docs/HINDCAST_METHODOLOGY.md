@@ -9,8 +9,8 @@ Hindcast analysis evaluates forecast skill by comparing historical predictions a
 ### Forecast Data: 12 days (today + 11 days back)
 
 **What it shows:** Storm surge predictions made 38-61 hours in advance
-- Based on Environment Canada's GDSPS 18Z model run
-- Corresponds to hours 56-79 from midnight UTC (the 38-61 hour window from the 18:00 UTC run)
+- Based on Environment Canada's GDSPS 12Z model run
+- Corresponds to hours 50-73 from midnight UTC (the 38-61 hour window from the 12:00 UTC run)
 - Includes forecast runs from ~14 days ago to capture predictions for the full 12-day valid time range
 
 **Example:** To display predictions FOR Nov 12-23, we include forecast runs FROM Nov 10-21. The ~2-day offset accounts for the forecast lead time.
