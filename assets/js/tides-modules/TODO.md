@@ -2,25 +2,17 @@
 
 ## High Priority
 
-### Fix "Now" Dot Interpolation on Charts
-**Status:** Pending
-**Date Added:** 2026-01-12
-
-Since we scrapped the custom calibration calculations for geodetic stations (now taking Surrey data at face value), the "Now" dot logic on the tide charts should be simplified to use straightforward interpolation.
-
-**What needs to be done:**
-- Review `chart-renderer.js` for the "Now" marker/dot logic
-- Make interpolation self-consistent across all station types
-- Remove any legacy calibration logic that might be affecting the current position marker
-- Ensure geodetic and DFO stations use consistent interpolation methods
-
-**Related Files:**
-- `/home/keelando/site/assets/js/tides-modules/chart-renderer.js`
-- Geodetic stations: `crescent_beach_ocean`, `crescent_channel_ocean`
+(No pending items)
 
 ---
 
 ## Completed Items
+
+### Fix "Now" Dot Interpolation on Charts (2026-01-22)
+- ✅ Simplified "Now" dot logic for geodetic stations (Surrey)
+- ✅ Geodetic stations now use straightforward interpolation without residual calculation
+- ✅ Non-geodetic stations (DFO) still calculate residual from latest observation
+- ✅ Added `isGeodetic` check to skip unnecessary residual computation for Surrey data
 
 ### Storm Surge Card Alignment (2026-01-12)
 - ✅ Fixed geodetic station labels to show "Residual" instead of misleading labels

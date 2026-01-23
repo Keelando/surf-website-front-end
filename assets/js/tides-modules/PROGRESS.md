@@ -69,7 +69,7 @@
 
 **Changes made:**
 - Updated `tides.html` to use `tides-refactored.js` with ES6 modules
-- Original `tides.js` kept as commented backup
+- Original `tides.js` backup deleted (2026-01-22)
 - All modules in place at `/home/keelando/site/assets/js/tides-modules/`
 
 ## Benefits Achieved
@@ -137,6 +137,12 @@ The refactored implementation should provide identical behavior to the original:
 **Modules created:** 8
 **Integration files:** 1
 **Files updated:** 1 (tides.html)
+
+## Updates (2026-01-22)
+
+- ✅ Fixed "Now" dot interpolation for geodetic stations (simplified to skip residual calculation)
+- ✅ Deleted original `tides.js` backup (1,937 lines removed)
+- ✅ Updated `tides.html` to remove backup reference
 
 ## Next Steps (Optional Future Improvements)
 

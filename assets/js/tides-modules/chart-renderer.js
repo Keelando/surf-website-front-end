@@ -231,9 +231,12 @@ function buildChartSeries(data) {
     if (currentPredictedTide !== null) {
       let currentEstimatedTide = currentPredictedTide;
       let nearestResidual = null;
+      const isGeodetic = isCrescentBeach || isCrescentChannel;
 
-      // Calculate tide residual from most recent observation
-      if (observations.length > 0) {
+      // For non-geodetic stations (DFO), calculate residual from most recent observation
+      // For geodetic stations (Surrey), we use predictions directly - Surrey's data
+      // already accounts for residuals in their pre-calculated values
+      if (!isGeodetic && observations.length > 0) {
         const latestObs = observations[observations.length - 1];
         const obsTime = new Date(latestObs.time);
         const obsValue = latestObs.value;
