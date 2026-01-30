@@ -96,18 +96,20 @@ function buildChartSeries(data) {
 
   const series = [];
 
-  // 1. Astronomical Tide (hide for Crescent Beach Ocean)
-  if (!isCrescentBeach) {
-    series.push({
-      name: 'Astronomical Tide',
-      type: 'line',
-      data: times.map((t, i) => [t, values[i]]),
-      smooth: true,
-      lineStyle: { color: '#0077be', width: 2 },
-      itemStyle: { color: '#0077be' },
-      showSymbol: false
-    });
-  }
+  // 1. Tide Predictions (Astronomical Tide for DFO, Tide Forecast for geodetic)
+  const isGeodetic = isCrescentBeach || isCrescentChannel;
+  const tidePredictionName = isGeodetic ? 'Tide Forecast (Geodetic)' : 'Astronomical Tide';
+  const tidePredictionColor = isGeodetic ? '#1976d2' : '#0077be';
+
+  series.push({
+    name: tidePredictionName,
+    type: 'line',
+    data: times.map((t, i) => [t, values[i]]),
+    smooth: true,
+    lineStyle: { color: tidePredictionColor, width: 2 },
+    itemStyle: { color: tidePredictionColor },
+    showSymbol: false
+  });
 
   // 2. Sunlight times as vertical lines
   if (sunlightTimes) {
@@ -223,20 +225,17 @@ function buildChartSeries(data) {
     });
   }
 
-  // 9. Current time indicator (only for today)
-  if (dayOffset === 0) {
+  // 9. Current time indicator (only for today, skip for geodetic stations)
+  if (dayOffset === 0 && !isGeodetic) {
     const now = new Date();
     const currentPredictedTide = interpolateTide(predictions, now);
 
     if (currentPredictedTide !== null) {
       let currentEstimatedTide = currentPredictedTide;
       let nearestResidual = null;
-      const isGeodetic = isCrescentBeach || isCrescentChannel;
 
-      // For non-geodetic stations (DFO), calculate residual from most recent observation
-      // For geodetic stations (Surrey), we use predictions directly - Surrey's data
-      // already accounts for residuals in their pre-calculated values
-      if (!isGeodetic && observations.length > 0) {
+      // Calculate residual from most recent observation
+      if (observations.length > 0) {
         const latestObs = observations[observations.length - 1];
         const obsTime = new Date(latestObs.time);
         const obsValue = latestObs.value;
@@ -302,10 +301,9 @@ function buildLegendData(data) {
 
   const legendItems = [];
 
-  // Astronomical Tide (hide for Crescent Beach Ocean)
-  if (!isCrescentBeach) {
-    legendItems.push('Astronomical Tide');
-  }
+  // Tide Predictions (Astronomical Tide for DFO, Tide Forecast for geodetic)
+  const isGeodetic = isCrescentBeach || isCrescentChannel;
+  legendItems.push(isGeodetic ? 'Tide Forecast (Geodetic)' : 'Astronomical Tide');
 
   // Observation (hide for Crescent Channel)
   if (!isCrescentChannel && observations.length > 0) {
@@ -322,8 +320,8 @@ function buildLegendData(data) {
     legendItems.push('Total Water Level (Forecast)');
   }
 
-  // Current time indicator (only for today)
-  if (dayOffset === 0) {
+  // Current time indicator (only for today, skip for geodetic stations)
+  if (dayOffset === 0 && !isGeodetic) {
     const hasResidual = observations.length > 0;
     legendItems.push(hasResidual ? 'Now (Predicted + Residual)' : 'Now (Predicted)');
   }

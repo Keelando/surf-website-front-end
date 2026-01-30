@@ -485,3 +485,139 @@
   border-color: #004b7c;
   box-shadow: 0 0 0 3px rgba(0,119,190,0.1);
 }
+
+/* =====================================================
+   Sunlight Times Cards
+   ===================================================== */
+
+.sunlight-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.sunlight-card {
+  color: white;
+  padding: 0.6rem;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.sunlight-card-icon {
+  font-size: 1.3rem;
+  margin-bottom: 0.15rem;
+}
+
+.sunlight-card-label {
+  font-size: 0.8rem;
+  opacity: 0.9;
+  margin-bottom: 0.15rem;
+}
+
+.sunlight-card-time {
+  font-size: 1.15rem;
+  font-weight: bold;
+}
+
+.sunlight-card-sublabel {
+  font-size: 0.7rem;
+  opacity: 0.8;
+  margin-top: 0.15rem;
+}
+
+/* Gradient backgrounds */
+.sunlight-card-first-light {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.sunlight-card-sunrise {
+  background: linear-gradient(135deg, #d88ab8 0%, #d97685 100%);
+}
+
+.sunlight-card-sunset {
+  background: linear-gradient(135deg, #e8945f 0%, #f5c563 100%);
+}
+
+.sunlight-card-last-light {
+  background: linear-gradient(135deg, #6ba3d4 0%, #5cb5d1 100%);
+}
+
+/* Daylight duration summary */
+.sunlight-duration {
+  margin-top: 0.75rem;
+  padding: 0.5rem;
+  background: #f7fafc;
+  border-radius: 6px;
+  border-left: 3px solid #0077be;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sunlight-duration-icon {
+  font-size: 1.2rem;
+}
+
+.sunlight-duration-label {
+  font-size: 0.75rem;
+  color: #666;
+}
+
+.sunlight-duration-value {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #0077be;
+}
+
+/* Tablet: 2x2 grid */
+@media (max-width: 768px) {
+  .sunlight-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+}
+
+/* Mobile: compact but readable */
+@media (max-width: 480px) {
+  .sunlight-cards-grid {
+    gap: 0.4rem;
+  }
+
+  .sunlight-card {
+    padding: 0.5rem 0.4rem;
+  }
+
+  .sunlight-card-icon {
+    font-size: 1.1rem;
+  }
+
+  .sunlight-card-label {
+    font-size: 0.75rem;
+  }
+
+  .sunlight-card-time {
+    font-size: 1rem;
+  }
+
+  .sunlight-card-sublabel {
+    font-size: 0.65rem;
+  }
+
+  .sunlight-duration {
+    padding: 0.4rem;
+  }
+
+  .sunlight-duration-icon {
+    font-size: 1.1rem;
+  }
+
+  .sunlight-duration-label {
+    font-size: 0.75rem;
+  }
+
+  .sunlight-duration-value {
+    font-size: 1rem;
+  }
+}

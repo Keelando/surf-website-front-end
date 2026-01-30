@@ -83,8 +83,8 @@ export function displaySunlightTimes(stationKey, dayOffset, sunlightStore, tideD
   // Get sunlight times for the target date
   const sunlight = sunlightStore.getForDate(stationKey, targetDateStr);
 
-  // Check if we have sunlight data for this station
-  if (!sunlight) {
+  // Check if we have valid sunlight data for this station (not missing or error)
+  if (!sunlight || sunlight.error || !sunlight.first_light) {
     container.style.display = 'none';
     return;
   }
@@ -94,6 +94,12 @@ export function displaySunlightTimes(stationKey, dayOffset, sunlightStore, tideD
   const sunrise = new Date(sunlight.sunrise);
   const sunset = new Date(sunlight.sunset);
   const lastLight = new Date(sunlight.last_light);
+
+  // Validate parsed dates
+  if (isNaN(firstLight) || isNaN(sunrise) || isNaN(sunset) || isNaN(lastLight)) {
+    container.style.display = 'none';
+    return;
+  }
 
   // Format to local time (24-hour)
   const timeOptions = { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'America/Vancouver' };
@@ -122,7 +128,7 @@ export function displaySunlightTimes(stationKey, dayOffset, sunlightStore, tideD
     dayLabel = dateStr;
   }
 
-  // Build modern card-based layout
+  // Build modern card-based layout with CSS classes for responsive sizing
   container.innerHTML = `
     <div class="tide-data-group">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
@@ -132,50 +138,48 @@ export function displaySunlightTimes(stationKey, dayOffset, sunlightStore, tideD
           <button id="sunlight-next-day-btn" title="Next day" style="padding: 0.5rem 1rem; background: #0077be; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem;">▶</button>
         </div>
       </div>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+      <div class="sunlight-cards-grid">
 
         <!-- First Light Card -->
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-          <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">🌅</div>
-          <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 0.25rem;">First Light</div>
-          <div style="font-size: 1.3rem; font-weight: bold;">${firstLightStr}</div>
-          <div style="font-size: 0.75rem; opacity: 0.8; margin-top: 0.25rem;">Civil Dawn</div>
+        <div class="sunlight-card sunlight-card-first-light">
+          <div class="sunlight-card-icon">🌅</div>
+          <div class="sunlight-card-label">First Light</div>
+          <div class="sunlight-card-time">${firstLightStr}</div>
+          <div class="sunlight-card-sublabel">Civil Dawn</div>
         </div>
 
         <!-- Sunrise Card -->
-        <div style="background: linear-gradient(135deg, #d88ab8 0%, #d97685 100%); color: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-          <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">🌄</div>
-          <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 0.25rem;">Sunrise</div>
-          <div style="font-size: 1.3rem; font-weight: bold;">${sunriseStr}</div>
-          <div style="font-size: 0.75rem; opacity: 0.8; margin-top: 0.25rem;">Sun Above Horizon</div>
+        <div class="sunlight-card sunlight-card-sunrise">
+          <div class="sunlight-card-icon">🌄</div>
+          <div class="sunlight-card-label">Sunrise</div>
+          <div class="sunlight-card-time">${sunriseStr}</div>
+          <div class="sunlight-card-sublabel">Sun Above Horizon</div>
         </div>
 
         <!-- Sunset Card -->
-        <div style="background: linear-gradient(135deg, #e8945f 0%, #f5c563 100%); color: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-          <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">🌇</div>
-          <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 0.25rem;">Sunset</div>
-          <div style="font-size: 1.3rem; font-weight: bold;">${sunsetStr}</div>
-          <div style="font-size: 0.75rem; opacity: 0.8; margin-top: 0.25rem;">Sun Below Horizon</div>
+        <div class="sunlight-card sunlight-card-sunset">
+          <div class="sunlight-card-icon">🌇</div>
+          <div class="sunlight-card-label">Sunset</div>
+          <div class="sunlight-card-time">${sunsetStr}</div>
+          <div class="sunlight-card-sublabel">Sun Below Horizon</div>
         </div>
 
         <!-- Last Light Card -->
-        <div style="background: linear-gradient(135deg, #6ba3d4 0%, #5cb5d1 100%); color: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-          <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">🌆</div>
-          <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 0.25rem;">Last Light</div>
-          <div style="font-size: 1.3rem; font-weight: bold;">${lastLightStr}</div>
-          <div style="font-size: 0.75rem; opacity: 0.8; margin-top: 0.25rem;">Civil Dusk</div>
+        <div class="sunlight-card sunlight-card-last-light">
+          <div class="sunlight-card-icon">🌆</div>
+          <div class="sunlight-card-label">Last Light</div>
+          <div class="sunlight-card-time">${lastLightStr}</div>
+          <div class="sunlight-card-sublabel">Civil Dusk</div>
         </div>
 
       </div>
 
       <!-- Daylight Duration Summary -->
-      <div style="margin-top: 1rem; padding: 0.75rem; background: #f7fafc; border-radius: 6px; border-left: 4px solid #0077be;">
-        <div style="display: flex; align-items: center; gap: 0.75rem;">
-          <div style="font-size: 1.5rem;">☀️</div>
-          <div>
-            <div style="font-size: 0.85rem; color: #666;">Daylight Duration</div>
-            <div style="font-size: 1.2rem; font-weight: bold; color: #0077be;">${daylightDuration}</div>
-          </div>
+      <div class="sunlight-duration">
+        <div class="sunlight-duration-icon">☀️</div>
+        <div>
+          <div class="sunlight-duration-label">Daylight Duration</div>
+          <div class="sunlight-duration-value">${daylightDuration}</div>
         </div>
       </div>
     </div>
