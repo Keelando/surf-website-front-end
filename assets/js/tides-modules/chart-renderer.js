@@ -160,8 +160,8 @@ function buildChartSeries(data) {
     });
   }
 
-  // 3. Raw observations (show for Crescent Beach only, skip for Crescent Channel)
-  if (observations.length > 0 && dayOffset === 0 && isCrescentBeach) {
+  // 3. Raw observations (show for all stations except Crescent Channel)
+  if (observations.length > 0 && dayOffset === 0 && !isCrescentChannel) {
     series.push({
       name: 'Observation',
       type: 'scatter',

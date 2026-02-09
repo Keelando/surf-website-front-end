@@ -169,6 +169,26 @@ async function fetchMarineData() {
   }
 }
 
+function isWebcamStale(metadata, updateInterval) {
+  if (!metadata?.timestamp) return false;
+
+  const now = Date.now();
+  const lastUpdate = new Date(metadata.timestamp).getTime();
+  const ageMinutes = (now - lastUpdate) / (1000 * 60);
+
+  // Consider stale if older than 3x the update interval (e.g., 30 min for 10-min interval)
+  const staleThreshold = updateInterval * 3;
+  return ageMinutes > staleThreshold;
+}
+
+function formatAge(ageMinutes) {
+  if (ageMinutes >= 120) {
+    const hours = Math.round(ageMinutes / 60);
+    return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+  }
+  return `${Math.round(ageMinutes)} min ago`;
+}
+
 async function loadWebcamMetadata(webcam, card) {
   try {
     const response = await fetch(webcam.dataUrl);
@@ -177,7 +197,22 @@ async function loadWebcamMetadata(webcam, card) {
     if (card) {
       const timestampEl = card.querySelector('.webcam-timestamp');
       if (timestampEl) {
-        timestampEl.textContent = 'Last updated: ' + formatTimestamp(metadata.timestamp);
+        const stale = isWebcamStale(metadata, webcam.updateInterval || 10);
+        const now = Date.now();
+        const lastUpdate = new Date(metadata.timestamp).getTime();
+        const ageMinutes = Math.round((now - lastUpdate) / (1000 * 60));
+
+        let timestampText = 'Last updated: ' + formatTimestamp(metadata.timestamp);
+
+        if (stale) {
+          const ageText = formatAge(ageMinutes);
+          timestampText += ` <span class="stale-indicator" title="Image is ${ageMinutes} minutes old">⚠️ STALE (${ageText})</span>`;
+          card.classList.add('webcam-stale');
+        } else {
+          card.classList.remove('webcam-stale');
+        }
+
+        timestampEl.innerHTML = timestampText;
       }
     }
     return metadata;
@@ -596,8 +631,23 @@ async function createWebcamCard(webcam, metadata) {
   info.appendChild(updateNotice);
 
   if (metadata) {
-    // Timestamp
-    info.appendChild(createElement('div', 'webcam-timestamp', 'Last updated: ' + formatTimestamp(metadata.timestamp)));
+    // Timestamp with staleness check
+    const timestampEl = createElement('div', 'webcam-timestamp');
+    const stale = isWebcamStale(metadata, webcam.updateInterval || 10);
+    const now = Date.now();
+    const lastUpdate = new Date(metadata.timestamp).getTime();
+    const ageMinutes = Math.round((now - lastUpdate) / (1000 * 60));
+
+    let timestampText = 'Last updated: ' + formatTimestamp(metadata.timestamp);
+
+    if (stale) {
+      const ageText = formatAge(ageMinutes);
+      timestampText += ` <span class="stale-indicator" title="Image is ${ageMinutes} minutes old">⚠️ STALE (${ageText})</span>`;
+      card.classList.add('webcam-stale');
+    }
+
+    timestampEl.innerHTML = timestampText;
+    info.appendChild(timestampEl);
 
     // Source link
     if (metadata.source || metadata.url) {

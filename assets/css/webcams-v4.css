@@ -246,6 +246,29 @@
   margin-bottom: 0.5rem;
 }
 
+.stale-indicator {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.15rem 0.5rem;
+  background: var(--webcam-warning-bg);
+  border: 1px solid var(--webcam-warning-border);
+  border-radius: 4px;
+  color: var(--webcam-warning);
+  font-weight: 600;
+  font-size: 0.8em;
+  vertical-align: middle;
+}
+
+.webcam-card.webcam-stale {
+  border: 2px solid var(--webcam-warning-border);
+  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+}
+
+.webcam-card.webcam-stale .webcam-header {
+  background: linear-gradient(to bottom, var(--webcam-warning-bg), white);
+  border-bottom: 1px solid var(--webcam-warning-border);
+}
+
 .webcam-source {
   font-size: 0.85rem;
   color: var(--webcam-text);
