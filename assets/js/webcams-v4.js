@@ -586,12 +586,12 @@ async function createWebcamCard(webcam, metadata) {
   // Add sun/moon indicator
   const indicator = createElement('span', 'daylight-indicator');
   if (webcam.daylightOnly) {
-    indicator.textContent = '🌙';
-    indicator.title = 'Daylight only - images not captured at night';
+    indicator.textContent = '🌞';
+    indicator.title = 'Daylight only - screen grabs during daytime hours';
     indicator.style.fontSize = '0.8em';
   } else {
-    indicator.textContent = '🌞';
-    indicator.title = '24/7 - images captured day and night';
+    indicator.textContent = '🌞🌙';
+    indicator.title = '24/7 - screen grabs day and night';
     indicator.style.fontSize = '0.8em';
   }
   title.appendChild(indicator);
@@ -649,7 +649,14 @@ async function createWebcamCard(webcam, metadata) {
   // Update interval notice
   const updateNotice = createElement('div', 'webcam-update-notice');
   const delayText = webcam.streamDelay === null ? 'unknown delay' : `~${webcam.streamDelay} min stream delay`;
-  updateNotice.textContent = `Updated every ${webcam.updateInterval || 10} minutes • ${delayText}`;
+  let noticeText = `Updated every ${webcam.updateInterval || 10} minutes • ${delayText}`;
+
+  // Add daylight-only note
+  if (webcam.daylightOnly) {
+    noticeText += ' • Screen grabs stop at night';
+  }
+
+  updateNotice.textContent = noticeText;
   info.appendChild(updateNotice);
 
   if (metadata) {
