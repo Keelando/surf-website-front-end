@@ -185,10 +185,16 @@ function isWebcamStale(metadata, updateInterval) {
 }
 
 function formatAge(ageMinutes) {
-  if (ageMinutes >= 120) {
+  if (ageMinutes >= 2880) {
+    // >= 48 hours: show days
+    const days = Math.round(ageMinutes / 1440);
+    return `${days} day${days !== 1 ? 's' : ''} ago`;
+  } else if (ageMinutes >= 120) {
+    // >= 2 hours but < 48 hours: show hours
     const hours = Math.round(ageMinutes / 60);
     return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
   }
+  // < 2 hours: show minutes
   return `${Math.round(ageMinutes)} min ago`;
 }
 
