@@ -24,6 +24,7 @@ const webcams = [
     slideshowPath: '/data/ambleside/',
     updateInterval: 20,
     streamDelay: 1,
+    daylightOnly: true,
     attribution: {
       text: 'Webcam screenshots provided by Hollyburn Sailing Club',
       url: 'https://www.hollyburnsailingclub.ca/'
@@ -77,6 +78,7 @@ const webcams = [
     slideshowPath: '/data/mudbay/',
     updateInterval: 30,
     streamDelay: null,
+    daylightOnly: true,
     conditions: [
       { label: 'White Rock East Beach', customStation: 'whiterock_east', fields: ['wind_speed_only'] },
       { label: 'Crescent Pile', buoyStation: 'CRPILE', fields: ['wind', 'waves'] }
@@ -93,6 +95,7 @@ const webcams = [
     slideshowPath: '/data/coxbay/',
     updateInterval: 15,
     streamDelay: 20,
+    daylightOnly: true,
     conditions: [
       { label: 'La Perouse Bank', buoyStation: '4600206', fields: ['wind', 'waves_detailed'] }
     ]
@@ -574,7 +577,26 @@ async function createWebcamCard(webcam, metadata) {
 
   // Header
   const header = createElement('div', 'webcam-header');
-  header.appendChild(createElement('h3', null, webcam.name));
+
+  // Title with daylight indicator
+  const title = createElement('h3');
+  const titleText = document.createTextNode(webcam.name + ' ');
+  title.appendChild(titleText);
+
+  // Add sun/moon indicator
+  const indicator = createElement('span', 'daylight-indicator');
+  if (webcam.daylightOnly) {
+    indicator.textContent = '🌙';
+    indicator.title = 'Daylight only - images not captured at night';
+    indicator.style.fontSize = '0.8em';
+  } else {
+    indicator.textContent = '🌞';
+    indicator.title = '24/7 - images captured day and night';
+    indicator.style.fontSize = '0.8em';
+  }
+  title.appendChild(indicator);
+
+  header.appendChild(title);
   header.appendChild(createElement('p', 'webcam-location', webcam.location));
   card.appendChild(header);
 
