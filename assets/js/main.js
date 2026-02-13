@@ -6,6 +6,24 @@ function degreesToCardinal(degrees) {
   return directions[index];
 }
 
+// Helper function to format data age in human-readable format
+function formatDataAge(ageMinutes) {
+  if (ageMinutes == null) return null;
+
+  if (ageMinutes < 60) {
+    const mins = Math.round(ageMinutes);
+    return `${mins} minute${mins !== 1 ? 's' : ''} ago`;
+  } else if (ageMinutes < 1440) {
+    // Less than 24 hours
+    const hours = Math.round(ageMinutes / 60);
+    return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+  } else {
+    // Days
+    const days = Math.round(ageMinutes / 1440);
+    return `${days} day${days !== 1 ? 's' : ''} ago`;
+  }
+}
+
 // Helper function to create rotated directional arrow
 // SVG approach - bulletproof across ALL browsers/devices (fixes Firefox Android tablet bug)
 function getDirectionalArrow(degrees, arrowType = 'wind') {
@@ -226,11 +244,21 @@ async function loadBuoyData() {
           }).replace(',', '')
         : "—";
 
-      // Use backend stale flag (calculated at export time for consistency)
-      const isStale = b.stale || false;
-      const ageWarning = isStale
-        ? ` <span style="color: #c62828; font-weight: bold;">⚠️ STALE (>3h old)</span>`
-        : "";
+      // Data freshness handling:
+      // - Up to 3 hours: No warning
+      // - 3-12 hours: Show age warning, display data
+      // - >12 hours: Show "STATION DOWN", hide data
+      const ageMinutes = b.age_minutes || 0;
+      const ageHours = ageMinutes / 60;
+      const isDown = ageHours > 12;
+      const isStale = ageHours > 3 && !isDown;
+
+      let ageWarning = "";
+      if (isDown) {
+        ageWarning = ` <span style="color: #e53935; font-weight: bold; background: #ffebee; padding: 0.2rem 0.5rem; border-radius: 3px;">🔴 STATION DOWN (${formatDataAge(ageMinutes)})</span>`;
+      } else if (isStale) {
+        ageWarning = ` <span style="color: #c62828; font-weight: bold;">⚠️ STALE (${formatDataAge(ageMinutes)})</span>`;
+      }
 
       // Round wind speeds to integers
       const windSpeed = b.wind_speed != null ? Math.round(b.wind_speed) : "—";
@@ -254,67 +282,80 @@ async function loadBuoyData() {
       // === CONDENSED VIEW (Always visible) ===
       cardContent += `<div class="card-compact-view">`;
 
-      // Compact Wind Line - Format: "WNW 15 G 20 kn (350°)"
-      let windDisplay = "No data";
-      if (windSpeed !== "—") {
-        const windCardinal = b.wind_direction_cardinal ?? "—";
-        const windDir = b.wind_direction_deg || b.wind_direction;
-        const windDegrees = windDir != null ? ` (${Math.round(windDir)}°)` : "";
-        const gustPart = windGust !== "—" ? ` G ${windGust}` : "";
-        windDisplay = `${windCardinal} ${windSpeed}${gustPart} kn${windDegrees} ${getDirectionalArrow(windDir, 'wind')}`;
-      }
-      cardContent += `<p class="buoy-metric" style="margin: 0.5rem 0;"><b>💨 Wind:</b> ${windDisplay}</p>`;
-
-      // Compact Wave Line - Format: "W 0.4m @ 3.3s (270°)"
-      // For Neah Bay (46087), prioritize swell data as it measures continuous open swells
-      let waveDisplay = "No data";
-      let waveLabel = "🌊 Wave:";
-
       // Determine decimal precision for wave height (Boundary Bay stations use 2 decimals)
+      // Declared here so it's available in both compact view and details section
       const isBoundaryBay = (id === "CRPILE" || id === "CRCHAN");
       const heightPrecision = isBoundaryBay ? 2 : 1;
 
-      if (id === "46087") {
-        // Neah Bay - show swell info
-        waveLabel = "🌊 Swell:";
-        const swellHeight = b.swell_height != null ? b.swell_height.toFixed(heightPrecision) : "—";
-        const swellPeriod = b.swell_period != null ? b.swell_period.toFixed(1) : null;
-        const swellDir = b.swell_direction_cardinal ?? null;
-        const swellDegrees = b.swell_direction != null ? ` (${Math.round(b.swell_direction)}°)` : "";
-        if (swellHeight !== "—") {
-          const dirDisplay = swellDir ? `${swellDir} ` : "";
-          const arrowDisplay = b.swell_direction != null ? ` ${getDirectionalArrow(b.swell_direction, 'wave')}` : "";
-          const periodDisplay = swellPeriod != null ? ` @ ${swellPeriod}s` : "";
-          waveDisplay = `${dirDisplay}${swellHeight}m${periodDisplay}${swellDegrees}${arrowDisplay}`;
-        }
-      } else if (id === "46088") {
-        // New Dungeness - show significant wave height and average period
-        const waveHeight = b.wave_height_sig != null ? b.wave_height_sig.toFixed(heightPrecision) : "—";
-        const wavePeriod = b.wave_period_avg != null ? b.wave_period_avg.toFixed(1) : null;
-        const waveDir = b.wave_direction_peak_cardinal ?? null;
-        const waveDegrees = b.wave_direction_peak != null ? ` (${Math.round(b.wave_direction_peak)}°)` : "";
-        if (waveHeight !== "—") {
-          const dirDisplay = waveDir ? `${waveDir} ` : "";
-          const arrowDisplay = b.wave_direction_peak != null ? ` ${getDirectionalArrow(b.wave_direction_peak, 'wave')}` : "";
-          const periodDisplay = wavePeriod != null ? ` @ ${wavePeriod}s` : "";
-          waveDisplay = `${dirDisplay}${waveHeight}m${periodDisplay}${waveDegrees}${arrowDisplay}`;
-        }
+      // If station is down (>12 hours), show station down message instead of data
+      if (isDown) {
+        cardContent += `
+          <p class="buoy-metric" style="margin: 1rem 0; padding: 1rem; background: #ffebee; border-left: 4px solid #e53935; border-radius: 4px; color: #c62828; font-weight: 600;">
+            🔴 Station Down - No recent data available
+          </p>
+          <p style="font-size: 0.85em; color: #666; text-align: center; margin-top: 0.5rem;">
+            Last data received ${formatDataAge(ageMinutes)}
+          </p>
+        `;
       } else {
-        // Other buoys - show combined wave data
-        const waveHeight = b.wave_height_sig != null ? b.wave_height_sig.toFixed(heightPrecision) : "—";
-        const wavePeriod = b.wave_period_avg != null ? b.wave_period_avg.toFixed(1) : b.wave_period_peak != null ? b.wave_period_peak.toFixed(1) : null;
-        const waveDir = b.wave_direction_peak_cardinal ?? b.swell_direction_cardinal ?? null;
-        const waveDirectionValue = b.wave_direction_peak ?? b.swell_direction;
-        const waveDegrees = waveDirectionValue != null ? ` (${Math.round(waveDirectionValue)}°)` : "";
-
-        if (waveHeight !== "—") {
-          const dirDisplay = waveDir ? `${waveDir} ` : "";
-          const arrowDisplay = waveDirectionValue != null ? ` ${getDirectionalArrow(waveDirectionValue, 'wave')}` : "";
-          const periodDisplay = wavePeriod != null ? ` @ ${wavePeriod}s` : "";
-          waveDisplay = `${dirDisplay}${waveHeight}m${periodDisplay}${waveDegrees}${arrowDisplay}`;
+        // Compact Wind Line - Format: "WNW 15 G 20 kn (350°)"
+        let windDisplay = "No data";
+        if (windSpeed !== "—") {
+          const windCardinal = b.wind_direction_cardinal ?? "—";
+          const windDir = b.wind_direction_deg || b.wind_direction;
+          const windDegrees = windDir != null ? ` (${Math.round(windDir)}°)` : "";
+          const gustPart = windGust !== "—" ? ` G ${windGust}` : "";
+          windDisplay = `${windCardinal} ${windSpeed}${gustPart} kn${windDegrees} ${getDirectionalArrow(windDir, 'wind')}`;
         }
-      }
-      cardContent += `<p class="buoy-metric" style="margin: 0.5rem 0;"><b>${waveLabel}</b> ${waveDisplay}</p>`;
+        cardContent += `<p class="buoy-metric" style="margin: 0.5rem 0;"><b>💨 Wind:</b> ${windDisplay}</p>`;
+
+        // Compact Wave Line - Format: "W 0.4m @ 3.3s (270°)"
+        // For Neah Bay (46087), prioritize swell data as it measures continuous open swells
+        let waveDisplay = "No data";
+        let waveLabel = "🌊 Wave:";
+
+        if (id === "46087") {
+          // Neah Bay - show swell info
+          waveLabel = "🌊 Swell:";
+          const swellHeight = b.swell_height != null ? b.swell_height.toFixed(heightPrecision) : "—";
+          const swellPeriod = b.swell_period != null ? b.swell_period.toFixed(1) : null;
+          const swellDir = b.swell_direction_cardinal ?? null;
+          const swellDegrees = b.swell_direction != null ? ` (${Math.round(b.swell_direction)}°)` : "";
+          if (swellHeight !== "—") {
+            const dirDisplay = swellDir ? `${swellDir} ` : "";
+            const arrowDisplay = b.swell_direction != null ? ` ${getDirectionalArrow(b.swell_direction, 'wave')}` : "";
+            const periodDisplay = swellPeriod != null ? ` @ ${swellPeriod}s` : "";
+            waveDisplay = `${dirDisplay}${swellHeight}m${periodDisplay}${swellDegrees}${arrowDisplay}`;
+          }
+        } else if (id === "46088") {
+          // New Dungeness - show significant wave height and average period
+          const waveHeight = b.wave_height_sig != null ? b.wave_height_sig.toFixed(heightPrecision) : "—";
+          const wavePeriod = b.wave_period_avg != null ? b.wave_period_avg.toFixed(1) : null;
+          const waveDir = b.wave_direction_peak_cardinal ?? null;
+          const waveDegrees = b.wave_direction_peak != null ? ` (${Math.round(b.wave_direction_peak)}°)` : "";
+          if (waveHeight !== "—") {
+            const dirDisplay = waveDir ? `${waveDir} ` : "";
+            const arrowDisplay = b.wave_direction_peak != null ? ` ${getDirectionalArrow(b.wave_direction_peak, 'wave')}` : "";
+            const periodDisplay = wavePeriod != null ? ` @ ${wavePeriod}s` : "";
+            waveDisplay = `${dirDisplay}${waveHeight}m${periodDisplay}${waveDegrees}${arrowDisplay}`;
+          }
+        } else {
+          // Other buoys - show combined wave data
+          const waveHeight = b.wave_height_sig != null ? b.wave_height_sig.toFixed(heightPrecision) : "—";
+          const wavePeriod = b.wave_period_avg != null ? b.wave_period_avg.toFixed(1) : b.wave_period_peak != null ? b.wave_period_peak.toFixed(1) : null;
+          const waveDir = b.wave_direction_peak_cardinal ?? b.swell_direction_cardinal ?? null;
+          const waveDirectionValue = b.wave_direction_peak ?? b.swell_direction;
+          const waveDegrees = waveDirectionValue != null ? ` (${Math.round(waveDirectionValue)}°)` : "";
+
+          if (waveHeight !== "—") {
+            const dirDisplay = waveDir ? `${waveDir} ` : "";
+            const arrowDisplay = waveDirectionValue != null ? ` ${getDirectionalArrow(waveDirectionValue, 'wave')}` : "";
+            const periodDisplay = wavePeriod != null ? ` @ ${wavePeriod}s` : "";
+            waveDisplay = `${dirDisplay}${waveHeight}m${periodDisplay}${waveDegrees}${arrowDisplay}`;
+          }
+        }
+        cardContent += `<p class="buoy-metric" style="margin: 0.5rem 0;"><b>${waveLabel}</b> ${waveDisplay}</p>`;
+      } // End of if (isDown) else block
 
       cardContent += `</div>`; // End compact view
 
@@ -354,6 +395,27 @@ async function loadBuoyData() {
 
       // === EXPANDABLE DETAILS SECTION (Hidden by default) ===
       cardContent += `<div id="card-details-${id}" style="display: none; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e0e0e0;">`;
+
+      // Show warning banner if station is down
+      if (isDown) {
+        cardContent += `
+          <div style="margin-bottom: 1rem; padding: 0.75rem; background: #fff3cd; border-left: 4px solid #ff9800; border-radius: 4px;">
+            <p style="margin: 0; color: #856404; font-weight: 600;">⚠️ Station Down - Showing Last Known Data</p>
+            <p style="margin: 0.25rem 0 0 0; font-size: 0.85em; color: #856404;">
+              This data is from ${formatDataAge(ageMinutes)} and does not reflect current conditions.
+            </p>
+          </div>
+        `;
+      } else if (isStale) {
+        cardContent += `
+          <div style="margin-bottom: 1rem; padding: 0.75rem; background: #fff3cd; border-left: 4px solid #ffa726; border-radius: 4px;">
+            <p style="margin: 0; color: #856404; font-weight: 600;">⚠️ Stale Data Warning</p>
+            <p style="margin: 0.25rem 0 0 0; font-size: 0.85em; color: #856404;">
+              This data is ${formatDataAge(ageMinutes)} old. Newer data may not be available.
+            </p>
+          </div>
+        `;
+      }
 
       // Check if NOAA buoy with spectral data
       const isNOAA = (id === "46087" || id === "46088" || id === "46267");
