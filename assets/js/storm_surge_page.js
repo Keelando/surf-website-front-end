@@ -538,7 +538,8 @@ function updateForecastMetadata(station, times, values) {
   // Extract model run time (00Z or 12Z format)
   let modelRunDisplay = "";
   if (forecastData.model_run_time) {
-    const modelRunTime = new Date(forecastData.model_run_time);
+    const runStr = forecastData.model_run_time;
+    const modelRunTime = new Date(runStr.endsWith('Z') || runStr.includes('+') ? runStr : runStr + 'Z');
     const hourUTC = modelRunTime.getUTCHours();
     const dateStr = modelRunTime.toLocaleString("en-US", {
       month: "short",
@@ -962,7 +963,8 @@ function updateHindcastMetadata(station) {
   // Extract model run time if available (hindcast data uses 12Z runs)
   let modelRunDisplay = "12Z model run";
   if (hindcastData.model_run_time) {
-    const modelRunTime = new Date(hindcastData.model_run_time);
+    const runStr = hindcastData.model_run_time;
+    const modelRunTime = new Date(runStr.endsWith('Z') || runStr.includes('+') ? runStr : runStr + 'Z');
     const hourUTC = modelRunTime.getUTCHours();
     const dateStr = modelRunTime.toLocaleString("en-US", {
       month: "short",

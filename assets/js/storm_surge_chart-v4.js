@@ -291,7 +291,8 @@ function updateMetadata(station, times, values, displayName = null) {
   // Extract model run time (00Z or 12Z format)
   let modelRunDisplay = "";
   if (surgeData.model_run_time) {
-    const modelRunTime = new Date(surgeData.model_run_time);
+    const runStr = surgeData.model_run_time;
+    const modelRunTime = new Date(runStr.endsWith('Z') || runStr.includes('+') ? runStr : runStr + 'Z');
     const hourUTC = modelRunTime.getUTCHours();
     const dateStr = modelRunTime.toLocaleString("en-US", {
       month: "short",

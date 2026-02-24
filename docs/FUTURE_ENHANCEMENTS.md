@@ -1,5 +1,20 @@
 # Future Enhancements
 
+## Dependency Upgrades
+
+The following CDN-loaded libraries are behind a major version and should be reviewed and tested before upgrading:
+
+| Library | Current | Latest | Notes |
+|---------|---------|--------|-------|
+| htmx | 1.9.10 | 2.0.8 | Major version — review breaking changes |
+| ECharts | 5.4.3 | 6.0.0 | Major version — chart configs may need updates |
+| Leaflet | 1.9.4 | 1.9.4 | Already up to date |
+
+### Priority
+Low — no known bugs, but staying current improves security and compatibility.
+
+---
+
 ## Wave Direction Arrows
 
 ### Overview
