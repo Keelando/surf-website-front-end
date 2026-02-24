@@ -1,6 +1,138 @@
 # Frontend Changelog
 
-UI/UX enhancements and feature history for halibutbank.ca
+UI/UX enhancements and feature history for halibutbank.ca. Entries are newest-first.
+
+---
+
+## 2026-02-24: Bug Fixes & Housekeeping
+
+### Storm Surge Model Run Timezone Fix
+
+Fixed a bug where the 00Z model run was displayed as "08Z" on both the homepage
+storm surge widget and the storm surge page. Root cause: `model_run_time` in the
+JSON has no timezone designator, so `new Date()` parsed it as local time (UTC-8),
+making `getUTCHours()` return 8 instead of 0.
+
+**Fix:** Append `Z` before parsing if the string has no timezone info.
+
+**Files modified:**
+- `assets/js/storm_surge_chart-v4.js`
+- `assets/js/storm_surge_page.js` (forecast + hindcast sections)
+
+### Sitemap Updated
+
+- Added `lightstations.html` and `webcams.html` (previously missing)
+- Refreshed all `<lastmod>` dates
+
+### SEO Meta Tags
+
+Added Open Graph tags to all pages that were missing them (forecasts, storm surge,
+tides, webcams, lightstations). Added `author` and `robots` meta to webcams and
+lightstations. Expanded keywords on lightstations and webcams.
+
+### Git Housekeeping
+
+Untracked `data/ambleside/` files — they were committed before the `.gitignore`
+rule took effect. Rules were already correct; just needed `git rm --cached`.
+
+---
+
+## 2026-02-08: Webcams Page
+
+### New Page: `/webcams.html`
+
+Added a dedicated webcams page showing live coastal camera feeds.
+
+**Features:**
+- Live image feeds with auto-refresh
+- Multiple camera locations (White Rock Pier, White Rock East Beach, others)
+- Slideshow/gallery layout
+- Mobile responsive
+
+**Files created:**
+- `webcams.html`
+- `assets/js/webcams-v4.js`
+- `assets/css/webcams-v4.css`
+- `components/header-webcams.html`
+- `components/tagline-webcams.html`
+
+---
+
+## 2026-01-22: Tides Page Refactor
+
+### Modular Tides Rewrite
+
+Refactored the tides page JavaScript into a module-based architecture.
+
+**Files created:**
+- `assets/js/tides-refactored.js` (replaces `tides.js`)
+- `assets/js/tides-modules/` — split into data-loader, chart-renderer, display modules
+
+---
+
+## 2025-11-17: v4 JS/CSS Rollout + New Pages
+
+### Version 4 Asset Refactor
+
+Renamed all CSS and JS files from v3 to v4 conventions. Added `logger.js` for
+centralized console logging across all pages (no more raw `console.*` calls).
+
+**Key files:**
+- `assets/css/style-v4.css`
+- `assets/css/nav-tide-styles-v4.css`
+- `assets/js/chart-utils-v4.js`
+- `assets/js/logger.js`
+- `assets/css/warning-banner-v4.css`
+
+### New Page: `/storm_surge.html`
+
+10-day storm surge forecast and hindcast analysis using the Environment Canada
+GDSPS model. Pulls data from `data/storm_surge/*.json` (updated every 6 hours).
+
+**Features:**
+- Station selector (Campbell River, Point Atkinson, Tofino, etc.)
+- 10-day forecast chart
+- Hindcast overlay (historical model runs for comparison)
+- Model run time display (00Z / 12Z)
+
+**Files created:**
+- `storm_surge.html`
+- `assets/js/storm_surge_page.js`
+- `assets/js/storm_surge_chart-v4.js`
+- `components/header-storm-surge.html`
+- `components/tagline-storm-surge.html`
+- `docs/HINDCAST_METHODOLOGY.md`
+
+### New Page: `/winds.html`
+
+Real-time wind observations from Environment Canada coastal weather stations,
+displayed on an interactive Leaflet map with per-station charts.
+
+**Files created:**
+- `winds.html`
+- `assets/js/wind-stations.js`
+- `assets/js/winds-map.js`
+- `assets/js/wind-chart-v4.js`
+- `components/header-winds.html`
+
+### New Page: `/lightstations.html`
+
+Real-time observations from BC coastal lightstations (wind, sea state, swell),
+updated every 3 hours from Environment Canada. Includes an interactive map.
+
+**Files created:**
+- `lightstations.html`
+- `components/header-lightstations.html`
+- `components/tagline-lightstations.html`
+
+### Navigation Expanded to 7 Tabs
+
+`components/nav.html` updated to include all pages:
+```
+[Buoys] [Tides] [Winds] [Forecasts] [Storm Surge] [Webcams] [Lightstations]
+```
+
+Also added a live Pacific time clock to the nav bar.
 
 ---
 
